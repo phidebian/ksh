@@ -671,6 +671,19 @@ char **sh_argbuild(int *nargs, const struct comnod *comptr,int flag)
 		register char	**comargn;
 		register int	argn;
 		register char	**comargm;
+
+                /* #545: When argbuild is aborted (longjmp) from a discipline
+                 * function (unset var access in discipline) we count an arg
+                 * that is unset at then end of the list, generating a
+                 * double NULL at the end.
+                 * This extra NULL make a core dump in sh_exec() $_ processing.
+                 * When building arglist we recount args (argi), and adjust
+                 * *nargs accordingly so
+                 * nargs==2 and arglist="print" NULL NULL become
+                 * nargs=1 arglist="print" NULL
+                 */
+                int argi;
+                
 		argn = *nargs;
 		/* allow room to prepend args */
 		argn += 1;
@@ -684,6 +697,7 @@ char **sh_argbuild(int *nargs, const struct comnod *comptr,int flag)
 			*--comargn = 0;
 			return(comargn);
 		}
+                argi=0;
 		while(argp)
 		{
 			struct argnod *nextarg = argp->argchn.ap;
@@ -697,8 +711,10 @@ char **sh_argbuild(int *nargs, const struct comnod *comptr,int flag)
 					strsort(comargn,argn,strcoll);
 				comargm = comargn;
 			}
+                        argi++;
 		}
 		sh.last_table = 0;
+                *nargs=argi;
 		return(comargn);
 	}
 }

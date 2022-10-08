@@ -1531,4 +1531,12 @@ exp='Line 3 is 3'
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # ======
+# https://github.com/ksh93/ksh/issues/545
+# phidebian@github
+# streamline by @hyenias
+$SHELL +E -uc $'a=A; function a.get { : $z; }\necho $a' >/dev/null 2>&1 ||
+{ err_exit "#545: unset variable access in discipline function" "(expected success, got core dump)"
+}
+
+# ======
 exit $((Errors<125?Errors:125))
