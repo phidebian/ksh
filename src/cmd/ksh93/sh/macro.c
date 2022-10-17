@@ -902,8 +902,9 @@ static void mac_substitute(Mac_t *mp, register char *cp,char *str,register int s
 		while((c= *cp++) && c!=ESCAPE);
 		if(c==0)
 			break;
-		if((n= *cp++)=='\\' || n==RBRACE || (n>='0' && n<='9' && (n-='0')<subsize))
-		{
+                if((n= *cp++)=='\\' || n==RBRACE || (n>='0' && n<='9' ))
+                 
+                {       if(n>='0' && n<='9')n-='0';
 			c = cp-first-2;
 			if(c)
 				mac_copy(mp,first,c);
@@ -913,6 +914,7 @@ static void mac_substitute(Mac_t *mp, register char *cp,char *str,register int s
 				first--;
 				continue;
 			}
+                        if(n<subsize)
 			if((c=subexp[2*n])>=0)
 			{
 				if((n=subexp[2*n+1]-c)>0)
