@@ -2,6 +2,12 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2022-10-18:
+
+- Fixed the expansion of out-of-range \n back references in the string part of
+  ${parameter//pattern/string}. For example:  v=AB; echo "${v/@(A)B/\0:\1:\2}"
+  now yields 'AB:A:' instead of 'AB:A:\2'.
+
 2022-10-14:
 
 - Fixed: the generic --version option was not recognised for the built-in
