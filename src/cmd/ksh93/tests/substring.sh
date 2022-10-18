@@ -700,4 +700,23 @@ typeset -m co.array=.sh.match
 [[ $x == "$(print -v co.array)" ]] || err_exit 'typeset -m for .sh.match to compound variable not working (2)'
 
 # ======
+# confusing behaviour of backreferences with alternation
+# https://github.com/ksh93/ksh/issues/447
+
+x='ab'
+got=${x//@(@(a)|b)/<\1+\2>}
+exp='<a+a><b+>'
+[[ $got == "$exp" ]] || err_exit "backreferences with alternation (got $(printf %q "$got"), expected $(printf %q "$exp"))"
+
+x='bc'
+got=${x//@(@(a)|b)@(c)/<\2,\3>}
+exp='<,c>'
+[[ $got == "$exp" ]] || err_exit "backreferences with alternation (got $(printf %q "$got"), expected $(printf %q "$exp"))"
+
+x='ab'
+got=${x//~(E:(a)|b)/<\1>}
+exp='<a><>'
+[[ $got == "$exp" ]] || err_exit "backreferences with alternation (got $(printf %q "$got"), expected $(printf %q "$exp"))"
+
+# ======
 exit $((Errors<125?Errors:125))
