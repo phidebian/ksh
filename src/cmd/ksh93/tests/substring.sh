@@ -724,6 +724,21 @@ got=${x//@(@(a)|b)@(c)/<\2,\3>}
 exp='<,c>'
 [[ $got == "$exp" ]] || err_exit "back-reference (got $(printf %q "$got"), expected $(printf %q "$exp"))"
 
+x='a1b2'
+got=${x//@(@(a)|b)@(?)/[1:<\1> 2:<\2> 3:<\3>]}
+exp='[1:<a> 2:<a> 3:<1>][1:<b> 2:<> 3:<2>]'
+[[ $got == "$exp" ]] || err_exit "back-reference (got $(printf %q "$got"), expected $(printf %q "$exp"))"
+
+x='ab'
+got=${x//@(@(a)|@(b))/<\1+\2>}
+exp='<a+a><b+>'
+[[ $got == "$exp" ]] || err_exit "back-reference (got $(printf %q "$got"), expected $(printf %q "$exp"))"
+
+x='ab'
+got=${x//@(@(a)|@(b))/<\1+\2+\3>}
+exp='<a+a+><b++b>'
+[[ $got == "$exp" ]] || err_exit "back-reference (got $(printf %q "$got"), expected $(printf %q "$exp"))"
+
 x='ab'
 got=${x//~(E:(a)|b)/<\1>}
 exp='<a><>'
