@@ -154,7 +154,7 @@ Time_t
 tmxdate(register const char* s, char** e, Time_t now)
 {
 	register Tm_t*	tm;
-	register long	n;
+	long		n;
 	register int	w;
 	unsigned long	set;
 	unsigned long	state;
@@ -228,19 +228,28 @@ tmxdate(register const char* s, char** e, Time_t now)
 		while (isspace(*s))
 			s++;
 		message((-1, "AHA#%d state=" FFMT " set=" FFMT " '%s'", __LINE__, FLAGS(state), FLAGS(set), s));
+
+		f = 1; 		       /* PHI: Default factor */
+		if(state&LAST) f = -f; /* PHI: Invert on LAST/AGO, etc...*/
+
 		for (;;)
 		{
 			if (*s == '.' || *s == '-' || *s == '+')
 			{
+				if(*s == '-')
+				{ f = -1;
+				}
+				if(*s == '+')
+				{ f = 1;
+				}
+
 				if (((set|state) & (MONTH|HOUR|MINUTE|ZONE)) == (MONTH|HOUR|MINUTE) && (i = tmgoff(s, &t, TM_LOCALZONE)) != TM_LOCALZONE)
 				{
 					zone = i;
 					state |= ZONE;
 					if (!*(s = t))
 						break;
-				}
-				else if (*s == '+')
-					break;
+				}	
 			}
 			else if (!skip[*s])
 				break;
@@ -499,21 +508,7 @@ tmxdate(register const char* s, char** e, Time_t now)
 			} while (c);
 			continue;
 		}
-		f = -1;
-		if (*s == '+')
-		{
-			while (isspace(*++s) || *s == '_');
-			n = strtol(s, &t, 0);
-			if (w = t - s)
-			{
-				for (s = t; skip[*s]; s++);
-				state |= (f = n) ? NEXT : THIS;
-				set &= ~(EXACT|LAST|NEXT|THIS);
-				set |= state & (EXACT|LAST|NEXT|THIS);
-			}
-			else
-				s = last;
-		}
+		
 		if (!(state & CRON))
 		{
 			/*
@@ -703,7 +698,7 @@ tmxdate(register const char* s, char** e, Time_t now)
 				now = n;
 				goto sns;
 			}
-			if ((*t == 'T' || *t == 't') && ((set|state) & (YEAR|MONTH|DAY)) == (YEAR|MONTH) && isdigit(*(t + 1)))
+			if ((*t == 'T' || *t == 't') && ((set|state) & (YEAR|MONTH)) == (YEAR|MONTH) && isdigit(*(t + 1)))
 				t++;
 			u = t + (*t == '-');
 			message((-1, "AHA#%d n=%d w=%d u='%c' f=%d t=\"%s\"", __LINE__, n, w, *u, f, t));
@@ -734,6 +729,10 @@ tmxdate(register const char* s, char** e, Time_t now)
 				if (k == 7)
 					k = 0;
 				tm->tm_year = m;
+				if(!(state&LAST)) /* PHI: use 'exact' to get HHMMSS */
+				{
+					tm->tm_hour = tm->tm_min = tm->tm_sec = tm->tm_nsec = 0;
+				}
 				tmweek(tm, 2, n, k);
 				set |= YEAR|MONTH|DAY;
 				s = t;
@@ -812,7 +811,12 @@ tmxdate(register const char* s, char** e, Time_t now)
 				message((-1, "AHA#%d n=%d", __LINE__, n));
  ordinal:
 				if (n)
-					n--;
+				{
+					if(k!=TM_PARTS) 
+					{
+						n--; /* Not for TM_PARTS on par with gdate(1) */
+					}
+				}
 				message((-1, "AHA#%d n=%d", __LINE__, n));
 				state |= ((f = n) ? NEXT : THIS)|ORDINAL;
 				set &= ~(EXACT|LAST|NEXT|THIS);
@@ -1038,7 +1042,7 @@ tmxdate(register const char* s, char** e, Time_t now)
 								tm->tm_hour = i += 12;
 							break;
 						}
-						if (f >= 0 || (state & (LAST|NEXT)))
+						if (state & (LAST|NEXT))
 						{
 							message((-1, "AHA#%d f=%d i=%d j=%d k=%d l=%d", __LINE__, f, i, j, k, l));
 							state &= ~HOLD;
@@ -1086,10 +1090,8 @@ tmxdate(register const char* s, char** e, Time_t now)
 		{
 			message((-1, "AHA#%d s=\"%s\"", __LINE__, s));
 			if (*s == '-' || *s == '+')
-			{
-				if (((set|state) & (MONTH|DAY|HOUR|MINUTE)) == (MONTH|DAY|HOUR|MINUTE) || *s == '+' && (!isdigit(s[1]) || !isdigit(s[2]) || s[3] != ':' && (s[3] != '.' || ((set|state) & (YEAR|MONTH)) != (YEAR|MONTH))))
-					break;
-				s++;
+			{ /* PHI: +/- handled on top of loop now */
+				break;
 			}
 			else if (skip[*s])
 				s++;
@@ -1265,6 +1267,11 @@ tmxdate(register const char* s, char** e, Time_t now)
 					case TM_ORDINALS:
 						n = j - TM_ORDINALS + 1;
 						message((-1, "AHA#%d n=%d", __LINE__, n));
+						u=t; /* PHI: look ahead for TM_PARTS, in k used in ordinal: */
+						while(skip[*u])u++;
+						k = tmlex(u, &u,
+						tm_info.format, TM_NFORM,
+						tm_info.format + TM_SUFFIXES,TM_PARTS - TM_SUFFIXES);                            
 						goto ordinal;
 					case TM_MERIDIAN:
 						if (f >= 0)
@@ -1302,7 +1309,27 @@ tmxdate(register const char* s, char** e, Time_t now)
 					case TM_PARTS:
 					case TM_HOURS:
 						state |= set & (EXACT|LAST|NEXT|THIS);
-						if (!(state & (LAST|NEXT|THIS)))
+						/* PHI:
+						 * disambiguate english "second"
+						 */
+						if( (n<0) && (j==TM_PARTS) && !(state&(LAST|NEXT|THIS)))
+						
+						if( (n<0) && (j==TM_PARTS) && !(state&(LAST|NEXT|THIS)))
+						{
+                                                u=t; /* look ahead for TM_PARTS, k used in ordinal: */
+							while(skip[*u])u++;
+							k = tmlex(u, &u,
+							tm_info.format, TM_NFORM,
+							tm_info.format + TM_SUFFIXES,TM_PARTS - TM_SUFFIXES);
+							if(k > 0)
+							{
+								n = 2;
+								goto ordinal;
+							}
+							n = 1;
+						}
+
+						if (1) /* PHI: Do always */
 							for (;;)
 							{
 								while (skip[*s])
@@ -1311,7 +1338,13 @@ tmxdate(register const char* s, char** e, Time_t now)
 								{
 									s = t;
 									if (k <= 2)
-										state |= LAST;
+									{
+										if( !(state & THIS)) /* PHI: THIS takes precedence */
+										{
+											state |= LAST;
+								   			f = -f; /* PHI: */
+										}
+									}
 									else if (k <= 5)
 										state |= THIS;
 									else if (k <= 8)
@@ -1321,8 +1354,20 @@ tmxdate(register const char* s, char** e, Time_t now)
 								}
 								else
 								{
-									state |= (n > 0) ? NEXT : THIS;
-									break;
+									if(n>=0)
+									{
+										state |= NEXT;
+									}
+									else
+									{
+										state |= THIS;
+										n=(state&LAST)?1:0;
+										if(state&(LAST|NEXT))
+										{
+											n = 1; /* f is -1(LAST|AGO) or +1(THIS|NEXT) */
+										}                     
+									}
+									break;                   
 								}
 								set &= ~(EXACT|LAST|NEXT|THIS);
 								set |= state & (EXACT|LAST|NEXT|THIS);
@@ -1367,11 +1412,9 @@ tmxdate(register const char* s, char** e, Time_t now)
 								state &= ~(THIS|NEXT);
 						}
 						message((-1, "AHA#%d disambiguate LAST k=%d", __LINE__, k));
-						if (state & LAST)
-							n = -n;
-						else if (!(state & NEXT))
-							n--;
-						m = (f > 0) ? f * n : n;
+                                                
+						m =  f * n; /* PHI: f is -1,1 n is >=0 (except for ordinals for historial reasons */
+
 						message((-1, "AHA#%d f=%d n=%d i=%d j=%d k=%d l=%d m=%d state=" FFMT, __LINE__, f, n, i, j, k, l, m, FLAGS(state)));
 						switch (j)
 						{
@@ -1416,7 +1459,7 @@ tmxdate(register const char* s, char** e, Time_t now)
 							goto clear_hour;
 						case TM_PARTS+4:
 							tm = tmxtm(tm, tmxtime(tm, zone), tm->tm_zone);
-							tm->tm_mday += 7 * m - tm->tm_wday + 1;
+							tm->tm_hour += (m * 7 * 24);
 							set |= DAY;
 							goto clear_hour;
 						case TM_PARTS+5:

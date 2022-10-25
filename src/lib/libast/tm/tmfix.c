@@ -108,12 +108,11 @@ tmfix(register Tm_t* tm)
 	}
 	else if (tm->tm_mon < 0)
 	{
-		tm->tm_year--;
-		if ((tm->tm_mon += 12) < 0)
-		{
-			tm->tm_year += tm->tm_mon / 12;
-			tm->tm_mon = (-tm->tm_mon) % 12;
-		}
+		tm->tm_year += ((tm->tm_mon / 12) - 1);
+		tm->tm_mon = 12+(tm->tm_mon % 12);
+		if(tm->tm_mon >= 12)
+		{ tm->tm_year++; tm->tm_mon = 0;
+		}		
 	}
 	while (tm->tm_mday < -365)
 	{
