@@ -657,6 +657,14 @@ int sh_eval(register Sfio_t *iop, int mode)
 			mode = sh_state(SH_INTERACTIVE);
 		}
 		sh_exec(t,sh_isstate(SH_ERREXIT)|sh_isstate(SH_NOFORK)|(mode&~SH_FUNEVAL));
+		if(!t&&errno&&sh.st.filename)
+		{
+			sfprintf(sfstderr,"ksh: %s [%s] on %s\n",
+			"error",
+			strerror(errno),
+			sh.st.filename);
+			sh.exitval=EXIT_NOEXEC ;
+		}
 		if(!(mode&SH_FUNEVAL))
 			break;
 	}

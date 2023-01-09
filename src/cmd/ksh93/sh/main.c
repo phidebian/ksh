@@ -628,7 +628,17 @@ done:
 	if(fno>0)
 		sh_close(fno);
 	if(sh.st.filename)
+	{
+		if( errno && (errno!=ENOTTY) ) // PHI:
+		{
+			sfprintf(sfstderr,"ksh: %s [%s] on %s\n",
+			"error",
+			strerror(errno),
+			sh.st.filename);
+			sh.exitval=EXIT_NOEXEC;
+		}
 		free((void*)sh.st.filename);
+        }
 	sh.st.filename = 0;
 }
 
