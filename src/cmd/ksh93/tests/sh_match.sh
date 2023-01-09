@@ -1065,4 +1065,11 @@ EOF
 fi
 
 # ======
+
+# https://github.com/ksh93/ksh/issues/577
+# https://github.com/ksh93/ksh/pull/581
+[[ "[a] b [c] d" =~ ^\[[^]]+\] ]]
+[[ ${.sh.match} == '[a]' ]] || err_exit 'pattern ^\[[^]]+ broken'
+
+# ======
 exit $((Errors<125?Errors:125))
