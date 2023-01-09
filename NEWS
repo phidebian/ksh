@@ -2,6 +2,11 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-01-09:
+
+- Fixed a bug causing incorrect greedy ${.sh.match} results when matching
+  the pattern [^]] in a non-ASCII locale.
+
 2023-01-08:
 
 - Fixed a completion bug in vi mode in multibyte character locales, in which
