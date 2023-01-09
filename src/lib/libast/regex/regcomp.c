@@ -1527,7 +1527,7 @@ bra(Cenv_t* env)
 						}
 					}
 				}
-				else if ((c == ']') && !(neg && (first == pp)))
+				else if (c == ']' && !(neg && first == pp))
 				{
 					if (env->cursor == begin)
 					{
