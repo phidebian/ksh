@@ -46,7 +46,7 @@ dllnames(const char* id, const char* name, Dllnames_t* names)
 
 	n = strlen(id);
 	if (strneq(name, id, n) && (streq(name + n, "_s") || streq(name + n, "_t")))
-		return 0;
+		return NULL;
 	if (!names)
 	{
 		s = fmtbuf(sizeof(Dllnames_t*) + sizeof(names) - 1);
@@ -114,7 +114,7 @@ dll_lib(Dllnames_t* names, unsigned long version, Dllerror_f dllerrorf, void* di
 	static Dll_lib_t*	loaded;
 
 	if (!names)
-		return 0;
+		return NULL;
 
 	/*
 	 * check if plugin already loaded
@@ -137,7 +137,7 @@ dll_lib(Dllnames_t* names, unsigned long version, Dllerror_f dllerrorf, void* di
 			(*dllerrorf)(NULL, disc, 2, "%s: library not found", names->name);
 		else
 			errorf("dll", NULL, -1, "dll_lib: %s version %lu library not found", names->name, version);
-		return 0;
+		return NULL;
 	}
 
 	/*
@@ -151,7 +151,7 @@ dll_lib(Dllnames_t* names, unsigned long version, Dllerror_f dllerrorf, void* di
 			(*dllerrorf)(NULL, disc, 2, "%s: %s: initialization function not found in library", names->path, sym);
 		else
 			errorf("dll", NULL, -1, "dll_lib: %s version %lu initialization function %s not found in library", names->name, version, sym);
-		return 0;
+		return NULL;
 	}
 
 	/*

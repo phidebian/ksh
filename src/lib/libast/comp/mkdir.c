@@ -52,7 +52,7 @@ mkdir(const char* path, mode_t mode)
 	for (n = 0; n < elementsof(cmd); n++)
 		if (procclose(procopen(cmd[n], av, NULL, NULL, 0)) != -1)
 			break;
-	return(chmod(path, mode));
+	return chmod(path, mode);
 }
 
 #endif

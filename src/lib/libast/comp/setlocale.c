@@ -2247,7 +2247,7 @@ set_numeric(Lc_category_t* cp)
 		}
 		else
 			dp = &default_numeric;
-		LCINFO(category)->data = (void*)dp;
+		LCINFO(category)->data = dp;
 	}
 	return 0;
 }
@@ -2322,7 +2322,7 @@ default_setlocale(int category, const char* locale)
 	if (locale)
 	{
 		if (!(lc = lcmake(locale)) || !(lc->flags & LC_default))
-			return 0;
+			return NULL;
 		locales[0]->flags &= ~lc->flags;
 		locales[1]->flags &= ~lc->flags;
 		return lc->name;
@@ -2420,7 +2420,7 @@ single(int category, Lc_t* lc, unsigned int flags)
 				lc->flags |= LC_checked;
 			}
 			if (!(lc->flags & LC_local))
-				return 0;
+				return NULL;
 			if (lc_categories[category].external != -lc_categories[category].internal)
 				setlocale(lc_categories[category].external, lcmake(NULL)->name);
 		}
@@ -2428,7 +2428,7 @@ single(int category, Lc_t* lc, unsigned int flags)
 		if (lc_categories[category].setf && (*lc_categories[category].setf)(&lc_categories[category]))
 		{
 			locales[category] = lc_categories[category].prev;
-			return 0;
+			return NULL;
 		}
 		if ((lc->flags & LC_default) || category == AST_LC_MESSAGES && lc->name[0] == 'e' && lc->name[1] == 'n' && (lc->name[2] == 0 || lc->name[2] == '_' && lc->name[3] == 'U'))
 			ast.locale.set &= ~(1<<category);
@@ -2617,7 +2617,7 @@ _ast_setlocale(int category, const char* locale)
 	static const char	local[] = "local";
 
 	if ((category = lcindex(category, 0)) < 0)
-		return 0;
+		return NULL;
 	if (!locale)
 	{
 		/*
@@ -2628,7 +2628,7 @@ _ast_setlocale(int category, const char* locale)
 		if (category != AST_LC_ALL && category != AST_LC_LANG)
 			return (char*)locales[category]->name;
 		if (!sp && !(sp = sfstropen()))
-			return 0;
+			return NULL;
 		for (i = 1; i < AST_LC_COUNT; i++)
 			cat[i] = -1;
 		for (i = 1, k = 0; i < AST_LC_COUNT; i++)
@@ -2724,7 +2724,7 @@ _ast_setlocale(int category, const char* locale)
 				{
 					while (i--)
 						single(i, NULL, 0);
-					return 0;
+					return NULL;
 				}
 			if (ast.locale.set & AST_LC_debug)
 				for (i = 1; i < AST_LC_COUNT; i++)
@@ -2751,7 +2751,7 @@ _ast_setlocale(int category, const char* locale)
 					{
 						while (i--)
 							single(i, NULL, 0);
-						return 0;
+						return NULL;
 					}
 		}
 	}
@@ -2764,7 +2764,7 @@ _ast_setlocale(int category, const char* locale)
 		return (char*)locales[category]->name;
 	}
 	else if (composite(locale, 0) < 0)
-		return 0;
+		return NULL;
 	else if (lc_all != p)
 	{
 		lc_all = p;
@@ -2773,7 +2773,7 @@ _ast_setlocale(int category, const char* locale)
 			{
 				while (i--)
 					single(i, NULL, 0);
-				return 0;
+				return NULL;
 			}
 	}
 	goto compose;

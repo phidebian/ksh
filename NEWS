@@ -2,6 +2,17 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-03-29:
+
+- Fixed a bug in 'printf -v' (added on 2021-11-18) where using the %B format
+  specifier would overwrite any data already written to the variable.
+
+- [1.1 change] In the ${parameter/pattern/string} search-and-replace
+  expansion, an anchored empty pattern will now match the beginning or the
+  end of the string, so that ${parameter/#/string} will prefix the string to
+  the parameter value and ${parameter/%/string} will append it. This change
+  brings ksh 93u+m/1.1 into line with mksh, bash, yash and zsh.
+
 2023-03-26:
 
 - Fixed an intermittent crash in 'command -x' experienced on some arm/arm64

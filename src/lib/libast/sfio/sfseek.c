@@ -192,7 +192,7 @@ Sfoff_t sfseek(Sfio_t*	f,	/* seek to a new location in this stream */
 	{	/* if mmap is not great, stop mmapping if moving around too much */
 #if _mmap_worthy < 2
 		if((f->next - f->data) < ((f->endb - f->data)/4) )
-		{	SFSETBUF(f,(void*)f->tiny,(size_t)SF_UNBOUND);
+		{	SFSETBUF(f,f->tiny,(size_t)SF_UNBOUND);
 			hardseek = 1; /* this forces a hard seek below */
 		}
 		else

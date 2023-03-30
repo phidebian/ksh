@@ -47,8 +47,8 @@ block(void* handle, void* data, size_t size)
 	Regex_t*	re = (Regex_t*)handle;
 
 	if (data || (size = roundof(size, ALIGN_BOUND2)) > (re->buf + re->size - re->cur))
-		return 0;
-	data = (void*)re->cur;
+		return NULL;
+	data = re->cur;
 	re->cur += size;
 	return data;
 }
@@ -148,11 +148,11 @@ regcmp(const char* pattern, ...)
 	}
 	va_end(ap);
 	if (e)
-		return 0;
+		return NULL;
 	if (!(s = sfstruse(sp)))
 	{
 		sfstrclose(sp);
-		return 0;
+		return NULL;
 	}
 	re = 0;
 	n = 0;
@@ -163,7 +163,7 @@ regcmp(const char* pattern, ...)
 			if (re)
 				free(re);
 			sfstrclose(sp);
-			return 0;
+			return NULL;
 		}
 		re->cur = re->buf;
 		re->size = n + ALIGN_BOUND2 - sizeof(Regex_t);
@@ -175,7 +175,7 @@ regcmp(const char* pattern, ...)
 	if (c)
 	{
 		free(re);
-		return 0;
+		return NULL;
 	}
 	if (re->nsub = nsub)
 		memcpy(re->sub, sub, (nsub + 1) * sizeof(sub[0]));
@@ -204,9 +204,9 @@ regex(const char* handle, const char* subject, ...)
 	}
 	va_end(ap);
 	if (k)
-		return 0;
+		return NULL;
 	if (regexec(&re->re, subject, SUB + 1, match, 0))
-		return 0;
+		return NULL;
 	for (n = 0; n < re->nsub; n++)
 		if (i = re->sub[n])
 		{

@@ -94,7 +94,7 @@ int    b_readonly(int argc,char *argv[],Shbltin_t *context)
 	char *command = argv[0];
 	struct tdata tdata;
 	NOT_USED(argc);
-	memset((void*)&tdata,0,sizeof(tdata));
+	memset(&tdata,0,sizeof(tdata));
 	tdata.aflag = '-';
 	while((flag = optget(argv,*command=='e'?sh_optexport:sh_optreadonly))) switch(flag)
 	{
@@ -120,7 +120,7 @@ int    b_readonly(int argc,char *argv[],Shbltin_t *context)
 		flag = (NV_ASSIGN|NV_EXPORT|NV_IDENT);
 	if(!sh.prefix)
 		sh.prefix = Empty;
-	return(setall(argv,flag,sh.var_tree, &tdata));
+	return setall(argv,flag,sh.var_tree, &tdata);
 }
 
 /*
@@ -137,7 +137,7 @@ int    b_alias(int argc,char *argv[],Shbltin_t *context)
 	int rflag=0, xflag=0, n;
 	struct tdata tdata;
 	NOT_USED(argc);
-	memset((void*)&tdata,0,sizeof(tdata));
+	memset(&tdata,0,sizeof(tdata));
 	troot = sh.alias_tree;
 	if(*argv[0]=='h')
 		flag |= NV_TAGGED;
@@ -200,7 +200,7 @@ int    b_alias(int argc,char *argv[],Shbltin_t *context)
 		if(rflag)				/* hash -r: clear hash table */
 			nv_scan(troot,nv_rehash,NULL,NV_TAGGED,NV_TAGGED);
 	}
-	return(setall(argv,flag,troot,&tdata));
+	return setall(argv,flag,troot,&tdata);
 }
 
 
@@ -223,7 +223,7 @@ int    b_typeset(int argc,char *argv[],Shbltin_t *context)
 	Dt_t		*troot;
 	int		isfloat=0, isadjust=0, shortint=0, sflag=0;
 
-	memset((void*)&tdata,0,sizeof(tdata));
+	memset(&tdata,0,sizeof(tdata));
 	troot = sh.var_tree;
 	if(ntp)					/* custom declaration command added using enum */
 	{
@@ -520,7 +520,7 @@ endargs:
 		Stk_t *stkp = sh.stk;
 		int off=0,offset = stktell(stkp);
 		if(!tdata.prefix)
-			return(sh_outtype(sfstdout));
+			return sh_outtype(sfstdout);
 		sfputr(stkp,NV_CLASS,-1);
 #if SHOPT_NAMESPACE
 		if(sh.namespace)
@@ -566,7 +566,7 @@ endargs:
 		errormsg(SH_DICT,ERROR_exit(1),e_nounattr);
 		UNREACHABLE();
 	}
-	return(setall(argv,flag,troot,&tdata));
+	return setall(argv,flag,troot,&tdata);
 }
 
 static void print_value(Sfio_t *iop, Namval_t *np, struct tdata *tp)
@@ -904,7 +904,7 @@ static int     setall(char **argv,int flag,Dt_t *troot,struct tdata *tp)
 						{
 							nv_disc(np,fp,NV_POP);
 							if(!(fp->nofree&1))
-								free((void*)fp);
+								free(fp);
 							nv_offattr(np,flag&(NV_LTOU|NV_UTOL));
 						}
 					}
@@ -1278,13 +1278,13 @@ int    b_set(int argc,char *argv[],Shbltin_t *context)
 int    b_unalias(int argc,char *argv[],Shbltin_t *context)
 {
 	NOT_USED(context);
-	return(unall(argc,argv,sh.alias_tree));
+	return unall(argc,argv,sh.alias_tree);
 }
 
 int    b_unset(int argc,char *argv[],Shbltin_t *context)
 {
 	NOT_USED(context);
-	return(unall(argc,argv,sh.var_tree));
+	return unall(argc,argv,sh.var_tree);
 }
 
 static int unall(int argc, char **argv, Dt_t *troot)
@@ -1507,7 +1507,7 @@ static int print_namval(Sfio_t *file,Namval_t *np,int flag, struct tdata *tp)
 			sfputc(file, '\n');
 			sh_deparse(file, (Shnode_t*)(nv_funtree(np)), 2 | nv_isattr(np,NV_FPOSIX), 0);
 		}
-		return(nv_size(np)+1);
+		return nv_size(np) + 1;
 	}
 	if(nv_arrayptr(np))
 	{
@@ -1559,7 +1559,7 @@ static int print_namval(Sfio_t *file,Namval_t *np,int flag, struct tdata *tp)
 static void	print_all(Sfio_t *file,Dt_t *root, struct tdata *tp)
 {
 	tp->outfile = file;
-	nv_scan(root, print_attribute, (void*)tp, 0, 0);
+	nv_scan(root, print_attribute, tp, 0, 0);
 }
 
 /*
@@ -1594,9 +1594,9 @@ static void print_scan(Sfio_t *file, int flag, Dt_t *root, int option,struct tda
 		tp->scanmask |= (NV_DOUBLE|NV_EXPNOTE);
 	if(flag==NV_LTOU || flag==NV_UTOL)
 		tp->scanmask |= NV_UTOL|NV_LTOU;
-	namec = nv_scan(root, nullscan, (void*)tp, tp->scanmask, flag&~NV_IARRAY);
+	namec = nv_scan(root, nullscan, tp, tp->scanmask, flag&~NV_IARRAY);
 	argv = tp->argnam  = (char**)stkalloc(sh.stk,(namec+1)*sizeof(char*));
-	namec = nv_scan(root, pushname, (void*)tp, tp->scanmask, flag&~NV_IARRAY);
+	namec = nv_scan(root, pushname, tp, tp->scanmask, flag&~NV_IARRAY);
 	if(mbcoll())
 		strsort(argv,namec,strcoll);
 	if(namec==0 && sh.namespace && nv_dict(sh.namespace)==root)

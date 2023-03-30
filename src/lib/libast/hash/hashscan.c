@@ -46,7 +46,7 @@ hashscan(Hash_table_t* tab, int flags)
 
 	static Hash_bucket_t		empty;
 
-	if (!(pos = newof(0, Hash_position_t, 1, 0))) return 0;
+	if (!(pos = newof(0, Hash_position_t, 1, 0))) return NULL;
 	pos->tab = tab->root->last.table = tab;
 	pos->bucket = &empty;
 	pos->slot = tab->table - 1;
@@ -84,7 +84,7 @@ hashnext(Hash_position_t* pos)
 {
 	Hash_bucket_t*	b;
 
-	if (!pos) return 0;
+	if (!pos) return NULL;
 	b = pos->bucket;
 	for (;;)
 	{
@@ -95,7 +95,7 @@ hashnext(Hash_position_t* pos)
 				if (++pos->slot >= pos->limit)
 				{
 					pos->tab->frozen--;
-					if (!pos->flags || !pos->tab->scope) return 0;
+					if (!pos->flags || !pos->tab->scope) return NULL;
 					pos->tab = pos->tab->scope;
 					pos->tab->root->last.table = pos->tab;
 					pos->limit = (pos->slot = pos->tab->table) + pos->tab->size;

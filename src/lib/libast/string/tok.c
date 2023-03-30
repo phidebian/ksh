@@ -56,7 +56,7 @@ tokopen(char* s, int f)
 	if (p = freelist)
 		freelist = freelist->ptr.nxt;
 	else if (!(p = newof(0, Tok_t, 1, 0)))
-		return 0;
+		return NULL;
 	p->chr = *(p->ptr.end = s);
 	p->flg = f ? FLG_RESTORE : 0;
 	return (char*)p;
@@ -99,7 +99,7 @@ tokread(char* u)
 	 */
 
 	if (!p->chr)
-		return 0;
+		return NULL;
 	s = p->ptr.end;
 	switch (p->flg)
 	{
@@ -126,7 +126,7 @@ tokread(char* u)
 	{
 		p->ptr.end = s;
 		p->chr = 0;
-		return 0;
+		return NULL;
 	}
 
 	/*

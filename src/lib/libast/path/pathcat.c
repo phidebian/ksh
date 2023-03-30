@@ -48,24 +48,24 @@ pathcat_20100601(const char* dirs, int sep, const char* a, const char* b, char* 
 	while (*dirs && *dirs != sep)
 	{
 		if (s >= e)
-			return 0;
+			return NULL;
 		*s++ = *dirs++;
 	}
 	if (s != path)
 	{
 		if (s >= e)
-			return 0;
+			return NULL;
 		*s++ = '/';
 	}
 	if (a)
 	{
 		while (*s = *a++)
 			if (++s >= e)
-				return 0;
+				return NULL;
 		if (b)
 		{
 			if (s >= e)
-				return 0;
+				return NULL;
 			*s++ = '/';
 		}
 	}
@@ -75,7 +75,7 @@ pathcat_20100601(const char* dirs, int sep, const char* a, const char* b, char* 
 		do
 		{
 			if (s >= e)
-				return 0;
+				return NULL;
 		} while (*s++ = *b++);
 	return *dirs ? (char*)++dirs : 0;
 }

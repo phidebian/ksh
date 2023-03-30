@@ -61,10 +61,10 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 				s1 = hashname(b);
 				s2 = name;
 				while ((c = *s1++) == *s2++)
-					if (!c) return((flags & HASH_VALUE) ? b->value : (char*)b);
+					if (!c) return (flags & HASH_VALUE) ? b->value : (char*)b;
 			}
 			if (!(tab = tab->scope) || (flags & HASH_NOSCOPE))
-				return 0;
+				return NULL;
 			n = i;
 		}
 	}
@@ -195,11 +195,11 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 						}
 					}
 				}
-				return((char*)value);
+				return (char*)value;
 
 			case HASH_RENAME:
 				if (tab != top || tab->frozen || (b->hash & (HASH_KEEP|HASH_OPAQUED)) || hashlook(top, value, (flags&(HASH_HASHED|HASH_INTERNAL))|HASH_LOOKUP, NULL))
-					return 0;
+					return NULL;
 				name = (char*)b->name;
 				if (!(tab->flags & HASH_ALLOCATE)) b->name = (char*)value;
 				else if (b->name && tab->root->namesize)
@@ -225,7 +225,7 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 					{
 						 m++;
 						 if (!(t = tab->root->local->region ? (char*)(*tab->root->local->region)(tab->root->local->handle, NULL, m, 0) : (char*)malloc(m)))
-							return 0;
+							return NULL;
 						b->name = strcpy(t, value);
 					}
 				}
@@ -244,11 +244,11 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 
 			default:
 				if (!(b->hash & HASH_DELETED)) goto exists;
-				return 0;
+				return NULL;
 			}
 		}
 	}
-	if (!(flags & (HASH_CREATE|HASH_INSTALL))) return 0;
+	if (!(flags & (HASH_CREATE|HASH_INSTALL))) return NULL;
 
 	/*
 	 * create a new bucket
@@ -303,11 +303,11 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 			if (tab->root->local->region)
 			{
 				if (!(b = (Hash_bucket_t*)(*tab->root->local->region)(tab->root->local->handle, NULL, n + m, 0)))
-					return 0;
+					return NULL;
 				memset(b, 0, n + m);
 			}
 			else if (!(b = newof(0, Hash_bucket_t, 0, n + m)))
-				return 0;
+				return NULL;
 			b->name = (char*)b + n;
 			memcpy(b->name, name, m);
 		}
@@ -316,11 +316,11 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 			if (tab->root->local->region)
 			{
 				if (!(b = (Hash_bucket_t*)(*tab->root->local->region)(tab->root->local->handle, NULL, n, 0)))
-					return 0;
+					return NULL;
 				memset(b, 0, n);
 			}
 			else if (!(b = newof(0, Hash_bucket_t, 0, n)))
-				return 0;
+				return NULL;
 			b->name = (char*)name;
 		}
 	}
@@ -333,7 +333,7 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 	{
 		tab->buckets--;
 		b->hash |= HASH_DELETED|HASH_OPAQUED;
-		return 0;
+		return NULL;
 	}
 
 	/*
@@ -354,10 +354,10 @@ hashlook(Hash_table_t* tab, const char* name, long flags, const char* value)
 		if (tab->root->local->free && !(tab->root->flags & HASH_BUCKET) && b->value) (*tab->root->local->free)(b->value);
 		if (value && tab->root->local->alloc) value = (*tab->root->local->alloc)((unsigned int)integralof(value));
 		b->value = (char*)value;
-		return((char*)hashname(b));
+		return (char*)hashname(b);
 	case HASH_VALUE:
 		return b->value;
 	default:
-		return((char*)b);
+		return (char*)b;
 	}
 }

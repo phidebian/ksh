@@ -716,16 +716,16 @@ mimeview(Mime_t* mp, const char* view, const char* name, const char* type, const
 				}
 			skip:
 				if (!(cap = cap->next))
-					return 0;
+					return NULL;
 			}
 		att = &cap->att;
 		if (view && *view && !streq(view, "-"))
 			while (strcasecmp(view, att->name))
 				if (!(att = att->next))
-					return 0;
+					return NULL;
 		return expand(mp, att->value, name, type, opts);
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -800,7 +800,7 @@ mimeopen(Mimedisc_t* disc)
 	Mime_t*	mp;
 
 	if (!(mp = newof(0, Mime_t, 1, 0)))
-		return 0;
+		return NULL;
 	mp->id = lib;
 	mp->disc = disc;
 	mp->dict.key = offsetof(Ent_t, name);
@@ -809,7 +809,7 @@ mimeopen(Mimedisc_t* disc)
 	if (!(mp->buf = sfstropen()) || !(mp->cap = dtopen(&mp->dict, Dtoset)))
 	{
 		mimeclose(mp);
-		return 0;
+		return NULL;
 	}
 	return mp;
 }

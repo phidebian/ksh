@@ -46,7 +46,7 @@ hashfree(Hash_table_t* tab)
 	Hash_region_f			region;
 	void*				handle;
 
-	if (!tab) return 0;
+	if (!tab) return NULL;
 	if (tab->table)
 	{
 		freebucket = 0;

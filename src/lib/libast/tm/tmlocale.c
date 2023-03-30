@@ -119,7 +119,7 @@ fixup(Lc_info_t* li, char** b)
 	tm_info.format = b;
 	if (!(tm_info.deformat = state.format))
 		tm_info.deformat = tm_info.format[TM_DEFAULT];
-	li->data = (void*)b;
+	li->data = b;
 }
 
 #if _WINIX
@@ -535,7 +535,7 @@ native_lc_time(Lc_info_t* li)
 
 #else
 
-#define native_lc_time(li)	((li->data=(void*)(tm_info.format=tm_data.format)),(tm_info.deformat=tm_info.format[TM_DEFAULT]))
+#define native_lc_time(li)	((li->data=(tm_info.format=tm_data.format)),(tm_info.deformat=tm_info.format[TM_DEFAULT]))
 
 #endif
 

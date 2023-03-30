@@ -152,7 +152,7 @@ int sfpoll(Sfio_t** fa,	/* array of streams to poll		*/
 			}
 		}
 
-		free((void*)fds);
+		free(fds);
 	}
 #endif /*_lib_poll*/
 
@@ -239,6 +239,6 @@ int sfpoll(Sfio_t** fa,	/* array of streams to poll		*/
 		r += 1;
 	}
 
-	free((void*)status);
+	free(status);
 	return r ? r : np < 0 ? -1 : 0;
 }

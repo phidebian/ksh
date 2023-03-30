@@ -553,7 +553,7 @@ search(Dict_t* dict, char* name, void* value)
 		root->left = lroot;
 		root->right = rroot;
 		dict->root = root;
-		return value ? (void*)root->name : root->value;
+		return value ? root->name : root->value;
 	}
 	if (left)
 	{
@@ -565,7 +565,7 @@ search(Dict_t* dict, char* name, void* value)
 		right->left = lroot;
 		dict->root = rroot;
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -611,7 +611,7 @@ rule(char* name)
 	{
 		if (!(r = newof(0, Rule_t, 1, 0)))
 			report(3, "out of memory [rule]", name, 0);
-		r->name = (char*)search(state.rules, name, (void*)r);
+		r->name = (char*)search(state.rules, name, r);
 	}
 	return r;
 }
@@ -1018,7 +1018,7 @@ find(Buf_t* buf, char* file, struct stat* st)
 			} while (vp = vp->next);
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -1143,7 +1143,7 @@ input(void)
 	if (state.peek)
 		state.peek = 0;
 	else if (!fgets(state.input, sizeof(state.input), state.sp->fp))
-		return 0;
+		return NULL;
 	else if (*state.input && *(e = state.input + strlen(state.input) - 1) == '\n')
 		*e = 0;
 	state.sp->line++;
@@ -1369,7 +1369,7 @@ path(Buf_t* buf, char* s, int must)
 	} while (*p++);
 	if (must)
 		report(3, "command not found", s, 0);
-	return 0;
+	return NULL;
 }
 
 /*

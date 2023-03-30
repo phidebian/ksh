@@ -177,7 +177,7 @@ void sh_subfork(void)
 		if(sp->subpid==0)
 			sp->subpid = pid;
 		if(trap)
-			free((void*)trap);
+			free(trap);
 		siglongjmp(*sh.jmplist,SH_JMPSUB);
 	}
 	else
@@ -218,8 +218,8 @@ int nv_subsaved(Namval_t *np, int flags)
 						lpprev->next = lp->next;
 					else
 						sp->svar = lp->next;
-					free((void*)np);
-					free((void*)lp);
+					free(np);
+					free(lp);
 				}
 				return 1;
 			}
@@ -382,7 +382,7 @@ static void nv_restore(struct subshell *sp)
 			mpnext = *((Namval_t**)mp);
 			dtinsert(lp->dict,mp);
 		}
-		free((void*)lp);
+		free(lp);
 		sp->svar = lq;
 	}
 	subshell_noscope = 0;
@@ -491,7 +491,7 @@ Sfio_t *sh_subshell(Shnode_t *t, volatile int flags, int comsub)
 	savst = sh.st;
 	sh_pushcontext(&checkpoint,SH_JMPSUB);
 	sh.subshell++;		/* increase level of virtual subshells */
-	sh.realsubshell++;		/* increase ${.sh.subshell} */
+	sh.realsubshell++;	/* increase ${.sh.subshell} */
 	sp->prev = subshell_data;
 	sp->sig = 0;
 	subshell_data = sp;
@@ -747,7 +747,7 @@ Sfio_t *sh_subshell(Shnode_t *t, volatile int flags, int comsub)
 	if(!sh.subshare)
 	{
 		path_delete((Pathcomp_t*)sh.pathlist);
-		sh.pathlist = (void*)sp->pathlist;
+		sh.pathlist = sp->pathlist;
 	}
 	job_subrestore(sp->jobs);
 	sh.curenv = sh.jobenv = savecurenv;
@@ -817,7 +817,7 @@ Sfio_t *sh_subshell(Shnode_t *t, volatile int flags, int comsub)
 				if (sh.st.trapcom[isig] && sh.st.trapcom[isig]!=Empty)
 					free(sh.st.trapcom[isig]);
 			memcpy((char*)&sh.st.trapcom[0],savsig,nsig*sizeof(char*));
-			free((void*)savsig);
+			free(savsig);
 		}
 		sh.options = sp->options;
 		/* restore the present working directory */

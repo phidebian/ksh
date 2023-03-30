@@ -74,7 +74,7 @@ aso_init_semaphore(void* data, const char* details)
 		if (!semop(apl->id, &sem, 1))
 			semctl(apl->id, 0, IPC_RMID);
 		free(apl);
-		return 0;
+		return NULL;
 	}
 	perm = S_IRUSR|S_IWUSR;
 	size = 128;
@@ -93,7 +93,7 @@ aso_init_semaphore(void* data, const char* details)
 			{
 				size = strtoul(path + 5, NULL, 0);
 				if (size <= 1)
-					return 0;
+					return NULL;
 			}
 			path = opt + 1;
 		}
@@ -113,14 +113,14 @@ aso_init_semaphore(void* data, const char* details)
 				if (semop(id, &sem, 1) < 0)
 				{	
 					(void)semctl(id, 0, IPC_RMID);
-					return 0;
+					return NULL;
 				}
 			break;
 		}
 		else if (errno == EINVAL && size > 3)
 			size /= 2;
 		else if (errno != EEXIST)
-			return 0;
+			return NULL;
 		else if ((id = semget(key, size, perm)) >= 0)
 		{	
 			struct semid_ds	ds;
@@ -135,12 +135,12 @@ aso_init_semaphore(void* data, const char* details)
 			for (k = 0; k < SPIN; ASOLOOP(k))
 			{	
 				if (semctl(id, size-1, IPC_STAT, arg) < 0)
-					return 0;
+					return NULL;
 				if (ds.sem_otime)
 					break;
 			}
 			if (k > SPIN)
-				return 0;
+				return NULL;
 
 			/*
 			 * bump the ref count
@@ -150,16 +150,16 @@ aso_init_semaphore(void* data, const char* details)
 			sem.sem_op = 1;
 			sem.sem_flg = 0;
 			if (semop(id, &sem, 1) < 0)
-				return 0;
+				return NULL;
 			break;
 		}
 		else if (errno == EINVAL && size > 3)
 			size /= 2;
 		else
-			return 0;
+			return NULL;
 	}
 	if (!(apl = newof(0, APL_t, 1, 0)))
-		return 0;
+		return NULL;
 	apl->id = id;
 	apl->size = size - 1;
 	return apl;

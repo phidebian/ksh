@@ -745,4 +745,23 @@ exp='<a><>'
 [[ $got == "$exp" ]] || err_exit "back-reference (got $(printf %q "$got"), expected $(printf %q "$exp"))"
 
 # ======
+# On ksh 93u+m/1.1+, anchored empty pattern should match in replacement, e.g. "${@/#/replacement}"
+# https://github.com/ksh93/ksh/issues/558
+case ${.sh.version} in
+*\ 93u+m/1.0.* )
+	;;
+*\ 93u+m/* )
+	set one two three
+	exp=Xone/Xtwo/Xthree
+	got=$(IFS=/; echo "${*/#/X}")
+	[[ $got == "$exp" ]] || err_exit "#-anchored empty pattern vector replacement" \
+		"(got $(printf %q "$got"), expected $(printf %q "$exp"))"
+	exp=oneX/twoX/threeX
+	got=$(IFS=/; echo "${*/%/X}")
+	[[ $got == "$exp" ]] || err_exit "%-anchored empty pattern vector replacement" \
+		"(got $(printf %q "$got"), expected $(printf %q "$exp"))"
+	;;
+esac
+
+# ======
 exit $((Errors<125?Errors:125))

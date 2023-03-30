@@ -775,7 +775,7 @@ static void* bestresize(Vmalloc_t*	vm,		/* region allocating from	*/
 	if(!data) /* resizing a NULL block is the same as allocating */
 	{	data = bestalloc(vm, size, local);
 		if(data && (type&VM_RSZERO) )
-			memset((void*)data, 0, size);
+			memset(data, 0, size);
 		return data;
 	}
 	if(size == 0) /* resizing to zero size is the same as freeing */
@@ -863,7 +863,7 @@ static void* bestresize(Vmalloc_t*	vm,		/* region allocating from	*/
 	}
 
 	if(data && (type&VM_RSZERO) && (size = SIZE(BLOCK(data))&~BITS) > oldz )
-		memset((void*)((Vmuchar_t*)data + oldz), 0, size-oldz);
+		memset(((Vmuchar_t*)data + oldz), 0, size-oldz);
 
 	if(!local && _Vmtrace && data && (vd->mode&VM_TRACE) && VMETHOD(vd) == VM_MTBEST)
 		(*_Vmtrace)(vm, (Vmuchar_t*)orgdata, (Vmuchar_t*)data, orgsize, 0);
@@ -988,7 +988,7 @@ static void* bestalign(Vmalloc_t* vm, size_t size, size_t align, int local)
 done:
 	CLRLOCK(vm, local); /**/ASSERT(_vmbestcheck(vd, NULL) == 0);
 
-	return (void*)data;
+	return data;
 }
 
 /* The below implements the discipline Vmdcsbrk and the heap region Vmheap.
@@ -1050,7 +1050,7 @@ static int chkaddr(Vmuchar_t* addr, size_t nsize)
 static void* win32mem(void* caddr, size_t csize, size_t nsize)
 {	/**/ ASSERT(csize > 0 || nsize > 0)
 	if(csize == 0)
-	{	caddr = (void*)VirtualAlloc(0,nsize,MEM_COMMIT,PAGE_READWRITE);
+	{	caddr = VirtualAlloc(0,nsize,MEM_COMMIT,PAGE_READWRITE);
 		return caddr;
 	}
 	else if(nsize == 0)
@@ -1177,7 +1177,7 @@ static void* mallocmem(void* caddr, size_t csize, size_t nsize)
 {
 	/**/ASSERT(csize > 0 || nsize > 0);
 	if(csize == 0)
-		return (void*)malloc(nsize);
+		return malloc(nsize);
 	else if(nsize == 0)
 	{	free(caddr);
 		return caddr;
@@ -1196,7 +1196,7 @@ static void* getmemory(Vmalloc_t* vm, void* caddr, size_t csize, size_t nsize, V
 
 #if _mem_win32
 	if((addr = win32mem(caddr, csize, nsize)) )
-		return (void*)addr;
+		return addr;
 #endif
 #if _mem_sbrk
 #if 1 /* no sbrk() unless explicit VM_break */
@@ -1204,23 +1204,23 @@ static void* getmemory(Vmalloc_t* vm, void* caddr, size_t csize, size_t nsize, V
 #else /* asoinit(0,0,0)==0 => the application did not request a specific aso method => sbrk() ok */
 	if(((_Vmassert & VM_break) || !(_Vmassert & VM_mmap) && !asoinit(0, 0, 0)) && (addr = sbrkmem(caddr, csize, nsize)) )
 #endif
-		return (void*)addr;
+		return addr;
 #endif
 #if _mem_mmap_anon
 	if((addr = mmapmem(caddr, csize, nsize, NULL)) )
-		return (void*)addr;
+		return addr;
 #endif
 #if _mem_mmap_zero
 	if((addr = mmapmem(caddr, csize, nsize, (Mmdisc_t*)disc)) )
-		return (void*)addr;
+		return addr;
 #endif
 #if _mem_sbrk
 	if(!(_Vmassert & VM_break) && (addr = sbrkmem(caddr, csize, nsize)) )
-		return (void*)addr;
+		return addr;
 #endif
 #if _std_malloc
 	if((addr = mallocmem(caddr, csize, nsize)) )
-		return (void*)addr;
+		return addr;
 #endif 
 	return NULL;
 }

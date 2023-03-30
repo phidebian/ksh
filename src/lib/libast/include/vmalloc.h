@@ -215,9 +215,9 @@ extern int		setregmax( int );
 				 (*(_VM_(vm)->meth.allocf))((vm),(sz),0) )
 #define vmresize(vm,d,sz,type)	(_VMFL_(vm), \
 				 (*(_VM_(vm)->meth.resizef))\
-					((vm),(void*)(d),(sz),(type),0) )
+					((vm),(d),(sz),(type),0) )
 #define vmfree(vm,d)		(_VMFL_(vm), \
-				 (*(_VM_(vm)->meth.freef))((vm),(void*)(d),0) )
+				 (*(_VM_(vm)->meth.freef))((vm),(d),0) )
 #define vmalign(vm,sz,align)	(_VMFL_(vm), \
 				 (*(_VM_(vm)->meth.alignf))((vm),(sz),(align),0) )
 
@@ -231,9 +231,9 @@ extern int		setregmax( int );
 #if _map_malloc
 
 #define malloc(s)		(_VMFL_(Vmregion), _ast_malloc((size_t)(s)) )
-#define realloc(d,s)		(_VMFL_(Vmregion), _ast_realloc((void*)(d),(size_t)(s)) )
+#define realloc(d,s)		(_VMFL_(Vmregion), _ast_realloc((d),(size_t)(s)) )
 #define calloc(n,s)		(_VMFL_(Vmregion), _ast_calloc((size_t)n, (size_t)(s)) )
-#define free(d)			(_VMFL_(Vmregion), _ast_free((void*)(d)) )
+#define free(d)			(_VMFL_(Vmregion), _ast_free(d) )
 #define memalign(a,s)		(_VMFL_(Vmregion), _ast_memalign((size_t)(a),(size_t)(s)) )
 #define valloc(s)		(_VMFL_(Vmregion), _ast_valloc((size_t)(s) )
 
@@ -242,9 +242,9 @@ extern int		setregmax( int );
 #if !_std_malloc
 
 #define malloc(s)		(_VMFL_(Vmregion), malloc((size_t)(s)) )
-#define realloc(d,s)		(_VMFL_(Vmregion), realloc((void*)(d),(size_t)(s)) )
+#define realloc(d,s)		(_VMFL_(Vmregion), realloc((d),(size_t)(s)) )
 #define calloc(n,s)		(_VMFL_(Vmregion), calloc((size_t)n, (size_t)(s)) )
-#define free(d)			(_VMFL_(Vmregion), free((void*)(d)) )
+#define free(d)			(_VMFL_(Vmregion), free(d) )
 #define memalign(a,s)		(_VMFL_(Vmregion), memalign((size_t)(a),(size_t)(s)) )
 #define valloc(s)		(_VMFL_(Vmregion), valloc((size_t)(s) )
 #ifndef strdup
@@ -266,19 +266,19 @@ extern int		setregmax( int );
 
 #ifndef vmresize
 #define vmresize(vm,d,sz,type)	(*(_VM_(vm)->meth.resizef))\
-					((vm),(void*)(d),(sz),(type),0)
+					((vm),(d),(sz),(type),0)
 #endif
 
 #ifndef vmfree
-#define vmfree(vm,d)		(*(_VM_(vm)->meth.freef))((vm),(void*)(d),0)
+#define vmfree(vm,d)		(*(_VM_(vm)->meth.freef))((vm),(d),0)
 #endif
 
 #ifndef vmalign
 #define vmalign(vm,sz,align)	(*(_VM_(vm)->meth.alignf))((vm),(sz),(align),0)
 #endif
 
-#define vmaddr(vm,addr)		(*(_VM_(vm)->meth.addrf))((vm),(void*)(addr),0)
-#define vmsize(vm,addr)		(*(_VM_(vm)->meth.sizef))((vm),(void*)(addr),0)
+#define vmaddr(vm,addr)		(*(_VM_(vm)->meth.addrf))((vm),(addr),0)
+#define vmsize(vm,addr)		(*(_VM_(vm)->meth.sizef))((vm),(addr),0)
 #define vmcompact(vm)		(*(_VM_(vm)->meth.compactf))((vm),0)
 #define vmoldof(v,p,t,n,x)	(t*)vmresize((v), (p), sizeof(t)*(n)+(x), \
 					(VM_RSMOVE) )

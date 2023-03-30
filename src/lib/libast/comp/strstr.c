@@ -54,7 +54,7 @@ strstr(const char* s1, const char* s2)
 				} while (*t1++ == *t2++);
 			}
 	}
-	return 0;
+	return NULL;
 }
 
 #endif

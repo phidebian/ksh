@@ -334,7 +334,7 @@ int    b_dot_cmd(int n,char *argv[],Shbltin_t *context)
 	if (sh.st.self != &savst)
 		*sh.st.self = sh.st;
 	/* only restore the top Shscope_t portion for POSIX functions */
-	memcpy((void*)&sh.st, (void*)prevscope, sizeof(Shscope_t));
+	memcpy(&sh.st, prevscope, sizeof(Shscope_t));
 	sh.topscope = (Shscope_t*)prevscope;
 	nv_putval(SH_PATHNAMENOD, sh.st.filename ,NV_NOFREE);
 	if(jmpval && jmpval!=SH_JMPFUN)

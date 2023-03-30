@@ -218,8 +218,8 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 	const char	*first;
 	Stk_t		*stkp = sh.stk;
 #ifdef timeofday
-	struct timeval tv_cpu_sum;
-	struct timeval *tvp;
+	struct timeval	tv_cpu_sum;
+	struct timeval	*tvp;
 #else
 	double d;
 #endif
@@ -389,12 +389,12 @@ static int sh_tclear(Shnode_t *t)
 	{
 		case TTIME:
 		case TPAR:
-			return(sh_tclear(t->par.partre)); 
+			return sh_tclear(t->par.partre);
 		case TCOM:
-			return(p_comarg((struct comnod*)t));
+			return p_comarg((struct comnod*)t);
 		case TSETIO:
 		case TFORK:
-			return(sh_tclear(t->fork.forktre));
+			return sh_tclear(t->fork.forktre);
 		case TIF:
 			n=sh_tclear(t->if_.iftre);
 			n+=sh_tclear(t->if_.thtre);
@@ -411,21 +411,21 @@ static int sh_tclear(Shnode_t *t)
 		case TORF:
 		case TFIL:
 			n=sh_tclear(t->lst.lstlef);
-			return(n+sh_tclear(t->lst.lstrit));
+			return n + sh_tclear(t->lst.lstrit);
 		case TARITH:
-			return(p_arg(t->ar.arexpr,ARG_ARITH));
+			return p_arg(t->ar.arexpr,ARG_ARITH);
 		case TFOR:
 			n=sh_tclear(t->for_.fortre);
-			return(n+sh_tclear((Shnode_t*)t->for_.forlst));
+			return n + sh_tclear((Shnode_t*)t->for_.forlst);
 		case TSW:
 			n=p_arg(t->sw.swarg,0);
-			return(n+p_switch(t->sw.swlst));
+			return n + p_switch(t->sw.swlst);
 		case TFUN:
 			n=sh_tclear(t->funct.functtre);
-			return(n+sh_tclear((Shnode_t*)t->funct.functargs));
+			return n + sh_tclear((Shnode_t*)t->funct.functargs);
 		case TTST:
 			if((t->tre.tretyp&TPAREN)==TPAREN)
-				return(sh_tclear(t->lst.lstlef)); 
+				return sh_tclear(t->lst.lstlef);
 			else
 			{
 				n=p_arg(&(t->lst.lstlef->arg),0);
@@ -713,7 +713,7 @@ static void free_list(struct openlist *olist)
 	for(item=olist;item;item=next)
 	{
 		next = item->next;
-		free((void*)item);
+		free(item);
 	}
 }
 
@@ -771,7 +771,7 @@ static void unset_instance(Namval_t *nq, Namval_t *node, struct Namref *nr,long 
 	if(nr->sub)
 	{
 		nv_putsub(nr->np, nr->sub, mode);
-		free((void*)nr->sub);
+		free(nr->sub);
 	}
 	_nv_unset(SH_NAMENOD,0);
 	_nv_unset(SH_SUBSCRNOD,0);
@@ -1258,7 +1258,7 @@ int sh_exec(const Shnode_t *t, int flags)
 						if(sh.subshell && nv_isattr(np,BLT_NOSFIO))
 							sh_subtmpfile();
 						if(argn)
-							sh.exitval = (*sh.bltinfun)(argn,com,(void*)bp);
+							sh.exitval = (*sh.bltinfun)(argn,com,bp);
 						if(error_info.flags&ERROR_INTERACTIVE)
 							tty_check(ERRIO);
 						((Shnode_t*)t)->com.comstate = sh.bltindata.data;
@@ -1283,7 +1283,7 @@ int sh_exec(const Shnode_t *t, int flags)
 							}
 						}
 						if(sh.bltinfun && (error_info.flags&ERROR_NOTIFY))
-							(*sh.bltinfun)(-2,com,(void*)bp);
+							(*sh.bltinfun)(-2,com,bp);
 						/* failure on special built-ins fatal */
 						if(jmpval<=SH_JMPCMD && (!nv_isattr(np,BLT_SPC) || command) && !was_mktype)
 							jmpval=0;
@@ -2486,14 +2486,14 @@ int sh_exec(const Shnode_t *t, int flags)
 				if(sh.funload)
 				{
 					if(!sh.fpathdict)
-						free((void*)np->nvalue.rp);
+						free(np->nvalue.rp);
 					np->nvalue.rp = 0;
 				}
 			}
 			if(!np->nvalue.rp)
 			{
 				np->nvalue.rp = new_of(struct Ufunction,sh.funload?sizeof(Dtlink_t):0);
-				memset((void*)np->nvalue.rp,0,sizeof(struct Ufunction));
+				memset(np->nvalue.rp,0,sizeof(struct Ufunction));
 			}
 			if(t->funct.functstak)
 			{
@@ -2694,7 +2694,7 @@ int sh_run(int argn, char *argv[])
 	memcpy(dp->dolval+ARG_SPARE, argv, (argn+1)*sizeof(char*));
 	t->comarg = (struct argnod*)dp;
 	if(!strchr(argv[0],'/'))
-		t->comnamp = (void*)nv_bfsearch(argv[0],sh.fun_tree,(Namval_t**)&t->comnamq,NULL);
+		t->comnamp = nv_bfsearch(argv[0],sh.fun_tree,(Namval_t**)&t->comnamq,NULL);
 	argn=sh_exec((Shnode_t*)t,sh_isstate(SH_ERREXIT));
 	optctx(op,np);
 	sh.bltindata = bltindata;
@@ -2784,7 +2784,7 @@ pid_t _sh_fork(pid_t parent,int flags,int *jobid)
 			errormsg(SH_DICT,ERROR_system(ERROR_NOEXEC),e_nofork);
 			UNREACHABLE();
 		}
-		timeout = (void*)sh_timeradd(forkcnt, 0, timed_out, NULL);
+		timeout = sh_timeradd(forkcnt, 0, timed_out, NULL);
 		nochild = job_wait((pid_t)1);
 		if(timeout)
 		{
@@ -3127,7 +3127,7 @@ int sh_funscope(int argn, char *argv[],int(*fun)(void*),void *arg,int execflg)
 			if (sh.st.trapcom[isig] && sh.st.trapcom[isig]!=Empty)
 				free(sh.st.trapcom[isig]);
 		memcpy((char*)&sh.st.trapcom[0],savsig,nsig*sizeof(char*));
-		free((void*)savsig);
+		free(savsig);
 	}
 	sh.trapnote=0;
 	sh.options = options;

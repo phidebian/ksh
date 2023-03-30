@@ -73,7 +73,7 @@ int	b_read(int argc,char *argv[], Shbltin_t *context)
 	if(argc==0)
 	{
 		if(rp)
-			free((void*)rp);
+			free(rp);
 		return 0;
 	}
 	if(rp)
@@ -368,7 +368,7 @@ int sh_readline(char **names, volatile int fd, int flags, ssize_t size, long tim
 		if(jmpval)
 			goto done;
 		if(timeout)
-	                timeslot = (void*)sh_timeradd(timeout,0,timedout,(void*)iop);
+	                timeslot = sh_timeradd(timeout,0,timedout,iop);
 	}
 	if(flags&(N_FLAG|NN_FLAG))
 	{
@@ -448,7 +448,7 @@ int sh_readline(char **names, volatile int fd, int flags, ssize_t size, long tim
 						up = var + ux;
 					}
 					if(cur!=(char*)cp)
-						memcpy((void*)cur,cp,c);
+						memcpy(cur,cp,c);
 					if(f)
 						sfread(iop,cp,c);
 					cur += c;
@@ -508,7 +508,7 @@ int sh_readline(char **names, volatile int fd, int flags, ssize_t size, long tim
 		{
 			nv_putval(np,var,0);
 			if(var!=buf)
-				free((void*)var);
+				free(var);
 		}
 		goto done;
 	}

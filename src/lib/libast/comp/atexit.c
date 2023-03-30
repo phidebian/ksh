@@ -38,7 +38,7 @@ extern int		onexit(void(*)(void));
 int
 atexit(void (*func)(void))
 {
-	return(onexit(func));
+	return onexit(func);
 }
 
 #else

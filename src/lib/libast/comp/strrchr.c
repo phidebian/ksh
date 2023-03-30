@@ -36,7 +36,7 @@ extern char*	rindex(const char*, int);
 char*
 strrchr(const char* s, int c)
 {
-	return(rindex(s, c));
+	return rindex(s, c);
 }
 
 #else
@@ -48,7 +48,7 @@ strrchr(const char* s, int c)
 
 	r = 0;
 	do if (*s == c) r = s; while(*s++);
-	return((char*)r);
+	return (char*)r;
 }
 
 #endif

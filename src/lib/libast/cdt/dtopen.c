@@ -51,7 +51,7 @@ Dt_t* _dtopen(Dtdisc_t* disc, Dtmethod_t* meth, unsigned long version)
 	dtdisc(&pdt,disc,0); /* note that this sets pdt.memoryf */
 
 	if(disc->eventf)
-	{	if((ev = (*disc->eventf)(&pdt,DT_OPEN,(void*)(&data),disc)) < 0)
+	{	if((ev = (*disc->eventf)(&pdt,DT_OPEN,(&data),disc)) < 0)
 			return NULL; /* something bad happened */
 		else if(ev > 0)
 		{	if(data) /* shared data are being restored */
@@ -135,5 +135,5 @@ void _dtfree(Dt_t* dt, Dtlink_t* l, int type)
 		(void)(*disc->freef)(dt, _DTOBJ(disc,l), disc);
 
 	if(disc->link < 0) /* free holder */
-		(void)(*dt->memoryf)(dt, (void*)l, 0, disc);
+		(void)(*dt->memoryf)(dt, l, 0, disc);
 }

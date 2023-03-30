@@ -47,7 +47,7 @@ char*
 mimetype(Mime_t* mp, Sfio_t* fp, const char* file, struct stat* st)
 {
 	if (mp->disc->flags & MIME_NOMAGIC)
-		return 0;
+		return NULL;
 	if (!mp->magic)
 	{
 		mp->magicd.version = MAGIC_VERSION;
@@ -56,7 +56,7 @@ mimetype(Mime_t* mp, Sfio_t* fp, const char* file, struct stat* st)
 		if (!(mp->magic = magicopen(&mp->magicd)))
 		{
 			mp->disc->flags |= MIME_NOMAGIC;
-			return 0;
+			return NULL;
 		}
 		mp->freef = drop;
 		magicload(mp->magic, NULL, 0);

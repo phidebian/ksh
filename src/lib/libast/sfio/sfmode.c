@@ -126,9 +126,9 @@ int _sfsetpool(Sfio_t* f)
 				goto done;
 
 			/* move old array to new one */
-			memcpy((void*)array,(void*)p->sf,p->n_sf*sizeof(Sfio_t*));
+			memcpy(array,p->sf,p->n_sf*sizeof(Sfio_t*));
 			if(p->sf != p->array)
-				free((void*)p->sf);
+				free(p->sf);
 
 			p->sf = array;
 			p->s_sf = n;
@@ -264,7 +264,7 @@ static int _sfpmode(Sfio_t* f, int type)
 			}
 		}
 		if(p->ndata > 0)
-			memcpy((void*)p->rdata,(void*)f->next,p->ndata);
+			memcpy(p->rdata,f->next,p->ndata);
 		f->endb = f->data;
 	}
 	else
@@ -272,7 +272,7 @@ static int _sfpmode(Sfio_t* f, int type)
 		if(p->ndata > f->size)	/* may lose data!!! */
 			p->ndata = f->size;
 		if(p->ndata > 0)
-		{	memcpy((void*)f->data,(void*)p->rdata,p->ndata);
+		{	memcpy(f->data,p->rdata,p->ndata);
 			f->endb = f->data+p->ndata;
 			p->ndata = 0;
 		}
@@ -335,7 +335,7 @@ int _sfmode(Sfio_t*	f,	/* change r/w mode and sync file pointer for this stream 
 				f->tiny[0]++;
 			if(((f->tiny[0]<<8)|f->ngetr) >= (4*SF_NMAP) )
 			{	/* turn off mmap to avoid page faulting */
-				sfsetbuf(f,(void*)f->tiny,(size_t)SF_UNBOUND);
+				sfsetbuf(f,f->tiny,(size_t)SF_UNBOUND);
 				f->ngetr = f->tiny[0] = 0;
 			}
 		}
@@ -495,7 +495,7 @@ int _sfmode(Sfio_t*	f,	/* change r/w mode and sync file pointer for this stream 
 		if(f->bits&SF_MMAP)
 		{	if(f->data)
 				SFMUNMAP(f,f->data,f->endb-f->data);
-			(void)SFSETBUF(f,(void*)f->tiny,(size_t)SF_UNBOUND);
+			(void)SFSETBUF(f,f->tiny,(size_t)SF_UNBOUND);
 		}
 #endif
 		if(f->data == f->tiny)

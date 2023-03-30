@@ -93,7 +93,7 @@ static void		applyopts(Shopt_t);
 
 void *sh_argopen(void)
 {
-	return(sh_newof(0,Arg_t,1,0));
+	return sh_newof(0,Arg_t,1,0);
 }
 
 static int infof(Opt_t* op, Sfio_t* sp, const char* s, Optdisc_t* dp)
@@ -458,7 +458,7 @@ struct dolnod *sh_argfree(struct dolnod *blk,int flag)
 					argr->dolnxt = argblk->dolnxt;
 					argr = argblk->dolnxt;
 				}
-				free((void*)argblk);
+				free(argblk);
 			}
 		}
 	}
@@ -631,11 +631,11 @@ void sh_printopts(Shopt_t oflags,int mode, Shopt_t *mask)
  */
 char **sh_argbuild(int *nargs, const struct comnod *comptr,int flag)
 {
-	struct argnod	*argp=0;
+	struct argnod *argp=0;
 	struct argnod *arghead=0;
 	sh.xargmin = 0;
 	{
-		const struct comnod	*ac = comptr;
+		const struct comnod *ac = comptr;
 		int n;
 		/* see if the arguments have already been expanded */
 		if(!ac->comarg)

@@ -105,7 +105,7 @@ void* sfsetbuf(Sfio_t*	f,	/* stream to be buffered */
 	if(size == 0 && buf)
 	{	/* special case to get buffer info */
 		_Sfi = f->val = (f->bits&SF_MMAP) ? (f->endb-f->data) : f->size;
-		return (void*)f->data;
+		return f->data;
 	}
 
 	/* cleanup actions already done, don't allow write buffering any more */
@@ -340,14 +340,14 @@ setbuf:
 	if(size > 0 && !buf && !(f->bits&SF_MMAP))
 	{	/* try to allocate a buffer */
 		if(obuf && size == (size_t)osize && init)
-		{	buf = (void*)obuf;
+		{	buf = obuf;
 			obuf = NULL;
 			sf_malloc = (oflags&SF_MALLOC);
 		}
 		if(!buf)
 		{	/* do allocation */
 			while(!buf && size > 0)
-			{	if((buf = (void*)malloc(size)) )
+			{	if((buf = malloc(size)) )
 					break;
 				else	size /= 2;
 			}
@@ -359,7 +359,7 @@ setbuf:
 	if(size == 0 && !(f->flags&SF_STRING) && !(f->bits&SF_MMAP) && (f->mode&SF_READ))
 	{	/* use the internal buffer */
 		size = sizeof(f->tiny);
-		buf = (void*)f->tiny;
+		buf = f->tiny;
 	}
 
 	/* set up new buffer */
@@ -380,7 +380,7 @@ setbuf:
 	f->flags = (f->flags & ~SF_MALLOC)|sf_malloc;
 
 	if(obuf && obuf != f->data && osize > 0 && (oflags&SF_MALLOC))
-	{	free((void*)obuf);
+	{	free(obuf);
 		obuf = NULL;
 	}
 
@@ -400,5 +400,5 @@ done:
 
 	SFOPEN(f,local);
 
-	return (void*)obuf;
+	return obuf;
 }

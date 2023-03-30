@@ -104,7 +104,7 @@ signal(int sig, Sig_handler_t fun)
 	}
 #endif
 	if (sigaction(sig, &na, &oa))
-		return 0;
+		return NULL;
 	if (unblock)
 		sigunblock(sig);
 	return oa.sa_handler;

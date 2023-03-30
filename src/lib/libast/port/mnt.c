@@ -267,13 +267,13 @@ mntopen(const char* path, const char* mode)
 	FIXARGS(path, mode, 0);
 #if _lib_getfsstat
 	if ((n = getfsstat(NULL, 0, MNT_WAIT)) <= 0)
-		return 0;
+		return NULL;
 	n = (n - 1) * sizeof(struct statfs);
 #else
 	n = 0;
 #endif
 	if (!(mp = newof(0, Handle_t, 1, n)))
-		return 0;
+		return NULL;
 #if _lib_getfsstat
 	n = getfsstat(mp->next = mp->buf, n + sizeof(struct statfs), MNT_WAIT);
 #else
@@ -282,10 +282,10 @@ mntopen(const char* path, const char* mode)
 	if (n <= 0)
 	{
 		free(mp);
-		return 0;
+		return NULL;
 	}
 	mp->last = mp->next + n;
-	return (void*)mp;
+	return mp;
 }
 
 Mnt_t*
@@ -307,7 +307,7 @@ mntread(void* handle)
 		mp->next++;
 		return &mp->hdr.mnt;
 	}
-	return 0;
+	return NULL;
 }
 
 int
@@ -355,14 +355,14 @@ mntopen(const char* path, const char* mode)
 
 	FIXARGS(path, mode, 0);
 	if (!(mp = newof(0, Handle_t, 1, SIZE)))
-		return 0;
+		return NULL;
 	if ((mp->count = mntctl(MCTL_QUERY, sizeof(Handle_t) + SIZE, &mp->info)) <= 0)
 	{
 		free(mp);
-		return 0;
+		return NULL;
 	}
 	mp->next = mp->info;
-	return (void*)mp;
+	return mp;
 }
 
 Mnt_t*
@@ -432,7 +432,7 @@ mntread(void* handle)
 			mp->next = (struct vmount*)((char*)mp->next + mp->next->vmt_length);
 		return &mp->hdr.mnt;
 	}
-	return 0;
+	return NULL;
 }
 
 int
@@ -526,13 +526,13 @@ mntopen(const char* path, const char* mode)
 
 	FIXARGS(path, mode, MOUNTED);
 	if (!(mp = newof(0, Handle_t, 1, 0)))
-		return 0;
+		return NULL;
 	if (!(mp->fp = setmntent(path, mode)))
 	{
 		free(mp);
-		return 0;
+		return NULL;
 	}
-	return (void*)mp;
+	return mp;
 }
 
 Mnt_t*
@@ -546,7 +546,7 @@ mntread(void* handle)
 		set(&mp->hdr, mnt->mnt_fsname, mnt->mnt_dir, mnt->mnt_type, OPTIONS(mnt));
 		return &mp->hdr.mnt;
 	}
-	return 0;
+	return NULL;
 }
 
 int
@@ -640,7 +640,7 @@ mntopen(const char* path, const char* mode)
 
 	FIXARGS(path, mode, MOUNTED);
 	if (!(mp = newof(0, Handle_t, 1, 0)))
-		return 0;
+		return NULL;
 #if _lib_w_getmntent
 	if ((mp->count = w_getmntent(mp->buf, sizeof(mp->buf))) > 0)
 		mp->mnt = (struct mntent*)(((struct w_mnth*)mp->buf) + 1);
@@ -651,9 +651,9 @@ mntopen(const char* path, const char* mode)
 #endif
 	{
 		free(mp);
-		return 0;
+		return NULL;
 	}
-	return (void*)mp;
+	return mp;
 }
 
 Mnt_t*
@@ -666,7 +666,7 @@ mntread(void* handle)
 	if (mp->count-- <= 0)
 	{
 		if ((mp->count = w_getmntent(mp->buf, sizeof(mp->buf))) <= 0)
-			return 0;
+			return NULL;
 		mp->count--;
 		mp->mnt = (struct mntent*)(((struct w_mnth*)mp->buf) + 1);
 	}
@@ -692,7 +692,7 @@ mntread(void* handle)
 #endif
 			return &mp->hdr.mnt;
 		}
-	return 0;
+	return NULL;
 
 #else
 
@@ -711,7 +711,7 @@ mntread(void* handle)
 	for (;;) switch (c = sfgetc(mp->fp))
 	{
 	case EOF:
-		return 0;
+		return NULL;
 	case '"':
 	case '\'':
 		if (q == c)

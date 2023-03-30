@@ -100,7 +100,7 @@ gl_dirnext(glob_t* gp, void* handle)
 #endif
 		return dp->d_name;
 	}
-	return 0;
+	return NULL;
 }
 
 /*

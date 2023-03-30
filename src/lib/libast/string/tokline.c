@@ -163,11 +163,11 @@ tokline(const char* arg, int flags, int* line)
 	static int	hidden;
 
 	if (!(d = newof(0, Splice_t, 1, 0)))
-		return 0;
+		return NULL;
 	if (!(s = sfopen(NULL, NULL, "s")))
 	{
 		free(d);
-		return 0;
+		return NULL;
 	}
 	if (!(flags & (SF_STRING|SF_READ)))
 		f = (Sfio_t*)arg;
@@ -175,7 +175,7 @@ tokline(const char* arg, int flags, int* line)
 	{
 		free(d);
 		sfclose(s);
-		return 0;
+		return NULL;
 	}
 	else if ((p = sfreserve(f, 0, 0)) && sfvalue(f) > 11 && strmatch(p, "#!!! +([-0-9]) *([!\n]) !!!\n*") && (e = strchr(p, '\n')))
 	{

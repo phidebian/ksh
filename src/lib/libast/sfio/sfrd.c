@@ -202,10 +202,10 @@ ssize_t sfrd(Sfio_t* f, void* buf, size_t n, Sfdisc_t* disc)
 				(void)SFSK(f,f->here,SEEK_SET,dc);
 
 				/* make a buffer */
-				(void)SFSETBUF(f,(void*)f->tiny,(size_t)SF_UNBOUND);
+				(void)SFSETBUF(f,f->tiny,(size_t)SF_UNBOUND);
 
 				if(!buf)
-				{	buf = (void*)f->data;
+				{	buf = f->data;
 					n = f->size;
 				}
 			}

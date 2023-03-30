@@ -206,7 +206,7 @@ void *sh_timeradd(unsigned long msec,int flags,void (*action)(void*),void *handl
 		{
 			Handler_t *hp = (Handler_t*)sh_malloc(sizeof(Handler_t));
 			*hp = fn;
-			sh_timeradd((long)(1000*t), 0, oldalrm, (void*)hp);
+			sh_timeradd((long)(1000*t), 0, oldalrm, hp);
 		}
 		tp = tptop;
 	}
@@ -220,7 +220,7 @@ void *sh_timeradd(unsigned long msec,int flags,void (*action)(void*),void *handl
 		if(tp!=tptop)
 			tp=0;
 	}
-	return((void*)tp);
+	return tp;
 }
 
 /*

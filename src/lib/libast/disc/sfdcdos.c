@@ -59,7 +59,7 @@ static void addmapping(Dosdisc_t *dp)
 	if((n=dp->maptop++)>=dp->mapsize)
 	{
 		dp->mapsize *= 2;
-		if(!(dp->maptable=(struct map*)realloc((void*)dp->maptable,(dp->mapsize+1)*sizeof(struct map))))
+		if(!(dp->maptable=(struct map*)realloc(dp->maptable,(dp->mapsize+1)*sizeof(struct map))))
 		{
 			dp->maptop--;
 			dp->mapsize *= 2;
@@ -269,7 +269,7 @@ retry:
 		break;
 	    case SEEK_END:
 		if(!dp->maptable)
-			return(sfsk(iop,offset,SEEK_END,disc));
+			return sfsk(iop,offset,SEEK_END,disc);
 		mp = &dummy;
 		mp->physical = dp->plast;
 		mp->logical = dp->llast;
@@ -330,10 +330,10 @@ static int dos_except(Sfio_t *iop, int type, void *arg, Sfdisc_t *disc)
 	if(type==SF_DPOP || type==SF_FINAL)
 	{
 		if(dp->bsize>0)
-			free((void*)dp->buff);
+			free(dp->buff);
 		if(dp->mapsize)
-			free((void*)dp->maptable);
-		free((void*)disc);
+			free(dp->maptable);
+		free(disc);
 	}
 	return 0;
 }

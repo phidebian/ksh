@@ -190,10 +190,10 @@ regclass(const char* s, char** e)
 	Ctype_t*	zp;
 
 	if (!(c = *s++))
-		return 0;
+		return NULL;
 	for (t = s; *t && (*t != c || *(t + 1) != ']'); t++);
 	if (*t != c || !(n = t - s))
-		return 0;
+		return NULL;
 	for (cp = ctypes; cp; cp = cp->next)
 		if (n == cp->size && strneq(s, cp->name, n))
 			goto found;
@@ -217,7 +217,7 @@ regclass(const char* s, char** e)
 	if (!(cp = zp))
 	{
 		if (!(cp = xp))
-			return 0;
+			return NULL;
 		cp->size = 0;
 		if (!streq(cp->name, s))
 		{
@@ -228,7 +228,7 @@ regclass(const char* s, char** e)
 	if (!cp->name)
 	{
 		if (!(cp->name = (const char*)memdup(s, n + 1)))
-			return 0;
+			return NULL;
 		*((char*)cp->name + n) = 0;
 	}
 	/* mvs.390 needs the (char*) cast -- barf */
@@ -236,7 +236,7 @@ regclass(const char* s, char** e)
 	{
 		free((char*)cp->name);
 		cp->name = 0;
-		return 0;
+		return NULL;
 	}
 	cp->size = n;
 	cp->next = lc;
@@ -291,5 +291,5 @@ classfun(int type)
 	case T_SPACE:		return  Isspace;
 	case T_SPACE_NOT:	return Notspace;
 	}
-	return 0;
+	return NULL;
 }

@@ -55,13 +55,13 @@ int
 setpgid(pid_t pid, pid_t pgid)
 {
 #if _lib_setpgrp2
-	return(setpgrp(pid, pgid));
+	return setpgrp(pid, pgid);
 #else
 #if _lib_setpgrp
 	int	caller = getpid();
 
 	if ((pid == 0 || pid == caller) && (pgid == 0 || pgid == caller))
-		return(setpgrp());
+		return setpgrp();
 	errno = EINVAL;
 #else
 	errno = ENOSYS;

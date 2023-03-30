@@ -149,11 +149,11 @@ vecopen(int inc, int siz)
 	if (inc <= 0)
 		inc = 16;
 	if (!(sp = stkopen(STK_SMALL|STK_NULL)))
-		return 0;
+		return NULL;
 	if (!(v = (Vector_t*)stkseek(sp, sizeof(Vector_t) + inc * siz)))
 	{
 		stkclose(sp);
-		return 0;
+		return NULL;
 	}
 	v->stk = sp;
 	v->vec = (char*)v + sizeof(Vector_t);
@@ -172,7 +172,7 @@ vecseek(Vector_t** p, int index)
 	{
 		while ((v->max += v->inc) <= index);
 		if (!(v = (Vector_t*)stkseek(v->stk, sizeof(Vector_t) + v->max * v->siz)))
-			return 0;
+			return NULL;
 		*p = v;
 		v->vec = (char*)v + sizeof(Vector_t);
 	}
@@ -208,7 +208,7 @@ stkpush(Stk_t* sp, size_t size)
 	stknew(sp, &p);
 	size = sizeof(Stk_frame_t) + sizeof(size_t) + size - 1;
 	if (!(f = (Stk_frame_t*)stkalloc(sp, sizeof(Stk_frame_t) + sizeof(Stk_frame_t*) + size - 1)))
-		return 0;
+		return NULL;
 	f->pos = p;
 	stkframe(sp) = f;
 	return f->data;
@@ -759,7 +759,7 @@ nestmatch(unsigned char* s, unsigned char* e, const unsigned short* type, int co
 				break;
 			case REX_NEST_escape:
 				if (s >= e)
-					return 0;
+					return NULL;
 				s++;
 				break;
 			case REX_NEST_open|REX_NEST_close:
@@ -773,14 +773,14 @@ nestmatch(unsigned char* s, unsigned char* e, const unsigned short* type, int co
 				if (c == co)
 				{
 					if (!++n)
-						return 0;
+						return NULL;
 				}
 				else if (!(s = nestmatch(s, e, type, c)))
-					return 0;
+					return NULL;
 				break;
 			case REX_NEST_close:
 				if (c != cc)
-					return 0;
+					return NULL;
 				if (!--n)
 					return s;
 				break;
@@ -788,7 +788,7 @@ nestmatch(unsigned char* s, unsigned char* e, const unsigned short* type, int co
 		}
 		return (oc || !(type[UCHAR_MAX+1] & REX_NEST_terminator)) ? 0 : s;
 	}
-	return 0;
+	return NULL;
 }
 
 static int

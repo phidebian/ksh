@@ -55,7 +55,7 @@ local_iswblank(wchar_t wc)
 		initialized = 1;
 		wt = wctype("blank");
 	}
-	return(iswctype(wc, wt));
+	return iswctype(wc, wt);
 }
 
 #endif
@@ -142,7 +142,7 @@ static void lex_advance(Sfio_t *iop, const char *buff, int size, void *context)
 		sfwrite(sh.strbuf,lp->lexd.docend,n);
 		lp->lexd.docextra  += n;
 		if(sffileno(iop)>=0)
-			lp->lexd.docend = sfsetbuf(iop,(void*)iop,0);
+			lp->lexd.docend = sfsetbuf(iop,iop,0);
 		else
 			lp->lexd.docend = fcfirst();
 	}
@@ -485,7 +485,7 @@ int sh_lex(Lex_t* lp)
 							lp->lastline = sh.inlineno;
 							lp->lexd.lex_state = ST_NESTED;
 							fcseek(1);
-							return(sh_lex(lp));
+							return sh_lex(lp);
 						}
 						c  |= SYMREP;
 					}
@@ -1496,7 +1496,7 @@ breakloop:
 				nv_onattr(np,NV_NOEXPAND);
 				lp->lex.reservok = 1;
 				lp->assignok |= lp->lex.reservok;
-				return(sh_lex(lp));
+				return sh_lex(lp);
 			}
 		}
 		lp->lex.reservok = 0;
@@ -1991,7 +1991,7 @@ static int here_copy(Lex_t *lp,struct ionod *iop)
 	}
 done:
 	if(lp->lexd.dolparen)
-		free((void*)iop);
+		free(iop);
 	else if(!special)
 		iop->iofile |= IOQUOTE;
 	return c;
@@ -2003,7 +2003,7 @@ done:
 static char	*fmttoken(Lex_t *lp, int sym)
 {
 	if(sym < 0)
-		return((char*)sh_translate(e_lexzerobyte));
+		return (char*)sh_translate(e_lexzerobyte);
 	if(sym==0)
 		return lp->arg?lp->arg->argval:"?";
 	if(lp->lex.intest && lp->arg && *lp->arg->argval)
@@ -2013,12 +2013,12 @@ static char	*fmttoken(Lex_t *lp, int sym)
 		const Shtable_t *tp=shtab_reserved;
 		while(tp->sh_number && tp->sh_number!=sym)
 			tp++;
-		return((char*)tp->sh_name);
+		return (char*)tp->sh_name;
 	}
 	if(sym==EOFSYM)
-		return((char*)sh_translate(e_endoffile));
+		return (char*)sh_translate(e_endoffile);
 	if(sym==NL)
-		return((char*)sh_translate(e_newline));
+		return (char*)sh_translate(e_newline);
 	stakfreeze(0);
 	stakputc(sym);
 	if(sym&SYMREP)
@@ -2052,7 +2052,7 @@ static char	*fmttoken(Lex_t *lp, int sym)
 		}
 		stakputc(sym);
 	}
-	return(stakfreeze(1));
+	return stakfreeze(1);
 }
 
 /*
@@ -2390,7 +2390,7 @@ static int alias_exceptf(Sfio_t *iop,int type,void *data, Sfdisc_t *handle)
 				sfdisc(iop,dp);
 		}
 		else if(type==SF_DPOP || type==SF_FINAL)
-			free((void*)ap);
+			free(ap);
 		goto done;
 	}
 	if(ap->nextc)

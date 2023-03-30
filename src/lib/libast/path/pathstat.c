@@ -34,8 +34,8 @@ pathstat(const char* path, struct stat* st)
 	oerrno = errno;
 	if (!stat(path, st)) return 0;
 	errno = oerrno;
-	return(lstat(path, st));
+	return lstat(path, st);
 #else
-	return(stat(path, st));
+	return stat(path, st);
 #endif
 }

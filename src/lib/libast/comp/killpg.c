@@ -30,7 +30,7 @@ NoN(killpg)
 int
 killpg(pid_t g, int s)
 {
-	return(kill(-g, s));
+	return kill(-g, s);
 }
 
 #endif

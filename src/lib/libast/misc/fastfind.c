@@ -358,7 +358,7 @@ findopen(const char* file, const char* pattern, const char* type, Finddisc_t* di
 		if (!(fp = (Find_t*)vmnewof(vm, 0, Find_t, 1, i)))
 		{
 			vmclose(vm);
-			return 0;
+			return NULL;
 		}
 		fp->vm = vm;
 		fp->id = lib;
@@ -650,11 +650,11 @@ findopen(const char* file, const char* pattern, const char* type, Finddisc_t* di
 	if (disc->errorf)
 		(*fp->disc->errorf)(fp, fp->disc, 2, "out of memory");
 	if (!vm)
-		return 0;
+		return NULL;
 	if (!fp)
 	{
 		vmclose(vm);
-		return 0;
+		return NULL;
 	}
 	goto drop;
  invalid:
@@ -666,7 +666,7 @@ findopen(const char* file, const char* pattern, const char* type, Finddisc_t* di
 	if (fp->fp)
 		sfclose(fp->fp);
 	vmclose(fp->vm);
-	return 0;
+	return NULL;
 }
 
 /*
@@ -691,7 +691,7 @@ findread(Find_t* fp)
 	struct stat	st;
 
 	if (fp->generate)
-		return 0;
+		return NULL;
 	if (fp->decode.restore)
 	{
 		*fp->decode.restore = '/';
@@ -710,14 +710,14 @@ findread(Find_t* fp)
 			goto grab;
 		case FF_gnu:
 			if ((c = sfgetc(fp->fp)) == EOF)
-				return 0;
+				return NULL;
 			if (c == 0x80)
 			{
 				if ((c = sfgetc(fp->fp)) == EOF)
-					return 0;
+					return NULL;
 				n = c << 8;
 				if ((c = sfgetc(fp->fp)) == EOF)
-					return 0;
+					return NULL;
 				n |= c;
 				if (n & 0x8000)
 					n = (n - 0xffff) - 1;
@@ -734,7 +734,7 @@ findread(Find_t* fp)
 			do
 			{
 				if ((c = sfgetc(fp->fp)) == EOF)
-					return 0;
+					return NULL;
 			} while (*p++ = c);
 			p -= 2;
 			break;
@@ -742,12 +742,12 @@ findread(Find_t* fp)
 			if (c == EOF)
 			{
 				fp->decode.peek = c;
-				return 0;
+				return NULL;
 			}
 			if (c == FF_ESC)
 			{
 				if (sfread(fp->fp, w, sizeof(w)) != sizeof(w))
-					return 0;
+					return NULL;
 				if (fp->decode.swap >= 0)
 				{
 					c = (int32_t)((w[0] << 24) | (w[1] << 16) | (w[2] << 8) | w[3]);
@@ -803,7 +803,7 @@ findread(Find_t* fp)
 			for (;;)
 			{
 				if (!*fp->dirs)
-					return 0;
+					return NULL;
 
 				/*
 				 * use the ordering and lengths to prune
@@ -911,7 +911,7 @@ findread(Find_t* fp)
 					regerror(n, &fp->decode.re, fp->decode.temp, sizeof(fp->decode.temp));
 					(*fp->disc->errorf)(fp, fp->disc, 2, "%s: %s", fp->decode.pattern, fp->decode.temp);
 				}
-				return 0;
+				return NULL;
 			}
 		}
 	}

@@ -43,7 +43,7 @@ static Sfio_t *outfile;
 int sh_tdump(Sfio_t *out, const Shnode_t *t)
 {
 	outfile = out;
-	return(p_tree(t));
+	return p_tree(t);
 }
 
 /*
@@ -65,29 +65,29 @@ static int outstring(Sfio_t *out, const char *string, int n)
 static int p_tree(const Shnode_t *t)
 {
 	if(!t)
-		return(sfputl(outfile,-1));
+		return sfputl(outfile,-1);
 	if(sfputl(outfile,t->tre.tretyp)<0)
 		return -1;
 	switch(t->tre.tretyp&COMMSK)
 	{
 		case TTIME:
 		case TPAR:
-			return(p_tree(t->par.partre)); 
+			return p_tree(t->par.partre);
 		case TCOM:
-			return(p_comarg((struct comnod*)t));
+			return p_comarg((struct comnod*)t);
 		case TSETIO:
 		case TFORK:
 			if(sfputu(outfile,t->fork.forkline)<0)
 				return -1;
 			if(p_tree(t->fork.forktre)<0)
 				return -1;
-			return(p_redirect(t->fork.forkio));
+			return p_redirect(t->fork.forkio);
 		case TIF:
 			if(p_tree(t->if_.iftre)<0)
 				return -1;
 			if(p_tree(t->if_.thtre)<0)
 				return -1;
-			return(p_tree(t->if_.eltre));
+			return p_tree(t->if_.eltre);
 		case TWH:
 			if(t->wh.whinc)
 			{
@@ -101,18 +101,18 @@ static int p_tree(const Shnode_t *t)
 			}
 			if(p_tree(t->wh.whtre)<0)
 				return -1;
-			return(p_tree(t->wh.dotre));
+			return p_tree(t->wh.dotre);
 		case TLST:
 		case TAND:
 		case TORF:
 		case TFIL:
 			if(p_tree(t->lst.lstlef)<0)
 				return -1;
-			return(p_tree(t->lst.lstrit));
+			return p_tree(t->lst.lstrit);
 		case TARITH:
 			if(sfputu(outfile,t->ar.arline)<0)
 				return -1;
-			return(p_arg(t->ar.arexpr));
+			return p_arg(t->ar.arexpr);
 		case TFOR:
 			if(sfputu(outfile,t->for_.forline)<0)
 				return -1;
@@ -120,13 +120,13 @@ static int p_tree(const Shnode_t *t)
 				return -1;
 			if(p_string(t->for_.fornam)<0)
 				return -1;
-			return(p_tree((Shnode_t*)t->for_.forlst));
+			return p_tree((Shnode_t*)t->for_.forlst);
 		case TSW:
 			if(sfputu(outfile,t->sw.swline)<0)
 				return -1;
 			if(p_arg(t->sw.swarg)<0)
 				return -1;
-			return(p_switch(t->sw.swlst));
+			return p_switch(t->sw.swlst);
 		case TFUN:
 			if(sfputu(outfile,t->funct.functline)<0)
 				return -1;
@@ -134,18 +134,18 @@ static int p_tree(const Shnode_t *t)
 				return -1;
 			if(p_tree(t->funct.functtre)<0)
 				return -1;
-			return(p_tree((Shnode_t*)t->funct.functargs));
+			return p_tree((Shnode_t*)t->funct.functargs);
 		case TTST:
 			if(sfputu(outfile,t->tst.tstline)<0)
 				return -1;
 			if((t->tre.tretyp&TPAREN)==TPAREN)
-				return(p_tree(t->lst.lstlef)); 
+				return p_tree(t->lst.lstlef);
 			else
 			{
 				if(p_arg(&(t->lst.lstlef->arg))<0)
 					return -1;
 				if((t->tre.tretyp&TBINARY))
-					return(p_arg(&(t->lst.lstrit->arg)));
+					return p_arg(&(t->lst.lstrit->arg));
 				return 0;
 			}
 	}
@@ -183,7 +183,7 @@ static int p_arg(const struct argnod *arg)
 			p_tree((Shnode_t*)arg->argchn.ap);
 		arg = arg->argnxt.ap;
 	}
-	return(sfputu(outfile,0));
+	return sfputu(outfile,0);
 }
 
 static int p_redirect(const struct ionod *iop)
@@ -211,7 +211,7 @@ static int p_redirect(const struct ionod *iop)
 			p_string(iop->iovname);
 		iop = iop->ionxt;
 	}
-	return(sfputl(outfile,-1));
+	return sfputl(outfile,-1);
 }
 
 static int p_comarg(const struct comnod *com)
@@ -224,7 +224,7 @@ static int p_comarg(const struct comnod *com)
 		p_arg(com->comarg);
 	else
 		p_comlist((struct dolnod*)com->comarg);
-	return(sfputu(outfile,com->comline));
+	return sfputu(outfile,com->comline);
 }
 
 static int p_comlist(const struct dolnod *dol)
@@ -239,7 +239,7 @@ static int p_comlist(const struct dolnod *dol)
 	argv = dol->dolval+ARG_SPARE;
 	while(cp  = *argv++)
 		p_string(cp);
-	return(sfputu(outfile,0));
+	return sfputu(outfile,0);
 }
 
 static int p_switch(const struct regnod *reg)
@@ -251,7 +251,7 @@ static int p_switch(const struct regnod *reg)
 		p_tree(reg->regcom);
 		reg = reg->regnxt;
 	}
-	return(sfputl(outfile,-1));
+	return sfputl(outfile,-1);
 }
 
 static int p_string(const char *string)
@@ -259,5 +259,5 @@ static int p_string(const char *string)
 	size_t n=strlen(string);
 	if(sfputu(outfile,n+1)<0)
 		return -1;
-	return(outstring(outfile,string,n));
+	return outstring(outfile,string,n);
 }

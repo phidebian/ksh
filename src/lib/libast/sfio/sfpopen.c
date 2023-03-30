@@ -36,7 +36,7 @@ Sfio_t*	sfpopen(Sfio_t*		f,
 	char*		av[4];
 
 	if (!command || !command[0] || !mode)
-		return 0;
+		return NULL;
 	sflags = _sftype(mode, NULL, NULL);
 
 	if(f == (Sfio_t*)(-1))
@@ -56,14 +56,14 @@ Sfio_t*	sfpopen(Sfio_t*		f,
 	av[2] = (char*)command;
 	av[3] = 0;
 	if (!(proc = procopen(0, av, 0, 0, flags)))
-		return 0;
+		return NULL;
 	if (!(f = sfnew(f, NULL, (size_t)SF_UNBOUND,
 	       		(sflags&SF_READ) ? proc->rfd : proc->wfd, sflags|((sflags&SF_RDWR)?0:SF_READ))) ||
 	    _sfpopen(f, (sflags&SF_READ) ? proc->wfd : -1, proc->pid, pflags) < 0)
 	{
 		if (f) sfclose(f);
 		procclose(proc);
-		return 0;
+		return NULL;
 	}
 	procfree(proc);
 	return f;

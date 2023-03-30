@@ -261,18 +261,18 @@ b_fds(int argc, char** argv, Shbltin_t* context)
 #ifdef S_IFSOCK
 		addrlen = sizeof(addr);
 		memset(&addr, 0, addrlen);
-		if (!getsockname(i, (struct sockaddr*)&addr, (void*)&addrlen))
+		if (!getsockname(i, (struct sockaddr*)&addr, &addrlen))
 		{
 			type = 0;
 			prot = 0;
 #ifdef SO_TYPE
 			len = sizeof(type);
-			if (getsockopt(i, SOL_SOCKET, SO_TYPE, (void*)&type, (void*)&len))
+			if (getsockopt(i, SOL_SOCKET, SO_TYPE, &type, &len))
 				type = -1;
 #endif
 #ifdef SO_PROTOTYPE
 			len = sizeof(prot);
-			if (getsockopt(i, SOL_SOCKET, SO_PROTOTYPE, (void*)&prot, (void*)&len))
+			if (getsockopt(i, SOL_SOCKET, SO_PROTOTYPE, &prot, &len))
 				prot = -1;
 #endif
 			if (!st.st_mode)

@@ -45,7 +45,7 @@ fmtbuf(size_t n)
 			{
 				bigsiz = roundof(n, 8 * 1024);
 				if (!(big = newof(big, char, bigsiz, 0)))
-					return 0;
+					return NULL;
 			}
 			return big;
 		}

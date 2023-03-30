@@ -57,7 +57,7 @@ getdate(const char* s)
 	{
 		/* of course we all know what 7 means */
 		getdate_err = 7;
-		return 0;
+		return NULL;
 	}
 	tm = tmmake(&t);
 	ts.tm_sec = tm->tm_sec;

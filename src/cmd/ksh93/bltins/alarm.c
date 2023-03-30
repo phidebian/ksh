@@ -67,7 +67,7 @@ static void *time_add(struct tevent *item, void *list)
 	if(!tp || item->milli < tp->milli)
 	{
 		item->next = tp;
-		list = (void*)item;
+		list = item;
 	}
 	else
 	{
@@ -77,7 +77,7 @@ static void *time_add(struct tevent *item, void *list)
 		tp->next = item;
 	}
 	tp = item;
-	tp->timeout = (void*)sh_timeradd(tp->milli,tp->flags&R_FLAG,trap_timeout,(void*)tp);
+	tp->timeout = sh_timeradd(tp->milli,tp->flags&R_FLAG,trap_timeout,tp);
 	return list;
 }
 
@@ -88,7 +88,7 @@ static 	void *time_delete(struct tevent *item, void *list)
 {
 	struct tevent *tp = (struct tevent*)list;
 	if(item==tp)
-		list = (void*)tp->next;
+		list = tp->next;
 	else
 	{
 		while(tp && tp->next != item)
@@ -97,7 +97,7 @@ static 	void *time_delete(struct tevent *item, void *list)
 			tp->next = item->next;
 	}
 	if(item->timeout)
-		sh_timerdel((void*)item->timeout);
+		sh_timerdel(item->timeout);
 	return list;
 }
 
@@ -167,17 +167,17 @@ static char *setdisc(Namval_t *np, const char *event, Namval_t* action, Namfun_t
 {
         struct tevent *tp = (struct tevent*)fp;
 	if(!event)
-		return(action ? Empty : (char*)ALARM);
+		return action ? Empty : (char*)ALARM;
 	if(strcmp(event,ALARM)!=0)
 	{
 		/* try the next level */
-		return(nv_setdisc(np, event, action, fp));
+		return nv_setdisc(np, event, action, fp);
 	}
 	if(action==np)
 		action = tp->action;
 	else
 		tp->action = action;
-	return(action ? (char*)action : Empty);
+	return action ? (char*)action : Empty;
 }
 
 /*
@@ -217,7 +217,7 @@ static void putval(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 		tp = (struct tevent*)nv_stack(np, NULL);
 		sh.st.timetrap = time_delete(tp,sh.st.timetrap);
 		nv_unset(np);
-		free((void*)fp);
+		free(fp);
 	}
 }
 

@@ -74,7 +74,7 @@ recfmt(const void* buf, size_t size, off_t total)
 	 */
 
 	for (i = 0; i < elementsof(terminators); i++)
-		if ((t = (unsigned char*)memchr((void*)s, k = terminators[i], size / 2)) && (n = t - s + 1) > 1 && (total <= 0 || !(total % n)))
+		if ((t = (unsigned char*)memchr(s, k = terminators[i], size / 2)) && (n = t - s + 1) > 1 && (total <= 0 || !(total % n)))
 		{
 			for (j = n - 1; j < size; j += n)
 				if (s[j] != k)

@@ -135,7 +135,7 @@ cmdopen_20120411(char** argv, int argmax, int size, const char* argpat, Cmddisc_
 	{
 		if (disc->errorf)
 			(*disc->errorf)(NULL, sh, 2, "size must be at least %d", m);
-		return 0;
+		return NULL;
 	}
 	if ((m = x / 10) > 2048)
 		m = 2048;
@@ -147,7 +147,7 @@ cmdopen_20120411(char** argv, int argmax, int size, const char* argpat, Cmddisc_
 	{
 		if (disc->errorf)
 			(*disc->errorf)(NULL, sh, ERROR_SYSTEM|2, "out of memory");
-		return 0;
+		return NULL;
 	}
 	cmd->id = lib;
 	cmd->disc = disc;
@@ -178,7 +178,7 @@ cmdopen_20120411(char** argv, int argmax, int size, const char* argpat, Cmddisc_
 			if (disc->flags & CMD_EXIT)
 				(*error_info.exit)(n);
 			free(cmd);
-			return 0;
+			return NULL;
 		}
 		exe = s;
 	}

@@ -37,5 +37,5 @@ void* vmgetmem(Vmalloc_t* vm, void* data, size_t size)
 	if (data || size)
 		return vmresize(vm, data, size, VM_RSMOVE|VM_RSCOPY|VM_RSZERO);
 	vmclose(vm);
-	return 0;
+	return NULL;
 }

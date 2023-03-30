@@ -593,7 +593,7 @@ static const Tty_t *lookup(const char *name)
 		if(strcmp(Ttable[i].name,name)==0)
 			return &Ttable[i];
 	}
-	return 0;
+	return NULL;
 }
 
 static const Tty_t *getspeed(unsigned long val)
@@ -604,7 +604,7 @@ static const Tty_t *getspeed(unsigned long val)
 		if(Ttable[i].type==SPEED && Ttable[i].mask==val)
 			return &Ttable[i];
 	}
-	return 0;
+	return NULL;
 }
 
 static int gettchar(const char *cp)
@@ -612,7 +612,7 @@ static int gettchar(const char *cp)
 	if(*cp==0)
 		return -1;
 	if(cp[1]==0)
-		return((unsigned)cp[0]);
+		return (unsigned)cp[0];
 	if(*cp=='^' && cp[1] && cp[2]==0)
 	{
 		switch(cp[1])
@@ -620,12 +620,12 @@ static int gettchar(const char *cp)
 		    case '-':
 			return -1;
 		    default:
-			return(cntl(cp[1]));
+			return cntl(cp[1]);
 		}
 	}
 	if(streq(cp,"undef") || streq(cp,"<undef>"))
 		return -1;
-	return(*((unsigned char*)cp));
+	return *((unsigned char*)cp);
 }
 
 static void set(char *argv[], struct termios *sp)

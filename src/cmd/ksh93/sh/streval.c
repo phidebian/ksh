@@ -105,10 +105,10 @@ typedef int        (*Math_3i_f)(Sfdouble_t,Sfdouble_t,Sfdouble_t);
 #endif
 
 #define seterror(v,msg)		_seterror(v,ERROR_dictionary(msg))
-#define ERROR(vp,msg)		return(seterror((vp),msg))
+#define ERROR(vp,msg)		return seterror((vp),msg)
 
 /*
- * set error message string and return(0)
+ * set error message string and return 0
  */
 static int _seterror(struct vars *vp,const char *msg)
 {
@@ -422,7 +422,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 				c &= ~T_BINARY;
 				arg[0] = num;
 				arg[1] = 0;
-				num = sh_mathfun((void*)fun,1,arg);
+				num = sh_mathfun(fun,1,arg);
 				break;
 			}
 			num = (*((Math_1f_f)fun))(num);
@@ -443,7 +443,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 				arg[0] = sp[1];
 				arg[1] = num;
 				arg[2] = 0;
-				num = sh_mathfun((void*)fun,2,arg);
+				num = sh_mathfun(fun,2,arg);
 				break;
 			}
 			if(c&T_NOFLOAT)
@@ -468,7 +468,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 				arg[1] = sp[2];
 				arg[2] = num;
 				arg[3] = 0;
-				num = sh_mathfun((void*)fun,3,arg);
+				num = sh_mathfun(fun,3,arg);
 				break;
 			}
 			num = (*((Math_3f_f)fun))(sp[1],sp[2],num);
@@ -894,7 +894,7 @@ Arith_t *arith_compile(const char *string,char **last,Sfdouble_t(*fun)(const cha
 	struct vars cur;
 	Arith_t *ep;
 	int offset;
-	memset((void*)&cur,0,sizeof(cur));
+	memset(&cur,0,sizeof(cur));
      	cur.expr = cur.nextchr = string;
 	cur.convert = fun;
 	cur.emode = emode;
@@ -909,7 +909,7 @@ Arith_t *arith_compile(const char *string,char **last,Sfdouble_t(*fun)(const cha
 		{
 			stakseek(0);
 			*last = (char*)Empty;
-			return 0;
+			return NULL;
 		}
 		cur.nextchr = cur.errchr;
 	}

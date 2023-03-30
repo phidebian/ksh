@@ -120,7 +120,7 @@ int fcclose(void)
 		*_Fcin.fclast = _Fcin.fcchar;
 	_Fcin.fclast = 0;
 	_Fcin.fcleft = 0;
-	return(fcfill());
+	return fcfill();
 }
 
 /*

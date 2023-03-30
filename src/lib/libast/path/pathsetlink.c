@@ -64,5 +64,5 @@ pathsetlink(const char* buf, const char* name)
 		}
 	}
 #endif
-	return(symlink(t, name));
+	return symlink(t, name);
 }

@@ -336,7 +336,7 @@ static int Error(Service_t *sp, int level, const char* arg, ...)
 	va_start(ap, arg);
 	if(sp->node)
 		nv_unset(sp->node);
-	free((void*)sp);
+	free(sp);
         errorv(NULL, ERROR_exit(1), ap);
         va_end(ap);
 	return 0;
@@ -359,7 +359,7 @@ static char* setdisc(Namval_t* np, const char* event, Namval_t* action, Namfun_t
 		else
 		{
 			if (nq = sp->disc[i])
-				free((void*)nq);
+				free(nq);
 			if (action)
 				sp->disc[i] = action;
 			else
@@ -389,7 +389,7 @@ static void putval(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 					break;
 			}
 		}
-		free((void*)fp);
+		free(fp);
 		return;
 	}
 }
@@ -443,7 +443,7 @@ int	b_mkservice(int argc, char** argv, Shbltin_t *context)
 	sp->fun.disc = &servdisc;
 	if((fd = sh_open(path, O_SERVICE|O_RDWR))<=0)
 	{
-		free((void*)sp);
+		free(sp);
 		error(ERROR_exit(1), "%s: cannot start service", path);
 		UNREACHABLE();
 	}

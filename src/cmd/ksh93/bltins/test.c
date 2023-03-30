@@ -270,7 +270,7 @@ static char *nxtarg(struct test *tp,int mt)
 		if(mt)
 		{
 			tp->ap++;
-			return 0;
+			return NULL;
 		}
 		errormsg(SH_DICT,ERROR_exit(2),e_argument);
 		UNREACHABLE();
@@ -292,12 +292,12 @@ static int e3(struct test *tp)
 		 */
 		tp->ap++;
 		if(op==TEST_AND)
-			return(*arg && expr(tp,2));
+			return *arg && expr(tp,2);
 		else /* TEST_OR */
-			return(*arg || expr(tp,3));
+			return *arg || expr(tp,3);
 	}
 	if(arg && c_eq(arg, '!') && tp->ap < tp->ac)
-		return(!e3(tp));
+		return !e3(tp);
 	if(c_eq(arg, '('))
 	{
 		op = expr(tp,1);
@@ -321,12 +321,12 @@ static int e3(struct test *tp)
 		if(cp)
 		{
 			op = strtol(cp,&binop, 10);
-			return(*binop?0:tty_check(op));
+			return *binop ? 0 : tty_check(op);
 		}
 		else
 		{
 			tp->ap--;
-			return(tty_check(1));
+			return tty_check(1);
 		}
 	}
 	if(*arg=='-' && arg[2]==0)
@@ -335,7 +335,7 @@ static int e3(struct test *tp)
 		if(!cp)					/* no further argument: */
 			return 1;			/* treat as nonempty string instead of unary op, so return true */
 		if(strchr(test_opchars,op))
-			return(test_unop(op,cp));
+			return test_unop(op,cp);
 	}
 	if(!cp)
 	{
@@ -353,7 +353,7 @@ skip:
 	}
 	if(op==TEST_AND || op==TEST_OR)
 		tp->ap--;
-	return(test_binop(op,arg,cp));
+	return test_binop(op,arg,cp);
 }
 
 int test_unop(int op,const char *arg)
@@ -363,26 +363,26 @@ int test_unop(int op,const char *arg)
 	switch(op)
 	{
 	    case 'r':
-		return(permission(arg, R_OK));
+		return permission(arg, R_OK);
 	    case 'w':
-		return(permission(arg, W_OK));
+		return permission(arg, W_OK);
 	    case 'x':
-		return(permission(arg, X_OK));
+		return permission(arg, X_OK);
 	    case 'd':
-		return(test_stat(arg,&statb)>=0 && S_ISDIR(statb.st_mode));
+		return test_stat(arg,&statb)>=0 && S_ISDIR(statb.st_mode);
 	    case 'c':
-		return(test_stat(arg,&statb)>=0 && S_ISCHR(statb.st_mode));
+		return test_stat(arg,&statb)>=0 && S_ISCHR(statb.st_mode);
 	    case 'b':
-		return(test_stat(arg,&statb)>=0 && S_ISBLK(statb.st_mode));
+		return test_stat(arg,&statb)>=0 && S_ISBLK(statb.st_mode);
 	    case 'f':
-		return(test_stat(arg,&statb)>=0 && S_ISREG(statb.st_mode));
+		return test_stat(arg,&statb)>=0 && S_ISREG(statb.st_mode);
 	    case 'u':
-		return(test_mode(arg)&S_ISUID);
+		return test_mode(arg) & S_ISUID;
 	    case 'g':
-		return(test_mode(arg)&S_ISGID);
+		return test_mode(arg) & S_ISGID;
 	    case 'k':
 #ifdef S_ISVTX
-		return(test_mode(arg)&S_ISVTX);
+		return test_mode(arg) & S_ISVTX;
 #else
 		return 0;
 #endif /* S_ISVTX */
@@ -393,11 +393,11 @@ int test_unop(int op,const char *arg)
 	    case 'h':
 		if(*arg==0 || arg[strlen(arg)-1]=='/' || lstat(arg,&statb)<0)
 			return 0;
-		return(S_ISLNK(statb.st_mode));
+		return S_ISLNK(statb.st_mode);
 
 	    case 'C':
 #ifdef S_ISCTG
-		return(test_stat(arg,&statb)>=0 && S_ISCTG(statb.st_mode));
+		return test_stat(arg,&statb)>=0 && S_ISCTG(statb.st_mode);
 #else
 		return 0;
 #endif	/* S_ISCTG */
@@ -412,18 +412,18 @@ int test_unop(int op,const char *arg)
 		stakputc(0);
 		arg = (const char*)stakptr(offset);
 		stakseek(offset);
-		return(test_stat(arg,&statb)>=0 && S_ISCDF(statb.st_mode));
+		return test_stat(arg,&statb)>=0 && S_ISCDF(statb.st_mode);
 	    }
 #else
 		return 0;
 #endif	/* S_ISCDF */
 
 	    case 'S':
-		return(isasock(arg,&statb));
+		return isasock(arg,&statb);
 	    case 'N':
-		return(test_stat(arg,&statb)>=0 && tmxgetmtime(&statb) > tmxgetatime(&statb));
+		return test_stat(arg,&statb)>=0 && tmxgetmtime(&statb) > tmxgetatime(&statb);
 	    case 'p':
-		return(isapipe(arg,&statb));
+		return isapipe(arg,&statb);
 	    case 'n':
 		return *arg != 0;
 	    case 'z':
@@ -442,18 +442,18 @@ int test_unop(int op,const char *arg)
 		return statb.st_gid==sh.groupid;
 	    case 'a':
 	    case 'e':
-		return(permission(arg, F_OK));
+		return permission(arg, F_OK);
 	    case 'o':
 		f=1;
 		if(*arg=='?')
-			return(sh_lookopt(arg+1,&f)>0);
+			return sh_lookopt(arg+1,&f)>0;
 		op = sh_lookopt(arg,&f);
-		return(op>0 && (f==(sh_isoption(op)!=0)));
+		return op>0 && (f==(sh_isoption(op)!=0));
 	    case 't':
 	    {
 		char *last;
 		op = strtol(arg,&last, 10);
-		return(*last?0:tty_check(op));
+		return *last ? 0 : tty_check(op);
 	    }
 	    case 'v':
 	    case 'R':
@@ -474,8 +474,8 @@ int test_unop(int op,const char *arg)
 				return 0;
 		}
 		if(ap = nv_arrayptr(np))
-			return(nv_arrayisset(np,ap));
-		return(!nv_isnull(np));
+			return nv_arrayisset(np,ap);
+		return !nv_isnull(np);
 	    }
 	    default:
 	    {
@@ -540,28 +540,28 @@ int test_binop(int op,const char *left,const char *right)
 	{
 		case TEST_AND:
 		case TEST_OR:
-			return *left!=0;
+			return *left != 0;
 		case TEST_PEQ:
-			return(test_strmatch(left, right));
+			return test_strmatch(left, right);
 		case TEST_PNE:
-			return(!test_strmatch(left, right));
+			return !test_strmatch(left, right);
 		case TEST_SGT:
-			return(strcoll(left, right)>0);
+			return strcoll(left, right) > 0;
 		case TEST_SLT:
-			return(strcoll(left, right)<0);
+			return strcoll(left, right) < 0;
 		case TEST_SEQ:
-			return(strcmp(left, right)==0);
+			return strcmp(left, right) == 0;
 		case TEST_SNE:
-			return(strcmp(left, right)!=0);
+			return strcmp(left, right) != 0;
 		case TEST_REP:
 			sfprintf(sh.strbuf, "~(E)%s", right);
-			return(test_strmatch(left, sfstruse(sh.strbuf))>0);
+			return test_strmatch(left, sfstruse(sh.strbuf)) > 0;
 		case TEST_EF:
-			return(test_inode(left,right));
+			return test_inode(left,right);
 		case TEST_NT:
-			return(test_time(left,right)>0);
+			return test_time(left,right) > 0;
 		case TEST_OT:
-			return(test_time(left,right)<0);
+			return test_time(left,right) < 0;
 	}
 	/* all non-arithmetic binary operators should be covered above */
 	UNREACHABLE();
@@ -613,12 +613,12 @@ int sh_access(const char *name, int mode)
 	if(*name==0)
 		return -1;
 	if(sh_isdevfd(name))
-		return(sh_ioaccess((int)strtol(name+8, NULL, 10),mode));
+		return sh_ioaccess((int)strtol(name+8, NULL, 10),mode);
 	/* can't use access function for execute permission with root */
 	if(mode==X_OK && sh.euserid==0)
 		goto skip;
 	if(sh.userid==sh.euserid && sh.groupid==sh.egroupid)
-		return(access(name,mode));
+		return access(name,mode);
 #ifdef _lib_setreuid
 	/* swap the real UID to effective, check access then restore */
 	/* first swap real and effective GID, if different */
@@ -714,7 +714,7 @@ static int test_stat(const char *name,struct stat *buff)
 		return -1;
 	}
 	if(sh_isdevfd(name))
-		return(fstat((int)strtol(name+8, NULL, 10),buff));
+		return fstat((int)strtol(name+8, NULL, 10),buff);
 	else
-		return(stat(name,buff));
+		return stat(name,buff);
 }

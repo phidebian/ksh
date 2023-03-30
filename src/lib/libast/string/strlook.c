@@ -41,6 +41,6 @@ strlook(const void* tab, size_t siz, const char* name)
 
 	for (; s = *((char**)t); t += siz)
 		if (*s == c && !strcmp(s, name))
-			return (void*)t;
-	return 0;
+			return t;
+	return NULL;
 }

@@ -48,7 +48,7 @@ typedef void (*SH_SIGTYPE)(int,void(*)(int));
 #define SH_TRAP			0200	/* bit for internal traps */
 #define SH_ERRTRAP		0	/* trap for non-zero exit status */
 #define SH_KEYTRAP		1	/* trap for keyboard event */
-#define SH_DEBUGTRAP		4	/* must be last internal trap */
+#define SH_DEBUGTRAP		2	/* must be last internal trap */
 
 #define SH_SIGBITS		8
 #define SH_SIGFAULT		1	/* signal handler is sh_fault */

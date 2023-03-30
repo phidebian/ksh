@@ -44,10 +44,10 @@ strsearch(const void* tab, size_t num, size_t siz, Strcmp_f comparf, const char*
 	{
 		mid = lo + (((hi - lo) / siz) / 2) * siz;
 		if (!(v = context ? (*(Strcmp_context_f)comparf)(name, *((char**)mid), context) : (*comparf)(name, *((char**)mid))))
-			return (void*)mid;
+			return mid;
 		else if (v > 0)
 			lo = mid + siz;
 		else hi = mid - siz;
 	}
-	return 0;
+	return NULL;
 }

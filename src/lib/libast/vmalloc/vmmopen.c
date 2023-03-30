@@ -135,15 +135,15 @@ static Mmvm_t* mmfix(Mmvm_t* mmvm, Mmdisc_t* mmdc, int fd)
 	void	*base = mmvm->base;
 	ssize_t	size = mmvm->size;
 
-	if(base != (void*)mmvm) /* mmvm is not right yet */
+	if(base != mmvm) /* mmvm is not right yet */
 	{	/**/ASSERT(!base || (base && (VLONG(base)%_Vmpagesize) == 0) );
 		if(mmdc->proj < 0)
-		{	munmap((void*)mmvm, size); 
+		{	munmap(mmvm, size); 
 			mmvm = (Mmvm_t*)mmap(base, size, (PROT_READ|PROT_WRITE),
 					     (MAP_FIXED|MAP_SHARED), fd, 0 );
 		}
 		else
-		{	shmdt((void*)mmvm);
+		{	shmdt(mmvm);
 			mmvm = (Mmvm_t*)shmat(mmdc->shmid, base, 0);
 		}
 		if(!mmvm || mmvm == (Mmvm_t*)(-1) )
@@ -216,7 +216,7 @@ static int mminit(Mmdisc_t* mmdc)
 	/* all processes compete for the chore to initialize data */
 	if(asocasint(&mmvm->magic, 0, MM_LETMEDOIT) == 0 ) /* lucky winner: us! */
 	{	if(!(base = vmmaddress(size)) ) /* get a suitable base for the map */
-			base = (void*)mmvm;
+			base = mmvm;
 		mmdc->flag |= MM_INIT;
 		mmvm->base = base;
 		mmvm->size = size;
@@ -224,9 +224,9 @@ static int mminit(Mmdisc_t* mmdc)
 		mmvm->proj = mmdc->proj;
 		strcpy(mmvm->file, mmdc->file);
 		if(mmdc->proj < 0 ) /* flush to file */
-			msync((void*)mmvm, MMHEAD(mmvm->file), MS_SYNC);
+			msync(mmvm, MMHEAD(mmvm->file), MS_SYNC);
 
-		if(mmvm->base != (void*)mmvm) /* not yet at the right address */
+		if(mmvm->base != mmvm) /* not yet at the right address */
 			if(!(mmvm = mmfix(mmvm, mmdc, fd)) )
 				goto done;
 		rv = 0; /* success, return this value to indicate a new map */
@@ -247,7 +247,7 @@ static int mminit(Mmdisc_t* mmdc)
 		if(mmvm->proj != mmdc->proj || strcmp(mmvm->file, mmdc->file) != 0 )
 			goto done;
 
-		if(mmvm->base != (void*)mmvm) /* not yet at the right address */
+		if(mmvm->base != mmvm) /* not yet at the right address */
 			if(!(mmvm = mmfix(mmvm, mmdc, fd)) )
 				goto done;
 		rv = 1; /* success, return this value to indicate a finished map */
@@ -261,8 +261,8 @@ done:	(void)close(fd);
 	}
 	else if(mmvm && mmvm != (Mmvm_t*)(-1)) /* error, remove map */
 	{	if(mmdc->proj < 0)
-			(void)munmap((void*)mmvm, size);
-		else	(void)shmdt((void*)mmvm);
+			(void)munmap(mmvm, size);
+		else	(void)shmdt(mmvm);
 	}
 
 	return rv;
@@ -356,7 +356,7 @@ static int mmexcept(Vmalloc_t* vm, int type, void* data, Vmdisc_t* disc)
 			asocasint(&mmdc->mmvm->magic, MM_LETMEDOIT, MM_MAGIC);
 
 			if(mmdc->proj < 0) /* sync data to file now */
-				msync((void*)mmdc->mmvm, MMHEAD(mmdc->file), MS_SYNC);
+				msync(mmdc->mmvm, MMHEAD(mmdc->file), MS_SYNC);
 		} /**/ASSERT(mmdc->mmvm->magic == MM_MAGIC);
 		return 0;
 	}
@@ -477,12 +477,12 @@ void* vmmaddress(size_t size)
 	if(_map_dir == 0 || (min+size) > max)
 		avail = NULL;
 	else if(_map_dir > 0)
-	{	avail = (void*)min;
+	{	avail = min;
 		min += size;
 	}
 	else 
 	{	max -= size;
-		avail = (void*)max;
+		avail = max;
 	}
 
 	return avail;

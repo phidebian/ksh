@@ -25,6 +25,6 @@ fdopen(int fd, const char* mode)
 	int	flags;
 
 	if (fd < 0 || !(flags = _sftype(mode, NULL, NULL)))
-		return 0;
+		return NULL;
 	return sfnew(NULL, NULL, (size_t)SF_UNBOUND, fd, flags);
 }

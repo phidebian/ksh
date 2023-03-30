@@ -103,12 +103,12 @@ regcache(const char* pattern, regflags_t reflags, int* status)
 		}
 		if (status)
 			*status = i;
-		return 0;
+		return NULL;
 	}
 	if (!matchstate.cache)
 	{
 		if (!(matchstate.cache = newof(0, Cache_t*, CACHE, 0)))
-			return 0;
+			return NULL;
 		matchstate.size = CACHE;
 	}
 
@@ -156,7 +156,7 @@ regcache(const char* pattern, regflags_t reflags, int* status)
 		{
 			if (status)
 				*status = REG_ESPACE;
-			return 0;
+			return NULL;
 		}
 		if (cp->keep)
 		{
@@ -170,7 +170,7 @@ regcache(const char* pattern, regflags_t reflags, int* status)
 			{
 				if (status)
 					*status = REG_ESPACE;
-				return 0;
+				return NULL;
 			}
 		}
 		strcpy(cp->pattern, pattern);
@@ -181,7 +181,7 @@ regcache(const char* pattern, regflags_t reflags, int* status)
 		{
 			if (status)
 				*status = i;
-			return 0;
+			return NULL;
 		}
 		cp->keep = 1;
 		cp->reflags = reflags;

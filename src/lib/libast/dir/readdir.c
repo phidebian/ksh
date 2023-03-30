@@ -42,13 +42,13 @@ readdir(DIR* dirp)
 	{
 		if (dirp->dd_loc >= dirp->dd_size)
 		{
-			if (dirp->dd_size < 0) return 0;
+			if (dirp->dd_size < 0) return NULL;
 			dirp->dd_loc = 0;
 			if ((dirp->dd_size = getdents(dirp->dd_fd, dirp->dd_buf, DIRBLKSIZ)) <= 0)
-				return 0;
+				return NULL;
 		}
 		dp = (struct dirent*)((char*)dirp->dd_buf + dirp->dd_loc);
-		if (dp->d_reclen <= 0) return 0;
+		if (dp->d_reclen <= 0) return NULL;
 		dirp->dd_loc += dp->d_reclen;
 		if (dp->d_fileno) return dp;
 	}

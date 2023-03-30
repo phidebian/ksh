@@ -105,7 +105,7 @@ pathfind(const char* name, const char* lib, const char* type, char* buf, size_t 
 			return buf;
 	}
 	if (*name == '/')
-		return 0;
+		return NULL;
 
 	/*
 	 * check the directory of the including file
@@ -160,5 +160,5 @@ pathfind(const char* name, const char* lib, const char* type, char* buf, size_t 
 				return buf;
 		}
 	}
-	return 0;
+	return NULL;
 }

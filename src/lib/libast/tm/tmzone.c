@@ -136,5 +136,5 @@ tmzone(const char* name, char** end, const char* type, int* dst)
 		else
 			zp++;
 	} while (zp->standard);
-	return 0;
+	return NULL;
 }

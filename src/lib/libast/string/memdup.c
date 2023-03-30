@@ -34,7 +34,7 @@ memdup(const void* s, size_t n)
 {
 	void*	t;
 
-	return((t = (void*)newof(0, char, n, 0)) ? memcpy(t, s, n) : 0);
+	return (t = newof(0, char, n, 0)) ? memcpy(t, s, n) : 0;
 }
 
 #endif

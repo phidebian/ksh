@@ -60,7 +60,7 @@ tst	map_malloc note{ map malloc to _ast_malloc }end noexecute{
 	static HT heap[1024 * 4];
 	static HT* hp = &heap[1];
 	static HT* op;
-	#define MALLOC(n) if(user)return&heap[0];op=hp;hp+=(n+sizeof(HT)-1)/sizeof(HT);return(void*)op;
+	#define MALLOC(n) if(user)return&heap[0];op=hp;hp+=(n+sizeof(HT)-1)/sizeof(HT);return op;
 	#define INTERCEPTED(p) (((char*)(p))==((char*)&heap[0]))
 	extern void free(void* p) { }
 	extern void _free(void* p) { }

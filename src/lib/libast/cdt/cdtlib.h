@@ -75,7 +75,7 @@ typedef struct _dtlib_s
 #define DTCLRLOCK(dt)		(((dt)->data->type&DT_SHARE) ? asolock(&(dt)->data->lock,1,ASO_UNLOCK) : 0 )
 #define DTRETURN(ob,rv)		do { (ob) = (rv); goto dt_return; } while(0)
 #define DTERROR(dt, mesg) 	(!((dt)->disc && (dt)->disc->eventf) ? 0 : \
-				  (*(dt)->disc->eventf)((dt),DT_ERROR,(void*)(mesg),(dt)->disc) )
+				  (*(dt)->disc->eventf)((dt),DT_ERROR,(mesg),(dt)->disc) )
 
 /* announce completion of an operation of type (ty) on some object (ob) in dictionary (dt) */
 #define DTANNOUNCE(dt,ob,ty)	( ((ob) && ((ty)&DT_TOANNOUNCE) && ((dt)->data->type&DT_ANNOUNCE) && \

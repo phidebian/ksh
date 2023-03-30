@@ -155,12 +155,12 @@ static void* tlist(Dt_t* dt, Dtlink_t* list, int type)
 		for(r = list; r; r = t)
 		{	t = r->_rght;
 			obj = _DTOBJ(disc,r);
-			if((*dt->meth->searchf)(dt, (void*)r, DT_RELINK) == obj )
+			if((*dt->meth->searchf)(dt, r, DT_RELINK) == obj )
 				dt->data->size += 1;
 		}
 	}
 
-	return (void*)list;
+	return list;
 }
 
 static ssize_t tsize(Dtlink_t* root, ssize_t lev, Dtstat_t* st)
@@ -621,7 +621,7 @@ static int treeevent(Dt_t* dt, int event, void* arg)
 			return 0;
 		if(tree->root)
 			(void)tclear(dt);
-		(void)(*dt->memoryf)(dt, (void*)tree, 0, dt->disc);
+		(void)(*dt->memoryf)(dt, tree, 0, dt->disc);
                 dt->data = NULL;
                 return 0;
 	}

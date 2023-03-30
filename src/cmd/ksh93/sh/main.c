@@ -113,12 +113,13 @@ static int sh_source(Sfio_t *iop, const char *file)
 
 int sh_main(int ac, char *av[], Shinit_f userinit)
 {
-	char	*name;
-	int	fdin;
-	Sfio_t  *iop;
+	char		*name;
+	int		fdin;
+	Sfio_t		*iop;
 	struct stat	statb;
-	int i, rshflag;		/* set for restricted shell */
-	char *command;
+	int		i;
+	int		rshflag;	/* set for restricted shell */
+	char		*command;
 #ifdef _lib_sigvec
 	/* This is to clear mask that may be left on by rlogin */
 	clearsigmask(SIGALRM);
@@ -630,7 +631,7 @@ done:
 	if(fno>0)
 		sh_close(fno);
 	if(sh.st.filename)
-		free((void*)sh.st.filename);
+		free(sh.st.filename);
 	sh.st.filename = 0;
 }
 

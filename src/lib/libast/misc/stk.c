@@ -213,7 +213,7 @@ Sfio_t *stkopen(int flags)
 	Sfdisc_t *dp;
 	char *cp;
 	if(!(stream=newof(NULL,Sfio_t, 1, sizeof(*dp)+sizeof(*sp))))
-		return 0;
+		return NULL;
 	increment(create);
 	count(addsize,sizeof(*stream)+sizeof(*dp)+sizeof(*sp));
 	dp = (Sfdisc_t*)(stream+1);
@@ -232,7 +232,7 @@ Sfio_t *stkopen(int flags)
 	if(!(fp=newof(NULL,struct frame, 1,bsize)))
 	{
 		free(stream);
-		return 0;
+		return NULL;
 	}
 	count(addsize,sizeof(*fp)+bsize);
 	cp = (char*)(fp+1);
@@ -303,7 +303,7 @@ int stkclose(Sfio_t* stream)
 		sp->stkref--;
 		return 1;
 	}
-	return(sfclose(stream));
+	return sfclose(stream);
 }
 
 /*
@@ -360,7 +360,7 @@ char *stkset(Sfio_t * stream, char* loc, size_t offset)
 		{
 			sp->stkbase = fp->prev;
 			sp->stkend = ((struct frame*)(fp->prev))->end;
-			free((void*)fp);
+			free(fp);
 		}
 		else
 			break;
@@ -376,7 +376,7 @@ char *stkset(Sfio_t * stream, char* loc, size_t offset)
 	else
 		stream->_data = stream->_next = (unsigned char*)cp;
 found:
-	return((char*)stream->_data);
+	return (char*)stream->_data;
 }
 
 /*
@@ -390,10 +390,10 @@ char *stkalloc(Sfio_t *stream, size_t n)
 	increment(alloc);
 	n = roundof(n,STK_ALIGN);
 	if(stkleft(stream) <= (int)n && !stkgrow(stream,n))
-		return 0;
+		return NULL;
 	old = stream->_data;
 	stream->_data = stream->_next = old+n;
-	return((char*)old);
+	return (char*)old;
 }
 
 /*
@@ -405,9 +405,9 @@ char *_stkseek(Sfio_t *stream, ssize_t n)
 		stkinit(n);
 	increment(seek);
 	if(stkleft(stream) <= n && !stkgrow(stream,n))
-		return 0;
+		return NULL;
 	stream->_next = stream->_data+n;
-	return((char*)stream->_data);
+	return (char*)stream->_data;
 }
 
 /*
@@ -426,14 +426,14 @@ char	*stkfreeze(Sfio_t *stream, size_t extra)
 		if(extra > (stream->_endb-stream->_next))
 		{
 			if (!(top = (unsigned char*)stkgrow(stream,extra)))
-				return 0;
+				return NULL;
 			old = stream->_data;
 		}
 		*top = 0;
 		top += extra;
 	}
 	stream->_next = stream->_data += roundof(top-old,STK_ALIGN);
-	return((char*)old);
+	return (char*)old;
 }
 
 /*
@@ -453,7 +453,7 @@ char	*stkcopy(Sfio_t *stream, const char* str)
 			{
 				struct stk *sp = stream2stk(stream);
 				if(!sp->stkoverflow || !(tp = (*sp->stkoverflow)(off)))
-					return 0;
+					return NULL;
 			}
 		}
 		memcpy(tp, stream->_data, off);
@@ -476,8 +476,8 @@ char	*stkcopy(Sfio_t *stream, const char* str)
 		}
 	}
 	if(tp!=buff)
-		free((void*)tp);
-	return((char*)cp);
+		free(tp);
+	return (char*)cp;
 }
 
 /*
@@ -514,7 +514,7 @@ static char *stkgrow(Sfio_t *stream, size_t size)
 	endoff = end - dp;
 	cp = newof(dp, char, n, nn*sizeof(char*));
 	if(!cp && (!sp->stkoverflow || !(cp = (*sp->stkoverflow)(n))))
-		return 0;
+		return NULL;
 	increment(grow);
 	count(addsize,n - (dp?m:0));
 	if(dp==cp)
@@ -547,5 +547,5 @@ static char *stkgrow(Sfio_t *stream, size_t size)
 		count(movsize,m);
 	}
 	sfsetbuf(stream,cp,sp->stkend-cp);
-	return((char*)(stream->_next = stream->_data+m));
+	return (char*)(stream->_next = stream->_data+m);
 }

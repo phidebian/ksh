@@ -118,7 +118,7 @@ void* llist(Dt_t* dt, Dtlink_t* lnk, int type)
 			dt->data->size += 1;
 	}
 
-	return (void*)lnk;
+	return lnk;
 }
 
 static void* listat(Dt_t* dt, Dtstat_t* st)
@@ -322,7 +322,7 @@ static int listevent(Dt_t* dt, int event, void* arg)
 			return 0;
 		if(list->link) /* remove all items */
 			(void)lclear(dt);
-		(void)(*dt->memoryf)(dt, (void*)list, 0, dt->disc);
+		(void)(*dt->memoryf)(dt, list, 0, dt->disc);
 		dt->data = NULL;
 		return 0;
 	}

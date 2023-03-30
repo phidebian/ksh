@@ -8,8 +8,11 @@ For more details, see the NEWS file and for complete details, see the git log.
 	from the environment. Any script that depends on this will need to
 	be changed to typeset the expected attributes itself.
 
-2.	The obsolete --viraw shell option has been removed. Its use is no
-	longer ignored and is now an error.
+2.	In the ${parameter/pattern/string} search-and-replace expansion, an
+	anchored empty pattern will now match the beginning or the end of the
+	string, so that ${parameter/#/string} will prefix the string to the
+	parameter value and ${parameter/%/string} will append it. This change
+	brings ksh 93u+m/1.1 into line with mksh, bash, yash and zsh.
 
 ____________________________________________________________________________
 

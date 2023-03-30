@@ -29,5 +29,5 @@ getwd(char* path)
 {
 	if (getcwd(path, PATH_MAX)) return path;
 	strcpy(path, "getwd: error in . or ..");
-	return 0;
+	return NULL;
 }

@@ -159,7 +159,7 @@ int tty_check(int fd)
 	if(fd < 0 || fd > sh.lim.open_max || sh.fdstatus[fd] == IOCLOSE
 	|| (sp = sh.sftable[fd]) && (sfset(sp,0,0) & SF_STRING))
 		return 0;
-	return(tty_get(fd,&tty)==0);
+	return tty_get(fd,&tty)==0;
 }
 
 /*
@@ -1277,7 +1277,7 @@ int	ed_internal(const char *src, genchar *dest)
 	while(*cp)
 		*dp++ = mbchar(cp);
 	*dp = 0;
-	return(dp-(wchar_t*)dest);
+	return dp - (wchar_t*)dest;
 }
 #endif /* (SHOPT_ESH || SHOPT_VSH) && SHOPT_MULTIBYTE */
 
@@ -1431,9 +1431,9 @@ int tcsetattr(int fd,int mode,struct termios *tt)
 			case TCSAFLUSH:
 				mode = TCSETAF;
 		}
-		return(ioctl(fd,mode,&ott));
+		return ioctl(fd,mode,&ott);
 	}
-	return(ioctl(fd,mode,tt));
+	return ioctl(fd,mode,tt);
 }
 #endif /* SHOPT_OLDTERMIO */
 
@@ -1488,7 +1488,7 @@ void	*ed_open(void)
 {
 	Edit_t *ed = sh_newof(0,Edit_t,1,0);
 	strcpy(ed->e_macro,"_??");
-	return((void*)ed);
+	return ed;
 }
 
 #undef ioctl

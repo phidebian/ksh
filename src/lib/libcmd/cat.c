@@ -530,7 +530,7 @@ b_cat(int argc, char** argv, Shbltin_t* context)
 			continue;
 		}
 		if (flags&U_FLAG)
-			sfsetbuf(fp, (void*)fp, -1);
+			sfsetbuf(fp, fp, -1);
 		if (dovcat)
 			n = vcat(states, fp, sfstdout, reserve, flags);
 		else if (sfmove(fp, sfstdout, SF_UNBOUND, -1) >= 0 && sfeof(fp))

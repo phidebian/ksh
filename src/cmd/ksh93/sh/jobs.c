@@ -190,7 +190,7 @@ static char		*job_string;
 	{
 		int pgid = pgrp;
 #		ifdef TIOCGPGRP
-			return(ioctl(fd, TIOCSPGRP, &pgid));	
+			return ioctl(fd, TIOCSPGRP, &pgid);
 #		else
 			return -1;
 #		endif /* TIOCGPGRP */
@@ -1118,13 +1118,13 @@ void	job_clear(void)
 		while(px=pw)
 		{
 			pw = pw->p_nxtproc;
-			free((void*)px);
+			free(px);
 		}
 	}
 	for(jp=bck.list; jp;jp=jpnext)
 	{
 		jpnext = jp->next;
-		free((void*)jp);
+		free(jp);
 	}
 	bck.list = 0;
 	if(njob_savelist < NJOB_SAVELIST)
@@ -1621,7 +1621,7 @@ static struct process *job_unpost(struct process *pwtop,int notify)
 #endif /* DEBUG */
 	pwtop = pw = job_byjid((int)pwtop->p_job);
 	if(!pw)
-		return 0;
+		return NULL;
 #if SHOPT_BGX
 	if(pw->p_flag&P_BG) 
 		return pw;
@@ -1630,7 +1630,7 @@ static struct process *job_unpost(struct process *pwtop,int notify)
 	if(pw)
 		return pw;
 	if(pwtop->p_job == job.curjobid)
-		return 0;
+		return NULL;
 	/* all processes complete, unpost job */
 	job_unlink(pwtop);
 	for(pw=pwtop; pw; pw=pw->p_nxtproc)
@@ -1792,7 +1792,7 @@ again:
 			job_savelist = jp;
 		}
 		else
-			free((void*)jp);
+			free(jp);
 	}
 	return r;
 }
@@ -1807,7 +1807,7 @@ void *job_subsave(void)
 	bck.list = 0;
 	bck.prev = bp;
 	job_unlock();
-	return((void*)bp);
+	return bp;
 }
 
 void job_subrestore(void* ptr)
@@ -1840,7 +1840,7 @@ void job_subrestore(void* ptr)
 		job_unpost(pw,0);
 	}
 
-	free((void*)bp);
+	free(bp);
 	job_unlock();
 }
 

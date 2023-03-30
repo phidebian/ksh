@@ -209,7 +209,7 @@ int ed_emacsread(void *context, int fd,char *buff,int scend, int reedit)
 	ep->lastdraw = FINAL;
 	if(tty_raw(ERRIO,0) < 0)
 	{
-		 return(reedit?reedit:ed_read(context, fd,buff,scend,0));
+		 return reedit ? reedit : ed_read(context,fd,buff,scend,0);
 	}
 	raw = 1;
 	/* This mess in case the read system call fails */
@@ -1700,12 +1700,12 @@ static void setcursor(Emacs_t *ep,int newp,int c)
 #if SHOPT_MULTIBYTE
 static int print(int c)
 {
-	return((c&~STRIP)==0 && isprint(c));
+	return (c&~STRIP)==0 && isprint(c);
 }
 
 static int _isword(int c)
 {
-	return((c&~STRIP) || isalnum(c) || c=='_');
+	return (c&~STRIP) || isalnum(c) || c=='_';
 }
 #endif /* SHOPT_MULTIBYTE */
 

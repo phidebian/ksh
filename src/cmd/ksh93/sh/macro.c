@@ -113,7 +113,7 @@ static int	charlen(const char*,int);
 
 void *sh_macopen(void)
 {
-	return(sh_newof(0,Mac_t,1,0));
+	return sh_newof(0,Mac_t,1,0);
 }
 
 /*
@@ -194,11 +194,10 @@ int sh_macexpand(struct argnod *argp, struct argnod **arghead,int flag)
 {
 	int	flags = argp->argflag;
 	char	*str = argp->argval;
-	Mac_t  *mp = (Mac_t*)sh.mac_context;
-	char		**saveargaddr = sh.argaddr;
-	Mac_t		savemac;
-	Stk_t		*stkp = sh.stk;
-	savemac = *mp;
+	Mac_t	*mp = (Mac_t*)sh.mac_context;
+	char	**saveargaddr = sh.argaddr;
+	Mac_t	savemac = *mp;
+	Stk_t	*stkp = sh.stk;
 	mp->sp = 0;
 	if(mp->ifsp=nv_getval(sh_scoped(IFSNOD)))
 		mp->ifs = *mp->ifsp;
@@ -879,9 +878,9 @@ done:
 static void mac_substitute(Mac_t *mp, char *cp,char *str,int subexp[],int subsize)
 {
 	int	c,n;
-	char *first=fcseek(0);
-	char		*ptr;
-	Mac_t		savemac;
+	char	*first=fcseek(0);
+	char	*ptr;
+	Mac_t	savemac;
 	n = stktell(sh.stk);
 	savemac = *mp;
 	mp->pattern = 3;
@@ -940,7 +939,7 @@ static char *getdolarg(int n, int *size)
 	unsigned char *first,*last,*cp = (unsigned char*)sh.cur_line;
 	int m=sh.offsets[0],delim=0;
 	if(m==0)
-		return 0;
+		return NULL;
 	if(m<0)
 		m = 0;
 	else if(n<=m)
@@ -982,7 +981,7 @@ static char *getdolarg(int n, int *size)
 		first = last = 0;
 	if(size)
 		*size = last-first;
-	return((char*)first);
+	return (char*)first;
 }
 #endif /* SHOPT_FILESCAN */
 
@@ -1025,7 +1024,7 @@ static char *prefix(char *id)
 			return id;
 		}
 	}
-	return(sh_strdup(id));
+	return sh_strdup(id);
 }
 
 /*
@@ -1105,7 +1104,7 @@ static char *nextname(Mac_t *mp,const char *prefix, int len)
 	if(len==0)
 	{
 		mp->nvwalk = nv_diropen(NULL,prefix);
-		return((char*)mp->nvwalk);
+		return (char*)mp->nvwalk;
 	}
 	if(!(cp=nv_dirnext(mp->nvwalk)))
 		nv_dirclose(mp->nvwalk);
@@ -1884,9 +1883,16 @@ retry2:
 					oldv = v;
 					nmatch_prev = nmatch;
 					if(c=='%')
-						nmatch=substring(v,tsize,pattern,match,flag&STR_MAXIMAL);
+						nmatch = substring(v, tsize,
+							*pattern ? pattern : "~(E)$",
+							match,
+							flag & STR_MAXIMAL);
 					else
-						nmatch=strngrpmatch(v,vsize,pattern,(ssize_t*)match,elementsof(match)/2,flag|STR_INT);
+						nmatch = strngrpmatch(v, vsize,
+							*pattern ? pattern : "~(E)^",
+							(ssize_t*)match,
+							elementsof(match) / 2,
+							flag | STR_INT);
 					if(nmatch && repstr && !mp->macsub)
 						sh_setmatch(v,vsize,nmatch,match,index++);
 					if(nmatch)
@@ -2035,7 +2041,7 @@ retry2:
 			}
 		}
 		if(arrmax)
-			free((void*)arrmax);
+			free(arrmax);
 	}
 	else if(argp)
 	{
@@ -2247,7 +2253,7 @@ static void comsubst(Mac_t *mp,Shnode_t* t, int type)
 	mp->ifsp = nv_getval(np);
 	stkset(stkp,savptr,savtop);
 	newlines = 0;
-	sfsetbuf(sp,(void*)sp,0);
+	sfsetbuf(sp,sp,0);
 	bufsize = sfvalue(sp);
 	/* read command substitution output and put on stack or here-doc */
 	sfpool(sp, NULL, SF_WRITE);
@@ -2656,7 +2662,7 @@ static int	charlen(const char *string,int len)
 	else
 	{
 		if(len<0)
-			return(strlen(string));
+			return strlen(string);
 		return len;
 	}
 }
@@ -2755,7 +2761,7 @@ static char *sh_tilde(const char *string)
 		str = stakseek(offset);
 		Skip = n;
 		if(logins_tree && (np=nv_search(str,logins_tree,0)))
-			return(nv_getval(np));
+			return nv_getval(np);
 		if(pw = getpwnam(str))
 		{
 			string = str;
@@ -2765,7 +2771,7 @@ static char *sh_tilde(const char *string)
 	}
 #endif /* _WINIX */
 	if(logins_tree && (np=nv_search(string,logins_tree,0)))
-		return(nv_getval(np));
+		return nv_getval(np);
 	if(!pw && !(pw = getpwnam(string)))
 		return NULL;
 #if _WINIX
@@ -2800,20 +2806,20 @@ static char *special(int c)
 		if(sh.cur_line)
 		{
 			getdolarg(MAX_ARGN,NULL);
-			return(ltos(sh.offsets[0]));
+			return ltos(sh.offsets[0]);
 		}
 #endif  /* SHOPT_FILESCAN */
-		return(ltos(sh.st.dolc));
+		return ltos(sh.st.dolc);
 	    case '!':
 		if(sh.bckpid)
-			return(ltos(sh.bckpid));
+			return ltos(sh.bckpid);
 		break;
 	    case '$':
-		return(ltos(sh.pid));
+		return ltos(sh.pid);
 	    case '-':
-		return(sh_argdolminus(sh.arg_context));
+		return sh_argdolminus(sh.arg_context);
 	    case '?':
-		return(ltos(sh.savexit));
+		return ltos(sh.savexit);
 	    case 0:
 		if(sh_isstate(SH_PROFILE) || sh.fn_depth==0 || !sh.st.cmdname)
 			return sh.shname;

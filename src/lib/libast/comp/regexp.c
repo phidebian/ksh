@@ -41,8 +41,8 @@ block(void* handle, void* data, size_t size)
 	Env_t*	env = (Env_t*)handle;
 
 	if (data || (size = roundof(size, ALIGN_BOUND2)) > (env->buf + env->size - env->cur))
-		return 0;
-	data = (void*)env->cur;
+		return NULL;
+	data = env->cur;
 	env->cur += size;
 	return data;
 }
@@ -111,9 +111,9 @@ _re_putc(int c)
 	static Sfio_t*	sp;
 
 	if (!sp && !(sp = sfstropen()))
-		return 0;
+		return NULL;
 	if (!c)
 		return sfstruse(sp);
 	sfputc(sp, c);
-	return 0;
+	return NULL;
 }

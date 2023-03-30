@@ -286,26 +286,26 @@ getdata(Magic_t* mp, long off, int siz)
 	long	n;
 
 	if (off < 0)
-		return 0;
+		return NULL;
 	if (off + siz <= mp->fbsz)
 		return mp->fbuf + off;
 	if (off < mp->xoff || off + siz > mp->xoff + mp->xbsz)
 	{
 		if (off + siz > mp->fbmx)
-			return 0;
+			return NULL;
 		n = (off / (SF_BUFSIZE / 2)) * (SF_BUFSIZE / 2);
 		if (sfseek(mp->fp, n, SEEK_SET) != n)
-			return 0;
+			return NULL;
 		if ((mp->xbsz = sfread(mp->fp, mp->xbuf, sizeof(mp->xbuf) - 1)) < 0)
 		{
 			mp->xoff = 0;
 			mp->xbsz = 0;
-			return 0;
+			return NULL;
 		}
 		mp->xbuf[mp->xbsz] = 0;
 		mp->xoff = n;
 		if (off + siz > mp->xoff + mp->xbsz)
-			return 0;
+			return NULL;
 	}
 	return mp->xbuf + off - mp->xoff;
 }
@@ -925,7 +925,7 @@ ckmagic(Magic_t* mp, const char* file, char* buf, char* end, struct stat* st, un
 		*b = 0;
 		return buf;
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -2259,11 +2259,11 @@ magicopen(Magicdisc_t* disc)
 	unsigned char*	map[CC_MAPS + 1];
 
 	if (!(vm = vmopen(Vmdcheap, Vmbest, 0)))
-		return 0;
+		return NULL;
 	if (!(mp = vmnewof(vm, 0, Magic_t, 1, 0)))
 	{
 		vmclose(vm);
-		return 0;
+		return NULL;
 	}
 	mp->id = lib;
 	mp->disc = disc;
@@ -2273,7 +2273,7 @@ magicopen(Magicdisc_t* disc)
 	mp->redisc.re_flags = REG_NOFREE;
 	mp->redisc.re_errorf = (regerror_t)disc->errorf;
 	mp->redisc.re_resizef = (regresize_t)vmgetmem;
-	mp->redisc.re_resizehandle = (void*)mp->vm;
+	mp->redisc.re_resizehandle = mp->vm;
 	mp->dtdisc.key = offsetof(Info_t, name);
 	mp->dtdisc.link = offsetof(Info_t, link);
 	if (!(mp->tmp = sfstropen()) || !(mp->infotab = dtnew(mp->vm, &mp->dtdisc, Dtoset)))
@@ -2297,7 +2297,7 @@ magicopen(Magicdisc_t* disc)
 	return mp;
  bad:
 	magicclose(mp);
-	return 0;
+	return NULL;
 }
 
 /*

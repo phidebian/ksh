@@ -420,7 +420,7 @@ procopen(const char* cmd, char** argv, char** envv, long* modv, int flags)
 	if (!argv && (flags & (PROC_ORPHAN|PROC_OVERLAY)))
 	{
 		errno = ENOEXEC;
-		return 0;
+		return NULL;
 	}
 	pio[0] = pio[1] = -1;
 	pop[0] = pop[1] = -1;
@@ -882,5 +882,5 @@ procopen(const char* cmd, char** argv, char** envv, long* modv, int flags)
 		close(poi[1]);
 #endif /* !_pipe_rw && !_lib_socketpair */
 	procfree(proc);
-	return 0;
+	return NULL;
 }

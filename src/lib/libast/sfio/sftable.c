@@ -390,7 +390,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 			memcpy(ft,&fp[n].ft,sizeof(Sffmt_t));
 			va_copy(ft->args,args);
 			ft->flags |= SFFMT_ARGPOS;
-			v = (*ft->extf)(f, (void*)(&fp[n].argv), ft);
+			v = (*ft->extf)(f, &fp[n].argv, ft);
 			va_copy(args,ft->args);
 			memcpy(&fp[n].ft,ft,sizeof(Sffmt_t));
 			if(v < 0)

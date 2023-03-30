@@ -171,7 +171,7 @@ suffix(const char* path)
 			return (char*)s + 1;
 		else if (c == '/' || c == '\\')
 			break;
-	return 0;
+	return NULL;
 }
 
 static int

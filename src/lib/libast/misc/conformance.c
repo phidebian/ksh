@@ -144,5 +144,5 @@ conformance(const char* s, size_t n)
 		if (s < e)
 			s++;
 	} while (s < e);
-	return 0;
+	return NULL;
 }

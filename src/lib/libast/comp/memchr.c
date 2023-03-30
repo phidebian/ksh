@@ -27,7 +27,7 @@ NoN(memchr)
 
 /*
  * Return the ptr in sp at which the character c appears;
- * 0 if not found in n chars; don't stop at \0.
+ * NULL if not found in n chars; don't stop at \0.
  */
 
 void*
@@ -39,7 +39,7 @@ memchr(const void* asp, int c, size_t n)
 	while (sp < ep)
 		if (*sp++ == c)
 			return --sp;
-	return 0;
+	return NULL;
 }
 
 #endif

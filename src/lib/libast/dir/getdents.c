@@ -67,7 +67,7 @@ getdents(int fd, void* buf, size_t siz)
 #if _lib_getdirentries
 	{
 		long		off;
-		return(getdirentries(fd, buf, siz, &off));
+		return getdirentries(fd, buf, siz, &off);
 	}
 #else
 #if _lib_dirread
@@ -104,12 +104,12 @@ getdents(int fd, void* buf, size_t siz)
 					up = (struct dirent*)((char*)up + up->d_reclen);
 				}
 			}
-			return((char*)up - (char*)buf);
+			return (char*)up - (char*)buf;
 		}
 	}
 #else
 #if _mem_d_reclen_direct
-	return(read(fd, buf, siz));
+	return read(fd, buf, siz);
 #else
 	{
 
@@ -152,7 +152,7 @@ getdents(int fd, void* buf, size_t siz)
 				sp++;
 			}
 		} while (up == (struct dirent*)buf);
-		return((char*)up - (char*)buf);
+		return (char*)up - (char*)buf;
 	}
 #endif
 #endif

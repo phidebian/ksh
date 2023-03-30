@@ -50,7 +50,7 @@ pathrepl_20100601(char* path, size_t size, const char* match, const char* replac
 	if (!replace)
 		replace = "";
 	if (streq(match, replace))
-		return(path + strlen(path));
+		return path + strlen(path);
 	if (!size)
 		size = strlen(path) + 1;
 	for (;;)

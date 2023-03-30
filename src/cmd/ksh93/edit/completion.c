@@ -46,7 +46,7 @@ static char *fmtx(const char *string)
 	mbinit();
 	while((c=mbchar(cp)),(c>UCHAR_MAX)||(n=state[c])==0 || n==S_EPAT);
 	if(n==S_EOF && *string!='#')
-		return((char*)string);
+		return (char*)string;
 	stakwrite(string,--cp-string);
 	for(string=cp;c=mbchar(cp);string=cp)
 	{
@@ -60,7 +60,7 @@ static char *fmtx(const char *string)
 			stakwrite(string,n);
 	}
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 #if !SHOPT_GLOBCASEDET

@@ -170,7 +170,7 @@ static void* hflatten(Dt_t* dt, int type)
 		}
 		else	hash->data.size = 0;
 
-		return (void*)head;
+		return head;
 	}
 	else /* restoring a previous flattened list */
 	{	head = hash->here;
@@ -211,10 +211,10 @@ static void* hlist(Dt_t* dt, Dtlink_t* list, int type)
 		for(l = list; l; l = next)
 		{	next = l->_rght;
 			obj = _DTOBJ(disc,l);
-			if((*dt->meth->searchf)(dt, (void*)l, DT_RELINK) == obj)
+			if((*dt->meth->searchf)(dt, l, DT_RELINK) == obj)
 				dt->data->size += 1;
 		}
-		return (void*)list;
+		return list;
 	}
 }
 

@@ -288,7 +288,7 @@ static long dbsize(Vmalloc_t* vm, void* addr, int local)
 		   (Vmuchar_t*)addr >= (Vmuchar_t*)endb)
 			continue;
 		while(b < endb)
-		{	if(addr == (void*)DB2DEBUG(DATA(b)))
+		{	if(addr == DB2DEBUG(DATA(b)))
 			{	if(ISBUSY(SIZE(b)) && !ISJUNK(SIZE(b)) )
 					size = (long)DBSIZE(addr);
 				goto done;
@@ -341,7 +341,7 @@ static void* dballoc(Vmalloc_t* vm, size_t size, int local)
 done:
 	CLRLOCK(vm, local);
 
-	return (void*)data;
+	return data;
 }
 
 
@@ -382,7 +382,7 @@ static int dbfree(Vmalloc_t* vm, void* data, int local )
 		while(ip < endip)
 			*ip++ = 0;
 
-		rv = KPVFREE((vm), (void*)DB2BEST(data), (*Vmbest->freef));
+		rv = KPVFREE((vm), DB2BEST(data), (*Vmbest->freef));
 	}
 
 	CLRLOCK(vm, local);
@@ -409,7 +409,7 @@ static void* dbresize(Vmalloc_t*	vm,	/* region allocating from	*/
 	{	vm->file = file; vm->line = line;
 		data = (Vmuchar_t*)dballoc(vm, size, local);
 		if(data && (type&VM_RSZERO) )
-			memset((void*)data, 0, size);
+			memset(data, 0, size);
 		return data;
 	}
 	if(size == 0)
@@ -441,7 +441,7 @@ static void* dbresize(Vmalloc_t*	vm,	/* region allocating from	*/
 		s = ROUND(size,ALIGN) + DB_EXTRA;
 		if(s < sizeof(Body_t))
 			s = sizeof(Body_t);
-		data = (Vmuchar_t*)KPVRESIZE(vm,(void*)data,s,
+		data = (Vmuchar_t*)KPVRESIZE(vm,data,s,
 					 (type&~VM_RSZERO),(*(Vmbest->resizef)) );
 		if(!data) /* failed, reset data for old block */
 		{	dbwarn(vm,NULL,DB_ALLOC,file,line,func,DB_RESIZE);
@@ -467,7 +467,7 @@ static void* dbresize(Vmalloc_t*	vm,	/* region allocating from	*/
 
 	CLRLOCK(vm, local);
 
-	return (void*)data;
+	return data;
 }
 
 /* compact any residual free space */
@@ -590,7 +590,7 @@ static void* dbalign(Vmalloc_t* vm, size_t size, size_t align, int local)
 
 	CLRLOCK(vm, local);
 
-	return (void*)data;
+	return data;
 }
 
 /* print statistics of region vm. If vm is NULL, use Vmregion */

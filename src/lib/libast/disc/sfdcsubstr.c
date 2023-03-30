@@ -135,17 +135,17 @@ Sfio_t* sfdcsubstream(Sfio_t*	f,	/* stream */
 
 	/* establish that we can seek to offset */
 	if((here = sfseek(parent,0,SEEK_CUR)) < 0 || sfseek(parent,offset,SEEK_SET) < 0)
-		return 0;
+		return NULL;
 	else	sfseek(parent,here,SEEK_SET);
 	sfpurge(parent);
 
 	if (!(sp = f) && !(sp = sfnew(NULL, NULL, (size_t)SF_UNBOUND, dup(sffileno(parent)), parent->flags)))
-		return 0;
+		return NULL;
 
 	if(!(su = (Subfile_t*)malloc(sizeof(Subfile_t))))
 	{	if(sp != f)
 			sfclose(sp);
-		return 0;
+		return NULL;
 	}
 	memset(su, 0, sizeof(*su));
 
@@ -161,7 +161,7 @@ Sfio_t* sfdcsubstream(Sfio_t*	f,	/* stream */
 	{	free(su);
 		if(sp != f)
 			sfclose(sp);
-		return 0;
+		return NULL;
 	}
 
 	return sp;

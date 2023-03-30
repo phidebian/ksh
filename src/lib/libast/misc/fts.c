@@ -181,7 +181,7 @@ node(FTS* fts, FTSENT* parent, char* name, size_t namelen)
 		{
 			fts->fts_errno = errno;
 			fts->state = FTS_error;
-			return 0;
+			return NULL;
 		}
 		f->fts = fts;
 	}
@@ -729,7 +729,7 @@ fts_open(char* const* pathnames, int flags, int (*comparf)(FTSENT* const*, FTSEN
 	FTS*	fts;
 
 	if (!(fts = newof(0, FTS, 1, sizeof(FTSENT))))
-		return 0;
+		return NULL;
 	fts->flags = flags;
 	fts->cd = (flags & FTS_NOCHDIR) ? 1 : -1;
 	fts->comparf = comparf;
@@ -744,7 +744,7 @@ fts_open(char* const* pathnames, int flags, int (*comparf)(FTSENT* const*, FTSEN
 		if (!(fts->home = newof(fts->home, char, fts->homesize, 0)))
 		{
 			free(fts);
-			return 0;
+			return NULL;
 		}
 		if (fts->cd > 0 || getcwd(fts->home, fts->homesize))
 			break;
@@ -789,7 +789,7 @@ fts_open(char* const* pathnames, int flags, int (*comparf)(FTSENT* const*, FTSEN
 #endif
 	{
 		fts_close(fts);
-		return 0;
+		return NULL;
 	}
 	return fts;
 }
@@ -849,7 +849,7 @@ fts_read(FTS* fts)
 			if (!fts->state && fts->comparf)
 				order(fts);
 			if (!(f = fts->todo))
-				return 0;
+				return NULL;
 			/* FALLTHROUGH */
 
 		case FTS_todo:
@@ -897,7 +897,7 @@ fts_read(FTS* fts)
 			 */
 
 			if ((fts->baselen = f->fts_namelen) >= (fts->endbuf - fts->base) && resize(fts, fts->baselen))
-				return 0;
+				return NULL;
 			memcpy(fts->base, f->name, fts->baselen + 1);
 			fts->name = fts->cd ? fts->path : fts->base;
 			/* FALLTHROUGH */
@@ -1020,7 +1020,7 @@ fts_read(FTS* fts)
 
 				i = D_NAMLEN(d);
 				if (!(f = node(fts, fts->current, s, i)))
-					return 0;
+					return NULL;
 				TYPE(f, D_TYPE(d));
 
 				/*
@@ -1030,7 +1030,7 @@ fts_read(FTS* fts)
 				if (i >= fts->endbuf - fts->endbase)
 				{
 		   	   		if (resize(fts, i))
-						return 0;
+						return NULL;
 					fts->endbase = fts->base + fts->baselen;
 					if (fts->endbase[-1] != '/')
 						fts->endbase++;
@@ -1257,7 +1257,7 @@ fts_read(FTS* fts)
 				fts->state = FTS_todo;
 				continue;
 			}
-			return 0;
+			return NULL;
 
 		case FTS_children_return:
 
@@ -1390,13 +1390,13 @@ fts_read(FTS* fts)
 
 		case FTS_error:
 
-			return 0;
+			return NULL;
 
 		default:
 
 			fts->fts_errno = EINVAL;
 			fts->state = FTS_error;
-			return 0;
+			return NULL;
 
 		}
  note:
@@ -1407,7 +1407,7 @@ fts_read(FTS* fts)
 		{
 			fts->fts_errno = EINVAL;
 			fts->state = FTS_error;
-			return 0;
+			return NULL;
 		}
 	return f;
 }
@@ -1469,7 +1469,7 @@ fts_children(FTS* fts, int flags)
 		return f;
 
 	}
-	return 0;
+	return NULL;
 }
 
 /*

@@ -219,7 +219,7 @@ dllsopen(const char* lib, const char* name, const char* version)
 	char		buf[32];
 
 	if (!(vm = vmopen(Vmdcheap, Vmlast, 0)))
-		return 0;
+		return NULL;
 	if (lib && *lib && (*lib != '-' || *(lib + 1)))
 	{
 		/*
@@ -240,7 +240,7 @@ dllsopen(const char* lib, const char* name, const char* version)
 	if (!(scan = vmnewof(vm, 0, Dllscan_t, 1, i)) || !(scan->tmp = sfstropen()))
 	{
 		vmclose(vm);
-		return 0;
+		return NULL;
 	}
 	scan->vm = vm;
 	info = dllinfo();
@@ -345,7 +345,7 @@ dllsopen(const char* lib, const char* name, const char* version)
 	return scan;
  bad:
 	dllsclose(scan);
-	return 0;
+	return NULL;
 }
 
 /*
@@ -383,7 +383,7 @@ dllsread(Dllscan_t* scan)
 	int		m;
 
 	if (scan->flags & DLL_MATCH_DONE)
-		return 0;
+		return NULL;
  again:
 	do
 	{
@@ -400,7 +400,7 @@ dllsread(Dllscan_t* scan)
 			{
 				scan->sp = scan->sb;
 				if (!*scan->pe++)
-					return 0;
+					return NULL;
 				scan->pb = scan->pe;
 			}
 			for (p = scan->pp = scan->pb; *p && *p != ':'; p++)
@@ -416,7 +416,7 @@ dllsread(Dllscan_t* scan)
 			{
 				sfprintf(scan->tmp, "/%s", scan->nam);
 				if (!(p = sfstruse(scan->tmp)))
-					return 0;
+					return NULL;
 				if (!eaccess(p, R_OK))
 				{
 					b = scan->nam;
@@ -429,7 +429,7 @@ dllsread(Dllscan_t* scan)
 			{
 				sfstrseek(scan->tmp, scan->off, SEEK_SET);
 				if (!(t = sfstruse(scan->tmp)))
-					return 0;
+					return NULL;
 				if ((scan->fts = fts_open((char**)t, FTS_LOGICAL|FTS_NOPOSTORDER|FTS_ONEPATH, vercmp)) && (scan->ent = fts_read(scan->fts)) && (scan->ent = fts_children(scan->fts, FTS_NOSTAT)))
 					break;
 			}
@@ -439,7 +439,7 @@ dllsread(Dllscan_t* scan)
 	sfstrseek(scan->tmp, scan->off, SEEK_SET);
 	sfprintf(scan->tmp, "/%s", b);
 	if (!(p = sfstruse(scan->tmp)))
-		return 0;
+		return NULL;
  found:
 	b = scan->buf + sfsprintf(scan->buf, sizeof(scan->buf), "%s", b + scan->prelen);
 	if (!(scan->flags & DLL_INFO_PREVER))
@@ -500,20 +500,20 @@ dllsread(Dllscan_t* scan)
 			scan->disc.size = 0;
 			scan->disc.link = offsetof(Uniq_t, link);
 			if (!(scan->dict = dtopen(&scan->disc, Dtset)))
-				return 0;
+				return NULL;
 			dtinsert(scan->dict, scan->uniq);
 		}
 		if (dtmatch(scan->dict, b))
 			goto again;
 		if (!(u = vmnewof(scan->vm, 0, Uniq_t, 1, strlen(b))))
-			return 0;
+			return NULL;
 		strcpy(u->name, b);
 		dtinsert(scan->dict, u);
 	}
 	else if (!(scan->flags & DLL_MATCH_NAME))
 		scan->flags |= DLL_MATCH_DONE;
 	else if (!(scan->uniq = vmnewof(scan->vm, 0, Uniq_t, 1, strlen(b))))
-		return 0;
+		return NULL;
 	else
 		strcpy(scan->uniq->name, b);
 	scan->entry.name = b;

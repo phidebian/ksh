@@ -100,7 +100,7 @@ int sfclose(Sfio_t* f)
 		else
 #endif
 		if(f->flags&SF_MALLOC)
-			data = (void*)f->data;
+			data = f->data;
 
 		f->data = NULL;
 		f->size = -1;

@@ -75,7 +75,7 @@ Vmalloc_t* vmopen(Vmdisc_t*	disc,	/* discipline to get segments	*/
 
 	if(disc->exceptf)
 	{	addr = NULL;
-		if((rv = (*disc->exceptf)(vmp,VM_OPEN,(void*)(&addr),disc)) < 0)
+		if((rv = (*disc->exceptf)(vmp,VM_OPEN,&addr,disc)) < 0)
 			return NULL;
 		else if(rv == 0 )
 		{	if(addr) /* vm itself is in memory from disc->memoryf */
@@ -120,7 +120,7 @@ Vmalloc_t* vmopen(Vmdisc_t*	disc,	/* discipline to get segments	*/
 	seg = vd->seg;
 	seg->next = NULL;
 	seg->vmdt = vd;
-	seg->addr = (void*)addr;
+	seg->addr = addr;
 	seg->extent = size;
 	seg->baddr = addr + size;
 	seg->size = size; /* Note: this size is unusually large to mark seg as

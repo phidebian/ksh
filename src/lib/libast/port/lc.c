@@ -53,7 +53,7 @@ static Lc_t		default_lc =
 		{ &default_lc, 0, 0 },
 		{ &default_lc, 0, 0 },
 		{ &default_lc, 0, 0 },
-		{ &default_lc, 0, (void*)&default_numeric },
+		{ &default_lc, 0, &default_numeric },
 		{ &default_lc, 0, 0 },
 		{ &default_lc, 0, 0 },
 		{ &default_lc, 0, 0 },
@@ -83,7 +83,7 @@ static Lc_t		debug_lc =
 		{ &debug_lc, 0, 0 },
 		{ &debug_lc, 0, 0 },
 		{ &debug_lc, 0, 0 },
-		{ &debug_lc, 0, (void*)&debug_numeric },
+		{ &debug_lc, 0, &debug_numeric },
 		{ &debug_lc, 0, 0 },
 		{ &debug_lc, 0, 0 },
 		{ &debug_lc, 0, 0 },
@@ -162,7 +162,7 @@ Lc_info_t*
 lcinfo(int category)
 {
 	if ((category = lcindex(category, 0)) < 0)
-		return 0;
+		return NULL;
 	return LCINFO(category);
 }
 
@@ -607,7 +607,7 @@ lcmake(const char* name)
 				s = (char*)name;
 				z = strlen(s) + 1;
 				if (!(lp = newof(0, Lc_language_t, 1, z)))
-					return 0;
+					return NULL;
 				name = ((Lc_language_t*)lp)->code = ((Lc_language_t*)lp)->name = (const char*)(lp + 1);
 				memcpy((char*)lp->code, s, z - 1);
 				tp = &lc_territories[0];
@@ -771,7 +771,7 @@ lcmake(const char* name)
 			break;
 		}
 	if (!(lc = newof(0, Lc_t, 1, n + z)))
-		return 0;
+		return NULL;
 	strcpy((char*)(lc->name = (const char*)(lc + 1)), name);
 	lc->code = lc->name + n;
 	if (i >= 0)
@@ -833,7 +833,7 @@ lcscan(Lc_t* lc)
 	if (!(ls = (Lc_scan_t*)lc))
 	{
 		if (!(ls = newof(0, Lc_scan_t, 1, 0)))
-			return 0;
+			return NULL;
 		ls->lc.code = ls->lc.name = ls->buf;
 		ls->territory = -1;
 		ls->language = elementsof(ls->lc.territory->languages);
@@ -846,7 +846,7 @@ lcscan(Lc_t* lc)
 			if (!lc_territories[++ls->territory].code)
 			{
 				free(ls);
-				return 0;
+				return NULL;
 			}
 			ls->lc.territory = &lc_territories[ls->territory];
 			ls->lc.language = ls->lc.territory->languages[ls->language = 0];

@@ -80,8 +80,6 @@ struct _sffmt_s
 	ssize_t		n_str;	/* length of t_str 			*/
 
 	void*		mbs;	/* multibyte state for format string	*/
-
-	void*		none;	/* unused for now			*/
 };
 #define sffmtversion(fe,type) \
 		((type) ? ((fe)->version = SFIO_VERSION) : (fe)->version)

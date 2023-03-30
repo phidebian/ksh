@@ -78,7 +78,7 @@ static Namval_t *create_tree(Namval_t *np,const char *name,int flag,Namfun_t *dp
 			return np;
 		}
 	}
-	return((flag&NV_NOADD)?0:np);
+	return (flag&NV_NOADD) ? 0 : np;
 }
 
 static Namfun_t *clone_tree(Namval_t *np, Namval_t *mp, int flags, Namfun_t *fp){
@@ -90,7 +90,7 @@ static Namfun_t *clone_tree(Namval_t *np, Namval_t *mp, int flags, Namfun_t *fp)
 	{
 		walk_tree(np,mp,flags);
 		if((flags&NV_MOVE) && !(fp->nofree&1))
-			free((void*)fp);
+			free(fp);
 	}
 	return dp;
 }
@@ -124,20 +124,20 @@ static char *nextdot(const char *str)
 		if(c=='.')
 			return cp;
 	}
-	return 0;
+	return NULL;
 }
 
 static  Namfun_t *nextdisc(Namval_t *np)
 {
 	Namfun_t *fp;
 	if(nv_isref(np))
-		return 0;
+		return NULL;
         for(fp=np->nvfun;fp;fp=fp->next)
 	{
 		if(fp && fp->disc && fp->disc->nextf)
 			return fp;
 	}
-	return 0;
+	return NULL;
 }
 
 void *nv_diropen(Namval_t *np,const char *name)
@@ -147,7 +147,7 @@ void *nv_diropen(Namval_t *np,const char *name)
 	struct nvdir *save, *dp = new_of(struct nvdir,len+1);
 	Namval_t *nq=0,fake;
 	Namfun_t *nfp=0;
-	memset((void*)dp, 0, sizeof(*dp));
+	memset(dp, 0, sizeof(*dp));
 	dp->data = (char*)(dp+1);
 	if(name[len-1]=='*' || name[len-1]=='@')
 		len -= 1;
@@ -247,17 +247,17 @@ void *nv_diropen(Namval_t *np,const char *name)
 		nq = np;
 		np = 0;
 	}
-	return((void*)dp);
+	return dp;
 }
 
 
 static Namval_t *nextnode(struct nvdir *dp)
 {
 	if(dp->nextnode)
-		return((*dp->nextnode)(dp->hp,dp->root,dp->fun));
+		return (*dp->nextnode)(dp->hp,dp->root,dp->fun);
 	if(dp->len && strncmp(dp->data, dp->hp->nvname, dp->len))
-		return 0;
-	return((Namval_t*)dtnext(dp->root,dp->hp));
+		return NULL;
+	return (Namval_t*)dtnext(dp->root,dp->hp);
 }
 
 char *nv_dirnext(void *dir)
@@ -331,16 +331,16 @@ char *nv_dirnext(void *dir)
 		if(!(save=dp->prev))
 			break;
 		*dp = *save;
-		free((void*)save);
+		free(save);
 	}
-	return 0;
+	return NULL;
 }
 
 void nv_dirclose(void *dir)
 {
 	struct nvdir *dp = (struct nvdir*)dir;
 	if(dp->prev)
-		nv_dirclose((void*)dp->prev);
+		nv_dirclose(dp->prev);
 	free(dir);
 }
 
@@ -702,7 +702,7 @@ static void outval(char *name, const char *vname, struct Walk *wp)
 		{
 			fp = nv_stack(np,fp);
 			if(fp = nv_stack(np,NULL))
-				free((void*)fp);
+				free(fp);
 			np->nvfun = 0;
 			return;
 		}
@@ -1050,14 +1050,14 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 		return NULL;
 	sfputc(out,0);
 	sfseek(out,off,SEEK_SET);
-	return((char*)out->_data+off);
+	return (char*)out->_data+off;
 }
 
 Namfun_t *nv_isvtree(Namval_t *np)
 {
 	if(np)
-		return(nv_hasdisc(np,&treedisc));
-	return 0;
+		return nv_hasdisc(np,&treedisc);
+	return NULL;
 }
 
 /*
@@ -1069,19 +1069,19 @@ char *nv_getvtree(Namval_t *np, Namfun_t *fp)
 	for(; fp && fp->next; fp=fp->next)
 	{
 		if(fp->next->disc && (fp->next->disc->getnum || fp->next->disc->getval))
-			return(nv_getv(np,fp));
+			return nv_getv(np,fp);
 	}
 	if(nv_isattr(np,NV_BINARY) &&  !nv_isattr(np,NV_RAW))
-		return(nv_getv(np,fp));
+		return nv_getv(np,fp);
 	if(nv_isattr(np,NV_ARRAY) && !nv_type(np) && nv_arraychild(np,NULL,0)==np)
-		return(nv_getv(np,fp));
+		return nv_getv(np,fp);
 	if(flags = nv_isattr(np,NV_EXPORT))
 		nv_offattr(np,NV_EXPORT);
 	if(flags |= nv_isattr(np,NV_TABLE))
 		nv_offattr(np,NV_TABLE);
 	if(dsize && (flags&NV_EXPORT))
-		return("()");
-	return(walk_tree(np,NULL,flags));
+		return "()";
+	return walk_tree(np,NULL,flags);
 }
 
 /*
@@ -1122,7 +1122,7 @@ static void put_tree(Namval_t *np, const char *val, int flags,Namfun_t *fp)
 	{
 		fp = nv_stack(np,fp);
 		if(fp = nv_stack(np,NULL))
-			free((void*)fp);
+			free(fp);
 	}
 }
 

@@ -76,7 +76,7 @@
 #define DEBUG_BREAK		break
 #define DEBUG_CONTINUE		continue
 #define DEBUG_GOTO(label)	goto label
-#define DEBUG_RETURN(x)		return(x)
+#define DEBUG_RETURN(x)		return x
 
 #endif
 

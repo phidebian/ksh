@@ -150,11 +150,11 @@ int	wordexp(const char *string, wordexp_t *wdarg, int flags)
 	if(flags&WRDE_DOOFFS)
 		c += wdarg->we_offs;
 	if(flags&WRDE_APPEND)
-		av = (char**)realloc((void*)&wdarg->we_wordv[-1], (wdarg->we_wordc+c)*sizeof(char*));
+		av = (char**)realloc(&wdarg->we_wordv[-1], (wdarg->we_wordc+c)*sizeof(char*));
 	else if(av = (char**)malloc(c*sizeof(char*)))
 	{
 		if(flags&WRDE_DOOFFS)
-			memset((void*)av,0,(wdarg->we_offs+1)*sizeof(char*));
+			memset(av,0,(wdarg->we_offs+1)*sizeof(char*));
 		else
 			av[0] = 0;
 	}
@@ -175,7 +175,7 @@ int	wordexp(const char *string, wordexp_t *wdarg, int flags)
 	wdarg->we_wordc += ac;
 	if(flags&WRDE_DOOFFS)
 		av += wdarg->we_offs;
-	memcpy((void*)cp,stakptr(offset),c);
+	memcpy(cp,stakptr(offset),c);
 	while(ac-- > 0)
 	{
 		*av++ = cp;
@@ -204,9 +204,9 @@ int wordfree(wordexp_t *wdarg)
 		while(arg=argnext)
 		{
 			argnext = arg->next;
-			free((void*)arg);
+			free(arg);
 		}
-		free((void*)&wdarg->we_wordv[-1]);
+		free(&wdarg->we_wordv[-1]);
 		wdarg->we_wordv = 0;
 	}
 	wdarg->we_wordc=0;

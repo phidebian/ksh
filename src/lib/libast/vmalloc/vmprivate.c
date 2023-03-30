@@ -120,7 +120,7 @@ static Block_t* _vmextend(Vmalloc_t*	vm,		/* region to increase in size	*/
 
 		seg = (Seg_t*)addr;
 		seg->vmdt = vd;
-		seg->addr = (void*)(addr - (s ? ALIGN-s : 0));
+		seg->addr = addr - (s ? ALIGN-s : 0);
 		seg->extent = size;
 		seg->baddr = addr + size - (s ? 2*ALIGN : 0);
 		seg->free = NULL;

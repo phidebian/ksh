@@ -487,7 +487,7 @@ pop(Push_t* psp)
 		psp = psp->next;
 		free(tsp);
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -774,8 +774,8 @@ search(const void* tab, size_t num, size_t siz, char* s)
 
 	for (e = (p = (char*)tab) + num * siz; p < e; p += siz)
 		if (match(s, *((char**)p), -1, NULL, NULL))
-			return (void*)p;
-	return 0;
+			return p;
+	return NULL;
 }
 
 /*
@@ -1227,7 +1227,7 @@ localize(Push_t* psp, char* s, char* e, int term, int n, Sfio_t* ip, int version
 		sfputc(ip, c);
 	}
 	if (!(s = sfstruse(ip)) || (u = T(id, catalog, s)) == s)
-		return 0;
+		return NULL;
 	n = strlen(u);
 	if (tsp = newof(0, Push_t, 1, n + 1))
 	{

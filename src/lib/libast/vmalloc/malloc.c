@@ -131,7 +131,7 @@ lcl_getenv(const char* s)
 	static char	buf[512];
 
 	if (!(n = GetEnvironmentVariable(s, buf, sizeof(buf))) || n > sizeof(buf))
-		return 0;
+		return NULL;
 	return buf;
 }
 #endif /* _WINIX */
@@ -275,7 +275,7 @@ static void addfreelist(Regfree_t* data)
 
 	for(k = 0;; ASOLOOP(k) )
 	{	data->next = head = Regfree;
-		if(asocasptr(&Regfree, head, data) == (void*)head )
+		if(asocasptr(&Regfree, head, data) == head )
 			return;
 	}
 }
@@ -293,9 +293,9 @@ static void clrfreelist()
 
 	for(; list; list = next)
 	{	next = list->next;
-		if(vm = regionof((void*)list))
+		if(vm = regionof(list))
 		{	if(asocasint(&vm->data->lock, 0, 1) == 0) /* can free this now */
-			{	(void)(*vm->meth.freef)(vm, (void*)list, 1);
+			{	(void)(*vm->meth.freef)(vm, list, 1);
 				vm->data->lock = 0;
 			}
 			else	addfreelist(list); /* ah well, back in the queue */
@@ -597,7 +597,7 @@ extern void* alloca(size_t size)
 	f->head.head.next = Frame;
 	Frame = f;
 
-	return (void*)f->data;
+	return f->data;
 }
 #endif /*!_lib_alloca || _mal_alloca*/
 

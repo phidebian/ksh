@@ -31,7 +31,7 @@ Vmdisc_t* vmdisc(Vmalloc_t* vm, Vmdisc_t* disc)
 
 	if(disc)
 	{	if(old->exceptf &&
-		   (*old->exceptf)(vm,VM_DISC,(void*)disc,old) != 0 )
+		   (*old->exceptf)(vm,VM_DISC,disc,old) != 0 )
 			return NULL;
 		vm->disc = disc;
 	}

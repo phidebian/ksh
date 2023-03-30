@@ -57,7 +57,7 @@ Wc_t* wc_init(int mode)
 	Wc_t*	wp;
 
 	if (!(wp = (Wc_t*)stakalloc(sizeof(Wc_t))))
-		return 0;
+		return NULL;
 	if (!mbwide())
 		wp->mb = 0;
 #if _hdr_wchar && _hdr_wctype && _lib_iswctype
@@ -135,7 +135,7 @@ static int chkstate(int state, unsigned int c)
 		else if((c&0xf0)== 0x80)
 		{
 			if((c&=0xf)==7)
-				return(iswspace(0x2007)?10:0);
+				return iswspace(0x2007) ? 10 : 0;
 			if(c<=0xb)
 				return 10;
 		}

@@ -29,7 +29,7 @@ NoN(lstat)
 int
 lstat(const char* path, struct stat* st)
 {
-	return(stat(path, st));
+	return stat(path, st);
 }
 
 #endif

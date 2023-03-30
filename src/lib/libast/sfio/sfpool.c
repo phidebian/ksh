@@ -36,7 +36,7 @@ static int delpool(Sfpool_t* p)
 {
 
 	if(p->s_sf && p->sf != p->array)
-		free((void*)p->sf);
+		free(p->sf);
 	p->mode = SF_AVAIL;
 
 	return 0;

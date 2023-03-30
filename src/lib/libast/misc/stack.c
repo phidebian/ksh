@@ -36,17 +36,17 @@ stackalloc(int size, void* error)
 	struct stackblock	*b;
 
 	if (size <= 0) size = 100;
-	if (!(stack = newof(0, struct stacktable, 1, 0))) return 0;
+	if (!(stack = newof(0, struct stacktable, 1, 0))) return NULL;
 	if (!(b = newof(0, struct stackblock, 1, 0)))
 	{
 		free(stack);
-		return 0;
+		return NULL;
 	}
 	if (!(b->stack = newof(0, void*, size, 0)))
 	{
 		free(b);
 		free(stack);
-		return 0;
+		return NULL;
 	}
 	stack->blocks = b;
 	stack->size = size;

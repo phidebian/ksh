@@ -45,7 +45,7 @@ static Sfio_t *infile;
 Shnode_t *sh_trestore(Sfio_t *in)
 {
 	infile = in;
-	return(r_tree());
+	return r_tree();
 }
 /*
  * read in a shell tree
@@ -171,8 +171,8 @@ static Shnode_t *r_tree(void)
 
 static struct argnod *r_arg(void)
 {
-	struct argnod *ap=0, *apold, *aptop=0;
-	long l;
+	struct argnod	*ap=0, *apold, *aptop=0;
+	long		l;
 	Stk_t		*stkp=sh.stk;
 	while((l=sfgetu(infile))>0)
 	{
@@ -266,11 +266,11 @@ static void r_comarg(struct comnod *com)
 	if(cmdname)
 	{
 		char *cp;
-		com->comnamp = (void*)nv_search(cmdname,sh.fun_tree,0);
+		com->comnamp = nv_search(cmdname,sh.fun_tree,0);
 		if(com->comnamp && (cp =strrchr(cmdname+1,'.')))
 		{
 			*cp = 0;
-			com->comnamp =  (void*)nv_open(cmdname,sh.var_tree,NV_VARNAME|NV_NOADD|NV_NOARRAY);
+			com->comnamp = nv_open(cmdname,sh.var_tree,NV_VARNAME|NV_NOADD|NV_NOARRAY);
 			*cp = '.';
 		}
 	}

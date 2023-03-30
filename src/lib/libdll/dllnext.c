@@ -201,10 +201,10 @@ dllnext(int flags)
 		do
 		{
 			if (ver <= path)
-				return 0;
+				return NULL;
 		} while (*--ver != '.');
 		if (*(ver + 1) <= '0' || *(ver + 1) >= '9')
-			return 0;
+			return NULL;
 		*ver = 0;
 	}
 #endif

@@ -361,12 +361,12 @@ static Sfdouble_t nget_cur_eof(Namval_t* np, Namfun_t *fp)
 	struct Eof *ep = (struct Eof*)fp;
 	Sfoff_t end, cur =lseek(ep->fd, 0, SEEK_CUR);
 	if(*np->nvname=='C')
-	        return((Sfdouble_t)cur);
+	        return (Sfdouble_t)cur;
 	if(cur<0)
-		return((Sfdouble_t)-1);
+		return (Sfdouble_t)-1;
 	end =lseek(ep->fd, 0, SEEK_END);
 	lseek(ep->fd, 0, SEEK_CUR);
-        return((Sfdouble_t)end);
+        return (Sfdouble_t)end;
 }
 
 static const Namdisc_t EOF_disc	= { sizeof(struct Eof), 0, 0, nget_cur_eof};
@@ -417,7 +417,7 @@ int  sh_iovalidfd(int fd)
 	if(max)
 		memcpy(sh.fdstatus,fdstatus,max);
 	if(sftable)
-		free((void*)sftable);
+		free(sftable);
 	sh.lim.open_max = n;
 	return 1;
 }
@@ -486,7 +486,7 @@ static int outexcept(Sfio_t *iop,int type,void *data,Sfdisc_t *handle)
 {
 	static int	active = 0;
 	if(type==SF_DPOP || type==SF_FINAL)
-		free((void*)handle);
+		free(handle);
 	else if(type==SF_WRITE && (*(ssize_t*)data)<0 && sffileno(iop)!=2)
 		switch (errno)
 		{
@@ -921,7 +921,7 @@ int	sh_pipe(int pv[])
 	int fd[2];
 #ifdef pipe
 	if(sh_isoption(SH_POSIX))
-		return(sh_rpipe(pv));
+		return sh_rpipe(pv);
 #endif
 	if(pipe(fd)<0 || (pv[0]=fd[0])<0 || (pv[1]=fd[1])<0)
 	{
@@ -998,7 +998,7 @@ static int io_patseek(regex_t *rp, Sfio_t* sp, int flags)
 			n--;
 		if(n)
 			m = n;
-		r = regrexec(rp,cp,m,0,NULL, 0, '\n', (void*)&match, pat_seek);
+		r = regrexec(rp,cp,m,0,NULL, 0, '\n', &match, pat_seek);
 		if(r<0)
 			m = match-cp;
 		else if(r==2)
@@ -1042,7 +1042,7 @@ static Sfoff_t	file_offset(int fn, char *fname)
 		nv_stack(mp, NULL);
 	if(pp)
 		nv_stack(pp, NULL);
-	return(*cp?(Sfoff_t)-1:off);
+	return *cp ? (Sfoff_t)-1 : off;
 }
 
 /*
@@ -1493,7 +1493,7 @@ int	sh_redirect(struct ionod *iop, int flag)
 				sh_close(fn);
 			}
 			if(flag==3)
-				return(sh_iomovefd(fd));  /* ensure FD > 2 to make $(<file) work with std{in,out,err} closed */
+				return sh_iomovefd(fd);  /* ensure FD > 2 to make $(<file) work with std{in,out,err} closed */
 			if(fd>=0)
 			{
 				if(np)
@@ -1548,7 +1548,7 @@ static int io_heredoc(struct ionod *iop, const char *name, int traceon)
 	int		fd;
 	Sfoff_t		off;
 	if(!(iop->iofile&IOSTRG) && (!sh.heredocs || iop->iosize==0))
-		return(sh_open(e_devnull,O_RDONLY));
+		return sh_open(e_devnull,O_RDONLY);
 	/* create an unnamed temporary file */
 	if(!(outfile=sftmp(0)))
 	{
@@ -1571,7 +1571,7 @@ static int io_heredoc(struct ionod *iop, const char *name, int traceon)
 		int	fno = sffileno(sh.heredocs);
 		if(fno>=0)
 		{
-			memset((void*)&lock,0,sizeof(lock));
+			memset(&lock,0,sizeof(lock));
 			lock.l_type = F_WRLCK;
 			lock.l_whence = SEEK_SET;
 			fcntl(fno,F_SETLKW,&lock);
@@ -1631,7 +1631,7 @@ static ssize_t tee_write(Sfio_t *iop,const void *buff,size_t n,Sfdisc_t *unused)
 {
 	NOT_USED(unused);
 	sfwrite(sfstderr,buff,n);
-	return(write(sffileno(iop),buff,n));
+	return write(sffileno(iop),buff,n);
 }
 
 /*
@@ -1838,7 +1838,7 @@ static int slowexcept(Sfio_t *iop,int type,void *data,Sfdisc_t *handle)
 {
 	int	n,fno;
 	if(type==SF_DPOP || type==SF_FINAL)
-		free((void*)handle);
+		free(handle);
 	if(type==SF_WRITE && ERROR_PIPE(errno))
 	{
 		sfpurge(iop);
@@ -1980,7 +1980,7 @@ static ssize_t slowread(Sfio_t *iop,void *buff,size_t size,Sfdisc_t *handle)
 		if(io_prompt(iop,sh.nextprompt)<0 && errno==EIO)
 			return 0;
 		if(sh.timeout)
-			timeout = (void*)sh_timeradd(sh_isstate(SH_GRACE)?1000L*TGRACE:1000L*sh.timeout,0,time_grace,&sh);
+			timeout = sh_timeradd(sh_isstate(SH_GRACE)?1000L*TGRACE:1000L*sh.timeout,0,time_grace,&sh);
 		rsize = (*readf)(sh.ed_context, fno, (char*)buff, size, reedit);
 		if(timeout)
 			sh_timerdel(timeout);
@@ -2126,7 +2126,7 @@ static int	io_prompt(Sfio_t *iop,int flag)
 	if(flag==2 && sfpkrd(sffileno(iop),buff,1,'\n',0,1) >= 0)
 		flag = 0;
 	if(flag==0)
-		return(sfsync(sfstderr));
+		return sfsync(sfstderr);
 	sfflags = sfset(sfstderr,SF_SHARE|SF_PUBLIC|SF_READ,0);
 	if(!(sh.prompt=(char*)sfreserve(sfstderr,0,0)))
 		sh.prompt = "";
@@ -2189,7 +2189,7 @@ done:
 	if(*sh.prompt && (endprompt=(char*)sfreserve(sfstderr,0,0)))
 		*endprompt = 0;
 	sfset(sfstderr,sfflags&SF_READ|SF_SHARE|SF_PUBLIC,1);
-	return(sfsync(sfstderr));
+	return sfsync(sfstderr);
 }
 
 /*
@@ -2199,7 +2199,7 @@ done:
 static int pipeexcept(Sfio_t* iop, int mode, void *data, Sfdisc_t* handle)
 {
 	if(mode==SF_DPOP || mode==SF_FINAL)
-		free((void*)handle);
+		free(handle);
 	else if(mode==SF_WRITE && ERROR_PIPE(errno))
 	{
 		sfpurge(iop);
@@ -2345,7 +2345,7 @@ static int eval_exceptf(Sfio_t *iop,int type, void *data, Sfdisc_t *handle)
 		if(type==SF_CLOSING)
 			sfdisc(iop,SF_POPDISC);
 		else if(ep && (type==SF_DPOP || type==SF_FINAL))
-			free((void*)ep);
+			free(ep);
 		return 0;
 	}
 
@@ -2421,7 +2421,7 @@ static int subexcept(Sfio_t* sp,int mode, void *data, Sfdisc_t* handle)
 	}
 	else if(disp && (mode==SF_DPOP || mode==SF_FINAL))
 	{
-		free((void*)disp);
+		free(disp);
 		return 0;
 	}
 	else if (mode==SF_ATEXIT)
@@ -2500,9 +2500,9 @@ ssize_t sh_read(int fd, void* buff, size_t n)
 {
 	Sfio_t *sp;
 	if(sp=sh.sftable[fd])
-		return(sfread(sp,buff,n));
+		return sfread(sp,buff,n);
 	else
-		return(read(fd,buff,n));
+		return read(fd,buff,n);
 }
 
 #undef write
@@ -2513,9 +2513,9 @@ ssize_t sh_write(int fd, const void* buff, size_t n)
 {
 	Sfio_t *sp;
 	if(sp=sh.sftable[fd])
-		return(sfwrite(sp,buff,n));
+		return sfwrite(sp,buff,n);
 	else
-		return(write(fd,buff,n));
+		return write(fd,buff,n);
 }
 
 #undef lseek
@@ -2526,9 +2526,9 @@ off_t sh_seek(int fd, off_t offset, int whence)
 {
 	Sfio_t *sp;
 	if((sp=sh.sftable[fd]) && (sfset(sp,0,0)&(SF_READ|SF_WRITE)))
-		return(sfseek(sp,offset,whence));
+		return sfseek(sp,offset,whence);
 	else
-		return(lseek(fd,offset,whence));
+		return lseek(fd,offset,whence);
 }
 
 #undef dup
@@ -2581,7 +2581,7 @@ int sh_fcntl(int fd, int op, ...)
 mode_t	sh_umask(mode_t m)
 {
 	sh.mask = m;
-	return(umask(m));
+	return umask(m);
 }
 
 /*
@@ -2669,7 +2669,7 @@ Sfio_t *sh_pathopen(const char *cp)
 		errormsg(SH_DICT,ERROR_system(1),e_open,cp);
 		UNREACHABLE();
 	}
-	return(sh_iostream(n));
+	return sh_iostream(n);
 }
 
 int sh_isdevfd(const char *fd)

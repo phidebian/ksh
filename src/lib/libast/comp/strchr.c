@@ -36,7 +36,7 @@ extern char*	index(const char*, int);
 char*
 strchr(const char* s, int c)
 {
-	return(index(s, c));
+	return index(s, c);
 }
 
 #else
@@ -44,8 +44,8 @@ strchr(const char* s, int c)
 char*
 strchr(const char* s, int c)
 {
-	do if (*s == c) return((char*)s); while(*s++);
-	return 0;
+	do if (*s == c) return (char*)s; while(*s++);
+	return NULL;
 }
 
 #endif

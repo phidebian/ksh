@@ -78,7 +78,7 @@ getfield(Field_t* f, int restore)
 	char*	b;
 
 	if (!f->delimiter)
-		return 0;
+		return NULL;
 	s = f->next;
 	if (f->first)
 		f->first = 0;

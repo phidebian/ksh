@@ -79,7 +79,7 @@ aso_init_fcntl(void* data, const char* details)
 		}
 		close(apl->fd);
 		free(apl);
-		return 0;
+		return NULL;
 	}
 	fd = -1;
 	perm = S_IRUSR|S_IWUSR;
@@ -108,7 +108,7 @@ aso_init_fcntl(void* data, const char* details)
 	if (!path || !*path)
 	{
 		if (!(path = pathtemp(buf, sizeof(buf), NULL, "aso", &fd)))
-			return 0;
+			return NULL;
 		drop = 1;
 	}
 	if (!(apl = newof(0, APL_t, 1, strlen(path))))
@@ -155,7 +155,7 @@ aso_init_fcntl(void* data, const char* details)
 		close(fd);
 	if (drop)
 		remove(path);
-	return 0;
+	return NULL;
 }
 
 static ssize_t

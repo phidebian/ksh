@@ -44,7 +44,7 @@ extern ssize_t sfpeek(Sfio_t*	f,	/* file to peek */
 		if(!bp)
 			return n;
 		else if(n > 0)	/* size == 0 */
-		{	*bp = (void*)f->next;
+		{	*bp = f->next;
 			return 0;
 		}
 		/* else fall down and fill buffer */
@@ -61,7 +61,7 @@ extern ssize_t sfpeek(Sfio_t*	f,	/* file to peek */
 		return sz;
 
 	if((n = sfvalue(f)) > 0)
-	{	*bp = (void*)f->next;
+	{	*bp = f->next;
 		if(sz < 0)
 		{	f->mode |= SF_PEEK;
 			f->endr = f->endw = f->data;

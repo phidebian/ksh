@@ -168,7 +168,7 @@ static noreturn void outofmemory(void)
 			if(name[n-2]=='z')
 				name[n-2]=='P';
 			else
-				return 0;
+				return NULL;
 		}
 		else
 			name[n-2]++;
@@ -185,7 +185,7 @@ static noreturn void outofmemory(void)
 	{
 		char *minion=0;
 #   if _lib__getpty
-		return(_getpty(master,O_RDWR,MODE_666,0));
+		return _getpty(master,O_RDWR,MODE_666,0);
 #   else
 #	if defined(_pty_clone)
 		*master = open(_pty_clone,O_RDWR|O_CREAT,MODE_666);
@@ -621,7 +621,7 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 			errno = 0;
 			error(-1, "r EOF");
 		}
-		return 0;
+		return NULL;
 	}
 	if (!(s = sfreserve(mp, SF_UNBOUND, -1)))
 	{
@@ -646,7 +646,7 @@ masterline(Sfio_t* mp, Sfio_t* lp, char* prompt, int must, int timeout, Master_t
 				error(-1, "r EOF");
 			}
 		}
-		return 0;
+		return NULL;
 	}
 	n = sfvalue(mp);
 	error(-2, "b \"%s\"", fmtnesq(s, "\"", n));

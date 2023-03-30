@@ -72,20 +72,20 @@ static const char enum_type[] =
         "variables of this type are written to standard output.]"
 "[+?\b\f?\f\b is built in to the shell as a declaration command so that "
         "field splitting and pathname expansion are not performed on "
-        "the arguments.  Tilde expansion occurs on \avalue\a.]"
-"[r?Enables readonly.  Once enabled, the value cannot be changed or unset.]"
+        "the arguments. Tilde expansion occurs on \avalue\a.]"
+"[r?Enables readonly. Once enabled, the value cannot be changed or unset.]"
 "[a?Indexed array. Each \aname\a is converted to an indexed "
-        "array of type \b\f?\f\b.  If a variable already exists, the current "
+        "array of type \b\f?\f\b. If a variable already exists, the current "
         "value will become index \b0\b.]"
 "[A?Associative array. Each \aname\a is converted to an associative "
-        "array of type \b\f?\f\b.  If a variable already exists, the current "
+        "array of type \b\f?\f\b. If a variable already exists, the current "
         "value will become subscript \b0\b.]"
 "[h]:[string?Used within a type definition to provide a help string  "
-        "for variable \aname\a.  Otherwise, it is ignored.]"
+        "for variable \aname\a. Otherwise, it is ignored.]"
 "[S?Used with a type definition to indicate that the variable is shared by "
-        "each instance of the type.  When used inside a function defined "
+        "each instance of the type. When used inside a function defined "
         "with the \bfunction\b reserved word, the specified variables "
-        "will have function static scope.  Otherwise, the variable is "
+        "will have function static scope. Otherwise, the variable is "
         "unset prior to processing the assignment list.]"
 "\n"
 "\n[name[=value]...]\n"
@@ -113,7 +113,7 @@ struct Enum
  */
 short b_enum_nelem(Namfun_t *fp)
 {
-	return(((struct Enum *)fp)->nelem);
+	return ((struct Enum *)fp)->nelem;
 }
 
 static int enuminfo(Opt_t* op, Sfio_t *out, const char *str, Optdisc_t *fp)
@@ -152,7 +152,7 @@ static Namfun_t *clone_enum(Namval_t* np, Namval_t *mp, int flags, Namfun_t *fp)
 {
 	struct Enum	*ep, *pp=(struct Enum*)fp;
 	ep = sh_newof(0,struct Enum,1,pp->nelem*sizeof(char*));
-	memcpy((void*)ep,(void*)pp,sizeof(struct Enum)+pp->nelem*sizeof(char*));
+	memcpy(ep,pp,sizeof(struct Enum)+pp->nelem*sizeof(char*));
 	return &ep->hdr;
 }
 
@@ -167,7 +167,7 @@ static void put_enum(Namval_t* np,const char *val,int flags,Namfun_t *fp)
 		nv_putv(np, val, flags,fp);
 		nv_disc(np,&ep->hdr,NV_POP);
 		if(!ep->hdr.nofree)
-			free((void*)ep);
+			free(ep);
 		return;
 	}
 	if(flags&NV_INTEGER)
@@ -198,14 +198,14 @@ static char* get_enum(Namval_t* np, Namfun_t *fp)
 	struct Enum *ep = (struct Enum*)fp;
 	long n = nv_getn(np,fp);
 	if(n < ep->nelem)
-		return((char*)ep->values[n]);
+		return (char*)ep->values[n];
 	sfsprintf(buff,sizeof(buff),"%u%c",n,0);
 	return buff;
 }
 
 static Sfdouble_t get_nenum(Namval_t* np, Namfun_t *fp)
 {
-	return(nv_getn(np,fp));
+	return nv_getn(np,fp);
 }
 
 const Namdisc_t ENUM_disc        = {  0, put_enum, get_enum, get_nenum, 0,0,clone_enum };

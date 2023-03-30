@@ -515,8 +515,8 @@ typedef struct _sfextern_s
 #define SFISALL(f,v)	((((v) = (f)->mode&SF_RV) ? ((f)->mode &= ~SF_RV) : 0), \
 			 ((v) || ((f)->flags&(SF_SHARE|SF_APPENDWR|SF_WHOLE)) ) )
 #define SFSK(f,a,o,d)	(SETLOCAL(f),sfsk(f,(Sfoff_t)a,o,d))
-#define SFRD(f,b,n,d)	(SETLOCAL(f),sfrd(f,(void*)b,n,d))
-#define SFWR(f,b,n,d)	(SETLOCAL(f),sfwr(f,(void*)b,n,d))
+#define SFRD(f,b,n,d)	(SETLOCAL(f),sfrd(f,b,n,d))
+#define SFWR(f,b,n,d)	(SETLOCAL(f),sfwr(f,b,n,d))
 #define SFSYNC(f)	(SETLOCAL(f),sfsync(f))
 #define SFCLOSE(f)	(SETLOCAL(f),sfclose(f))
 #define SFFLSBUF(f,n)	(SETLOCAL(f),_sfflsbuf(f,n))
@@ -743,7 +743,7 @@ typedef struct _sftab_
 /* note that MEMCPY advances the associated pointers */
 #define MEMCPY(to,fr,n) \
 	switch(n) \
-	{ default : memcpy((void*)to,(void*)fr,n); to += n; fr += n; break; \
+	{ default : memcpy(to,fr,n); to += n; fr += n; break; \
 	  case  7 : *to++ = *fr++;	\
 		/* FALLTHROUGH */	\
 	  case  6 : *to++ = *fr++;	\
@@ -760,7 +760,7 @@ typedef struct _sftab_
 	}
 #define MEMSET(s,c,n) \
 	switch(n) \
-	{ default : memset((void*)s,(int)c,n); s += n; break; \
+	{ default : memset(s,(int)c,n); s += n; break; \
 	  case  7 : *s++ = c;		\
 		    /* FALLTHROUGH */	\
 	  case  6 : *s++ = c;		\

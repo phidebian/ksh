@@ -167,12 +167,12 @@ init(char* s)
 	 */
 
 	if (!(cp = newof(0, Catalog_t, 1, strlen(s))))
-		return 0;
+		return NULL;
 	strcpy(cp->name, s);
 	if (!dtinsert(state.catalogs, cp))
 	{
 		free(cp);
-		return 0;
+		return NULL;
 	}
 	cp->cat = NOCAT;
 
@@ -257,7 +257,7 @@ match(const char* cat, const char* msg)
 			break;
 		s = t + 1;
 	}
-	return 0;
+	return NULL;
 }
 
 /*

@@ -204,7 +204,7 @@ int sfvprintf(Sfio_t*		f,		/* file to print to	*/
 #define SMnputc(f,c,n)	{ if((o = SFNPUTC(f,c,n)) > 0 ) n_output += 1; \
 			  if(o != n)	{ SFBUF(f); goto done; } \
 			}
-#define SMwrite(f,s,n)	{ if((o = SFWRITE(f,(void*)s,n)) > 0 ) n_output += o; \
+#define SMwrite(f,s,n)	{ if((o = SFWRITE(f,s,n)) > 0 ) n_output += o; \
 			  if(o != n)	{ SFBUF(f); goto done; } \
 			}
 #if _sffmt_small /* these macros are made smaller at some performance cost */
@@ -343,7 +343,7 @@ loop_fmt :
 								LEFTP, 0, 0, 0,0,0,
 								NULL,0);
 							n = (*ft->extf)
-							      (f,(void*)&argv,ft);
+							      (f,&argv,ft);
 							if(n < 0)
 								goto pop_fmt;
 							if(!(ft->flags&SFFMT_VALUE) )
@@ -453,7 +453,7 @@ loop_fmt :
 				v = fp[n].argv.i;
 			else if(ft && ft->extf)
 			{	FMTSET(ft, form,args, '.',dot, 0, 0,0,0, NULL, 0);
-				if((*ft->extf)(f, (void*)(&argv), ft) < 0)
+				if((*ft->extf)(f, &argv, ft) < 0)
 					goto pop_fmt;
 				fmt = ft->fmt;
 				flags = (flags&~SFFMT_TYPES) | (ft->flags&SFFMT_TYPES);
@@ -518,7 +518,7 @@ loop_fmt :
 				else if(ft && ft->extf)
 				{	FMTSET(ft, form,args, 'I',sizeof(int), 0, 0,0,0,
 						NULL, 0);
-					if((*ft->extf)(f, (void*)(&argv), ft) < 0)
+					if((*ft->extf)(f, &argv, ft) < 0)
 						goto pop_fmt;
 					if(ft->flags&SFFMT_VALUE)
 						size = argv.i;
@@ -635,7 +635,7 @@ loop_fmt :
 		{	FMTSET(ft, form,args, fmt, size,flags, width,precis,base,
 				t_str,n_str);
 			SFEND(f); SFOPEN(f,0);
-			v = (*ft->extf)(f, (void*)(&argv), ft);
+			v = (*ft->extf)(f, &argv, ft);
 			SFLOCK(f,0); SFBUF(f);
 
 			if(v < 0)	/* no further processing */
@@ -1524,7 +1524,7 @@ done:
 
 	if((((flags = f->flags)&SF_SHARE) && !(flags&SF_PUBLIC) ) ||
 	   (n > 0 && (sp == data || (flags&SF_LINE) ) ) )
-		(void)SFWRITE(f,(void*)sp,n);
+		(void)SFWRITE(f,sp,n);
 	else	f->next += n;
 
 	SFOPEN(f,0);

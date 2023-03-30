@@ -46,13 +46,13 @@ void* sfreserve(Sfio_t*	f,	/* file to peek */
 	/* return the last record */
 	if(type == SF_LASTR )
 	{	if((n = f->endb - f->next) > 0 && n == f->val )
-		{	data = (void*)f->next;
+		{	data = f->next;
 			f->next += n;
 		}
 		else if((rsrv = f->rsrv) && (n = -rsrv->slen) > 0)
 		{	rsrv->slen = 0;
 			_Sfi = f->val = n;
-			data = (void*)rsrv->data;
+			data = rsrv->data;
 		}
 		else
 		{	_Sfi = f->val = -1;
@@ -158,26 +158,26 @@ done:	/* compute the buffer to be returned */
 	data = NULL;
 	if(size == 0 || n == 0)
 	{	if(n > 0) /* got data */
-			data = (void*)f->next;
+			data = f->next;
 		else if(type == SF_LOCKR && size == 0 && (rsrv = _sfrsrv(f,0)) )
-			data = (void*)rsrv->data;
+			data = rsrv->data;
 	}
 	else if(n >= sz) /* got data */
-		data = (void*)f->next;
+		data = f->next;
 	else if(f->flags&SF_STRING) /* try extending string buffer */
 	{	if((f->mode&SF_WRITE) && (f->flags&SF_MALLOC) )
 		{	(void)SFWR(f,f->next,sz,f->disc);
 			if((n = f->endb - f->next) >= sz )
-				data = (void*)f->next;
+				data = f->next;
 		}
 	}
 	else if(f->mode&SF_WRITE) /* allocate side buffer */
 	{	if(type == SF_LOCKR && (rsrv = _sfrsrv(f, sz)) )
-			data = (void*)rsrv->data;
+			data = rsrv->data;
 	}
 	else if(type != SF_LOCKR && sz > f->size && (rsrv = _sfrsrv(f,sz)) )
-	{	if((n = SFREAD(f,(void*)rsrv->data,sz)) >= sz) /* read side buffer */
-			data = (void*)rsrv->data;
+	{	if((n = SFREAD(f,rsrv->data,sz)) >= sz) /* read side buffer */
+			data = rsrv->data;
 		else	rsrv->slen = -n;
 	}
 
@@ -191,7 +191,7 @@ done:	/* compute the buffer to be returned */
 			f->endr = f->endw = f->data;
 		}
 		else
-		{	if(data == (void*)f->next)
+		{	if(data == f->next)
 				f->next += (size >= 0 ? size : n);
 		}
 	}

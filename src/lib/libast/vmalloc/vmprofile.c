@@ -471,7 +471,7 @@ static int pffree(Vmalloc_t* vm, void* data, int local)
 		(*_Vmtrace)(vm,(Vmuchar_t*)data,NULL,s,0);
 	}
 
-	rv = KPVFREE((vm), (void*)data, (*Vmbest->freef));
+	rv = KPVFREE((vm), data, (*Vmbest->freef));
 
         CLRLOCK(vm, local);
 

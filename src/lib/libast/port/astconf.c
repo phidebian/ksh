@@ -328,7 +328,7 @@ synthesize(Feature_t* fp, const char* path, const char* value)
 			n += strlen(s) + 1;
 		n = roundof(n, 32);
 		if (!(state.data = newof(0, char, n, 0)))
-			return 0;
+			return NULL;
 		state.last = state.data + n - 1;
 		strcpy(state.data, state.name);
 		state.data += state.prefix - 1;
@@ -367,7 +367,7 @@ synthesize(Feature_t* fp, const char* path, const char* value)
 	if (!state.last)
 	{
 		if (!value)
-			return 0;
+			return NULL;
 		n = strlen(value);
 		goto ok;
 	}
@@ -419,7 +419,7 @@ synthesize(Feature_t* fp, const char* path, const char* value)
 			else
 				fp->value = null;
 		}
-		return 0;
+		return NULL;
 	}
 	if (!value[0])
 		value = "0";
@@ -436,7 +436,7 @@ synthesize(Feature_t* fp, const char* path, const char* value)
 		c = n + state.last - state.data + 3 * MAXVAL;
 		c = roundof(c, 32);
 		if (!(state.data = newof(state.data, char, c, 0)))
-			return 0;
+			return NULL;
 		state.last = state.data + c - 1;
 		state.data += state.prefix;
 		d = state.data + i;
@@ -678,7 +678,7 @@ format(Feature_t* fp, const char* path, const char* value, unsigned int flags, E
 			{
 				if (conferror)
 					(*conferror)(&state, &state, 2, "%s: %s: universe value too large", fp->name, value);
-				return 0;
+				return NULL;
 			}
 		}
 #ifdef ATT_UNIV
@@ -751,15 +751,15 @@ feature(Feature_t* fp, const char* name, const char* path, const char* value, un
 	if (!fp)
 	{
 		if (!value)
-			return 0;
+			return NULL;
 		if (state.notify && !(*state.notify)(name, path, value))
-			return 0;
+			return NULL;
 		n = strlen(name);
 		if (!(fp = newof(0, Feature_t, 1, n + 1)))
 		{
 			if (conferror)
 				(*conferror)(&state, &state, 2, "%s: out of memory", name);
-			return 0;
+			return NULL;
 		}
 		fp->op = -1;
 		fp->name = (const char*)fp + sizeof(Feature_t);
@@ -775,10 +775,10 @@ feature(Feature_t* fp, const char* name, const char* path, const char* value, un
 		{
 			if (conferror)
 				(*conferror)(&state, &state, 2, "%s: cannot set readonly symbol", fp->name);
-			return 0;
+			return NULL;
 		}
 		if (state.notify && !streq(fp->value, value) && !(*state.notify)(name, path, value))
-			return 0;
+			return NULL;
 	}
 	else
 		state.recent = fp;
@@ -1323,7 +1323,7 @@ nativeconf(Proc_t** pp, const char* operand)
 		}
 		procclose(*pp);
 	}
-	return 0;
+	return NULL;
 }
 #endif
 

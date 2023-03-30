@@ -266,7 +266,7 @@ int	b_hist(int argc,char *argv[], Shbltin_t *context)
 	}
 	fdo = sh_chkopen(fname);
 	unlink(fname);
-	free((void*)fname);
+	free(fname);
 	/* don't history fc itself unless forked */
 	error_info.flags |= ERROR_SILENT;
 	if(!sh_isstate(SH_FORKED))

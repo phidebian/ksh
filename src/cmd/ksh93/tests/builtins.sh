@@ -1656,4 +1656,18 @@ got=$(set +x; { "$SHELL" -c 'read -rd $'\''\200'\'' && echo "$REPLY"';} 2>&1 <<<
 	"got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
 
 # ======
+# printf -v varname %B overwrites/truncates data
+# https://github.com/ksh93/ksh/issues/608
+exp='YWJjZGVmZ2g= / abcdefgh'
+got=$(
+	typeset  -b foo
+	read -N8 foo <<<abcdefghijklmnop &&
+	printf -v got '%s / %B\n' "$foo" foo &&
+	print -rn "$got"
+)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit "read -N8 && printf -v %B" \
+	"(expected status 0, '$exp';" \
+	"got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
+
+# ======
 exit $((Errors<125?Errors:125))

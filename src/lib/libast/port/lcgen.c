@@ -152,7 +152,7 @@ lookup(Table_t* tab, char* s)
 	for (x = tab->root; x; x = x->next)
 		if (!strcmp(x->code, s))
 			return x;
-	return 0;
+	return NULL;
 }
 
 static char*
@@ -162,7 +162,7 @@ copy(char** p, char* f)
 	char*		b;
 
 	if (!f)
-		return 0;
+		return NULL;
 	b = t = *p;
 	while (*t++ = *f++);
 	*p = t;

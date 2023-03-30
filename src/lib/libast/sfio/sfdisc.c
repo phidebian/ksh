@@ -177,7 +177,7 @@ Sfdisc_t* sfdisc(Sfio_t* f, Sfdisc_t* disc)
 		disc = d->disc;
 		if(d->exceptf)
 		{	SFOPEN(f,0);
-			if((*(d->exceptf))(f,SF_DPOP,(void*)disc,d) < 0 )
+			if((*(d->exceptf))(f,SF_DPOP,disc,d) < 0 )
 				goto done;
 			SFLOCK(f,0);
 		}
@@ -191,7 +191,7 @@ Sfdisc_t* sfdisc(Sfio_t* f, Sfdisc_t* disc)
 			d = f->disc;
 			if(d && d->exceptf)
 			{	SFOPEN(f,0);
-				if( (*(d->exceptf))(f,SF_DPUSH,(void*)disc,d) < 0 )
+				if( (*(d->exceptf))(f,SF_DPUSH,disc,d) < 0 )
 					goto done;
 				SFLOCK(f,0);
 			}
@@ -237,7 +237,7 @@ Sfdisc_t* sfdisc(Sfio_t* f, Sfdisc_t* disc)
 				sfsetbuf(f,NULL,0);
 			else
 			{	int	flags = f->flags;
-				sfsetbuf(f,(void*)f->data,f->size);
+				sfsetbuf(f,f->data,f->size);
 				f->flags |= (flags&SF_MALLOC);
 			}
 		}

@@ -61,5 +61,5 @@ pathaccess_20100601(const char* dirs, const char* a, const char* b, int mode, ch
 			sep = 0;
 		}
 	} while (dirs);
-	return 0;
+	return NULL;
 }

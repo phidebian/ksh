@@ -321,7 +321,7 @@ retry:
 	if(fname)
 	{
 		unlink(fname);
-		free((void*)fname);
+		free(fname);
 	}
 	if(hist_clean(fd) && hist_start>1 && hsize > HIST_MAX)
 	{
@@ -333,7 +333,7 @@ retry:
 	}
 	sfdisc(hp->histfp,&hp->histdisc);
 	(HISTCUR)->nvalue.lp = (&hp->histind);
-	sh_timeradd(1000L*(HIST_RECENT-30), 1, hist_touch, (void*)hp->histname);
+	sh_timeradd(1000L*(HIST_RECENT-30), 1, hist_touch, hp->histname);
 #if SHOPT_ACCTFILE
 	if(sh_isstate(SH_INTERACTIVE))
 		acctinit(hp);
@@ -375,7 +375,7 @@ void hist_close(History_t *hp)
 	if(hp->auditfp)
 	{
 		if(hp->tty)
-			free((void*)hp->tty);
+			free(hp->tty);
 		sfclose(hp->auditfp);
 	}
 #endif /* SHOPT_AUDIT */
@@ -409,7 +409,7 @@ static int hist_check(int fd)
 static int hist_clean(int fd)
 {
 	struct stat statb;
-	return(fstat(fd,&statb)>=0 && (time(NULL)-statb.st_mtime) >= HIST_RECENT);
+	return fstat(fd,&statb)>=0 && (time(NULL)-statb.st_mtime) >= HIST_RECENT;
 }
 
 /*
@@ -745,7 +745,7 @@ static ssize_t hist_write(Sfio_t *iop,const void *buff,size_t insize,Sfdisc_t* h
 	int saved=0;
 	char saveptr[HIST_MARKSZ];
 	if(!hp->histflush)
-		return(write(sffileno(iop),(char*)buff,size));
+		return write(sffileno(iop),(char*)buff,size);
 	if((cur = lseek(sffileno(iop),0,SEEK_END)) <0)
 	{
 		errormsg(SH_DICT,2,"hist_flush: EOF seek failed errno=%d",errno);
@@ -803,7 +803,7 @@ static ssize_t hist_write(Sfio_t *iop,const void *buff,size_t insize,Sfdisc_t* h
 	hp->histcmds[c] = hp->histcnt;
 	if(hp->histflush>HIST_MARKSZ && hp->histcnt > hp->histmarker+HIST_BSIZE/2)
 	{
-		memcpy((void*)saveptr,(void*)bufptr,HIST_MARKSZ);
+		memcpy(saveptr,bufptr,HIST_MARKSZ);
 		saved=1;
 		hp->histcnt += HIST_MARKSZ;
 		hist_marker(bufptr,hp->histind);
@@ -813,7 +813,7 @@ static ssize_t hist_write(Sfio_t *iop,const void *buff,size_t insize,Sfdisc_t* h
 	errno = 0;
 	size = write(sffileno(iop),(char*)buff,size);
 	if(saved)
-		memcpy((void*)bufptr,(void*)saveptr,HIST_MARKSZ);
+		memcpy(bufptr,saveptr,HIST_MARKSZ);
 	if(size>=0)
 	{
 		hp->histwfail = 0;
@@ -841,7 +841,7 @@ static void hist_marker(char *buff,long cmdno)
  */
 off_t hist_tell(History_t *hp, int n)
 {
-	return(hp->histcmds[hist_ind(hp,n)]);
+	return hp->histcmds[hist_ind(hp,n)];
 }
 
 /*
@@ -851,7 +851,7 @@ off_t hist_seek(History_t *hp, int n)
 {
 	if(!(n >= hist_min(hp) && n < hist_max(hp)))
 		return -1;
-	return(sfseek(hp->histfp,hp->histcmds[hist_ind(hp,n)],SEEK_SET));
+	return sfseek(hp->histfp,hp->histcmds[hist_ind(hp,n)],SEEK_SET);
 }
 
 /*

@@ -229,7 +229,7 @@ static int _sfgetwc(Scan_t*	sc,	/* the scanning handle		*/
 	}
 
 	for(n = 0; n < SFMBMAX; )
-	{	if((v = _scgetc((void*)sc, 0)) <= 0)
+	{	if((v = _scgetc(sc, 0)) <= 0)
 			goto no_match;
 		else	b[n++] = v;
 
@@ -306,7 +306,7 @@ int sfvscanf(Sfio_t*		f,		/* file to be scanned */
 #define SFlen(f)	(d - data)
 #define SFinit(f)	((peek = f->extent < 0 && (f->flags&SF_SHARE)), SFbuf(f) )
 #define SFend(f)	((n_input += SFlen(f)), \
-			 (peek ? SFREAD(f,(void*)data,SFlen(f)) : ((f->next = d),0)) )
+			 (peek ? SFREAD(f,data,SFlen(f)) : ((f->next = d),0)) )
 #define SFgetc(f,c)	((c) = (d < endd || (SFend(f), SFbuf(f), d < endd)) ? \
 				(int)(*d++) : -1 )
 #define SFungetc(f,c)	(d -= 1)
@@ -437,7 +437,7 @@ loop_fmt:
 								LEFTP, 0, 0, 0,0,0,
 								NULL,0);
 							n = (*ft->extf)
-							      (f,(void*)&argv,ft);
+							      (f,&argv,ft);
 							if(n < 0)
 								goto pop_fmt;
 							if(!(ft->flags&SFFMT_VALUE) )
@@ -482,7 +482,7 @@ loop_fmt:
 				else if(ft && ft->extf )
 				{	FMTSET(ft, form,args, '.',dot, 0, 0,0,0,
 						NULL, 0);
-					if((*ft->extf)(f, (void*)(&argv), ft) < 0)
+					if((*ft->extf)(f, &argv, ft) < 0)
 						goto pop_fmt;
 					if(ft->flags&SFFMT_VALUE)
 						v = argv.i;
@@ -535,7 +535,7 @@ loop_fmt:
 				else if(ft && ft->extf )
 				{	FMTSET(ft, form,args, 'I',sizeof(int), 0, 0,0,0,
 						NULL, 0);
-					if((*ft->extf)(f, (void*)(&argv), ft) < 0)
+					if((*ft->extf)(f, &argv, ft) < 0)
 						goto pop_fmt;
 					if(ft->flags&SFFMT_VALUE)
 						size = argv.i;
@@ -643,7 +643,7 @@ loop_fmt:
 		else if(ft && ft->extf)
 		{	FMTSET(ft, form,args, fmt, size,flags, width,0,base, t_str,n_str);
 			SFend(f); SFOPEN(f,0);
-			v = (*ft->extf)(f, (void*)&argv, ft);
+			v = (*ft->extf)(f, &argv, ft);
 			SFLOCK(f,0); SFbuf(f);
 
 			if(v < 0)
@@ -746,7 +746,7 @@ loop_fmt:
 
 		if(_Sftype[fmt] == SFFMT_FLOAT)
 		{	SFungetc(f,inp); SCinit(&scd,1);
-			argv.ld = _sfdscan((void*)(&scd), _scgetc);
+			argv.ld = _sfdscan(&scd, _scgetc);
 			SCend(&scd,1);
 
 			if(scd.error >= 0)

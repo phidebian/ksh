@@ -70,16 +70,16 @@ mcfind(const char* locale, const char* catalog, int category, int nls, char* pat
 	static char	lc_messages[] = "LC_MESSAGES";
 
 	if ((category = lcindex(category, 1)) < 0)
-		return 0;
+		return NULL;
 	if (!(lc = locale ? lcmake(locale) : locales[category]))
-		return 0;
+		return NULL;
 	oerrno = errno;
 	if (catalog && *catalog == '/')
 	{
 		i = eaccess(catalog, R_OK);
 		errno = oerrno;
 		if (i)
-			return 0;
+			return NULL;
 		strlcpy(path, catalog, size);
 		return path;
 	}
@@ -194,7 +194,7 @@ mcfind(const char* locale, const char* catalog, int category, int nls, char* pat
 		}
 	}
 	errno = oerrno;
-	return 0;
+	return NULL;
 }
 
 /*
@@ -227,10 +227,10 @@ mcopen(Sfio_t* ip)
 		if (sfread(ip, buf, MC_MAGIC_SIZE) != MC_MAGIC_SIZE)
 		{
 			errno = oerrno;
-			return 0;
+			return NULL;
 		}
 		if (memcmp(buf, MC_MAGIC, MC_MAGIC_SIZE))
-			return 0;
+			return NULL;
 	}
 
 	/*
@@ -240,7 +240,7 @@ mcopen(Sfio_t* ip)
 	if (!(vm = vmopen(Vmdcheap, Vmbest, 0)) || !(mc = vmnewof(vm, 0, Mc_t, 1, 0)))
 	{
 		errno = oerrno;
-		return 0;
+		return NULL;
 	}
 	mc->vm = vm;
 	mc->cvt = (iconv_t)(-1);
@@ -329,7 +329,7 @@ mcopen(Sfio_t* ip)
  bad:
 	vmclose(vm);
 	errno = oerrno;
-	return 0;
+	return NULL;
 }
 
 /*

@@ -32,7 +32,7 @@ NoN(vfork)
 extern pid_t
 vfork(void)
 {
-	return(fork());
+	return fork();
 }
 
 #endif

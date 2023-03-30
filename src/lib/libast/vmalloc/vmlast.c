@@ -71,7 +71,7 @@ got_block:
 done:
 	CLRLOCK(vm, local);
 
-	return (void*)tp;
+	return tp;
 }
 
 static int lastfree(Vmalloc_t* vm, void* data, int local )
@@ -228,7 +228,7 @@ static void* lastresize(Vmalloc_t* vm, void* data, size_t size, int type, int lo
 			(*_Vmtrace)(vm,(Vmuchar_t*)orgdata,(Vmuchar_t*)data,orgsize,0);
 
 		if((type&VM_RSZERO) && size > oldsize)
-			memset((void*)((Vmuchar_t*)data + oldsize), 0, size-oldsize);
+			memset((Vmuchar_t*)data + oldsize, 0, size-oldsize);
 	}
 
 done:	CLRLOCK(vm, local);
@@ -348,7 +348,7 @@ static void* lastalign(Vmalloc_t* vm, size_t size, size_t align, int local)
 done:
 	CLRLOCK(vm, local);
 
-	return (void*)data;
+	return data;
 }
 
 /* Public method for free-1 allocation */

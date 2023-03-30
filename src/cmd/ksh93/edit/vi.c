@@ -237,7 +237,7 @@ int ed_viread(void *context, int fd, char *shbuf, int nchar, int reedit)
 		/*** Set raw mode ***/
 
 		if(tty_raw(ERRIO,0) < 0 )
-			return(reedit?reedit:ed_read(context, fd, shbuf, nchar,0));
+			return reedit ? reedit : ed_read(context, fd, shbuf, nchar,0);
 		i = last_virt-1;
 	}
 
@@ -540,7 +540,7 @@ static int cntlmode(Vi_t *vp)
 			/*** print the prompt and ***/
 			/* force a total refresh */
 			putchar('\n');
-			vi_redraw((void*)vp);
+			vi_redraw(vp);
 			break;
 
 		case cntl('V'):
@@ -2027,7 +2027,7 @@ static int curline_search(Vi_t *vp, const char *string)
 	for(dp=(char*)vp->u_space,dpmax=dp+strlen(dp)-len; dp<=dpmax; dp++)
 	{
 		if(strncmp(cp,dp,len)==0)
-			return(dp-(char*)vp->u_space);
+			return dp - (char*)vp->u_space;
 	}
 #if SHOPT_MULTIBYTE
 	ed_internal((char*)vp->u_space,vp->u_space);
@@ -2319,7 +2319,7 @@ addin:
 		{
 			last_virt = i;
 			cur_virt = savecur;
-			vi_redraw((void*)vp);
+			vi_redraw(vp);
 			return GOOD;
 		}
 		else
@@ -2621,16 +2621,16 @@ yankeol:
     static int _isalph(int v)
     {
 #ifdef _lib_iswalnum
-	return(iswalnum(v) || v=='_');
+	return iswalnum(v) || v=='_';
 #else
-	return((v&~STRIP) || isalnum(v) || v=='_');
+	return (v&~STRIP) || isalnum(v) || v=='_';
 #endif
     }
 
 
     static int _isblank(int v)
     {
-	return((v&~STRIP)==0 && isspace(v));
+	return (v&~STRIP)==0 && isspace(v);
     }
 #endif	/* SHOPT_MULTIBYTE */
 

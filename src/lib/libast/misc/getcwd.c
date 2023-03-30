@@ -63,7 +63,7 @@ getcwd(char* buf, size_t len)
 		if (errno != ERANGE)
 		{
 			free(buf);
-			return 0;
+			return NULL;
 		}
 		n += PATH_MAX / 4;
 	}
@@ -122,7 +122,7 @@ pushdir(struct dirlist* d, char* dots, char* path, char* end)
 	{
 		if (p) free(p);
 		if (d) popdir(d, end);
-		return 0;
+		return NULL;
 	}
 	p->index = end - path;
 	p->next = d;
@@ -311,7 +311,7 @@ getcwd(char* buf, size_t len)
 		if (extra >= 0) free(buf);
 	}
 	if (dirp) closedir(dirp);
-	return 0;
+	return NULL;
 }
 
 #endif

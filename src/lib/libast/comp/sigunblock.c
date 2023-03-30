@@ -45,10 +45,10 @@ sigunblock(int s)
 		op = SIG_UNBLOCK;
 	}
 	else op = SIG_SETMASK;
-	return(sigprocmask(op, &mask, NULL));
+	return sigprocmask(op, &mask, NULL);
 #else
 #if _lib_sigsetmask
-	return(sigsetmask(s ? (sigsetmask(0L) & ~sigmask(s)) : 0L));
+	return sigsetmask(s ? (sigsetmask(0L) & ~sigmask(s)) : 0L);
 #else
 	NoP(s);
 	return 0;

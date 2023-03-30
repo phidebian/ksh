@@ -650,7 +650,7 @@ _ccmap(int i, int o)
 			o = CC_NATIVE;
 	}
 	if (i == o || i < 1 || i > MAPS || o < 1 || o > MAPS)
-		return 0;
+		return NULL;
 	if (i == CC_ASCII)
 		return (unsigned char*)tab + MAP * (2 * (o - 1));
 	if (o == CC_ASCII)
@@ -660,7 +660,7 @@ _ccmap(int i, int o)
 		if (map->op == op)
 			return map->map;
 	if (!(map = newof(0, Map_t, 1, 0)))
-		return 0;
+		return NULL;
 	map->op = op;
 	a = (unsigned char*)tab + MAP * (2 * (o - 1));
 	z = (unsigned char*)tab + MAP * (2 * (i - 1) + 1);
@@ -728,6 +728,7 @@ dump(int from, int to)
 	}
 }
 
+int
 main(int argc, char** argv)
 {
 	int			i;

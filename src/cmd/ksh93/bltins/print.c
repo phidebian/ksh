@@ -116,7 +116,7 @@ static int	exitval;
 		sh.universe = 1;
 	}
 	if(!bsd_univ)
-		return(b_print(0,argv,(Shbltin_t*)&prdata));
+		return b_print(0,argv,(Shbltin_t*)&prdata);
 	prdata.options = sh_optecho;
 	prdata.raw = 1;
 	while(argv[1] && *argv[1]=='-')
@@ -136,7 +136,7 @@ static int	exitval;
 			break;
 		argv++;
 	}
-	return(b_print(0,argv,(Shbltin_t*)&prdata));
+	return b_print(0,argv,(Shbltin_t*)&prdata);
    }
 #endif /* SHOPT_ECHOPRINT */
 
@@ -147,7 +147,7 @@ int    b_printf(int argc, char *argv[],Shbltin_t *context)
 	NOT_USED(context);
 	memset(&prdata,0,sizeof(prdata));
 	prdata.options = sh_optprintf;
-	return(b_print(-1,argv,(Shbltin_t*)&prdata));
+	return b_print(-1,argv,(Shbltin_t*)&prdata);
 }
 
 static int infof(Opt_t* op, Sfio_t* sp, const char* s, Optdisc_t* dp)
@@ -309,9 +309,10 @@ skip:
 		argv++;
 	if(vname)
 	{
-		if(!sh.strbuf2)
-			sh.strbuf2 = sfstropen();
-		outfile = sh.strbuf2;
+		static Sfio_t *vbuf;
+		if(!vbuf)
+			vbuf = sfstropen();
+		outfile = vbuf;
 		goto printf_v;
 	}
 skip2:
@@ -570,7 +571,7 @@ static char *fmthtml(const char *string, int flags)
 		}
 	}
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 static ssize_t fmtbase64(Sfio_t *iop, char *string, int alt)
@@ -629,7 +630,7 @@ static ssize_t fmtbase64(Sfio_t *iop, char *string, int alt)
 				number.i = (int)d; 
 			}
 		}
-		return(sfwrite(iop, (void*)&number, size));
+		return sfwrite(iop, &number, size);
 	}
 	if(nv_isattr(np,NV_BINARY))
 	{
@@ -663,7 +664,7 @@ static ssize_t fmtbase64(Sfio_t *iop, char *string, int alt)
 		nv_outnode(np,iop,(alt?-1:0),0);
 		if(sfputc(iop,')') < 0)
 			exitval = 1;
-		return(sftell(iop));
+		return sftell(iop);
 	}
 	else
 	{
@@ -677,7 +678,7 @@ static ssize_t fmtbase64(Sfio_t *iop, char *string, int alt)
 		if(!cp)
 			return 0;
 		size = strlen(cp);
-		return(sfwrite(iop,cp,size));
+		return sfwrite(iop,cp,size);
 	}
 }
 
@@ -716,7 +717,7 @@ static const char *mapformat(Sffmt_t *fe)
 			return pm->map;
 		pm++;
 	}
-	return 0;
+	return NULL;
 }
 
 static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
@@ -730,7 +731,7 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
 	int		fold = fe->base;
 	union types_t*	value = (union types_t*)v;
 	struct printf*	pp = (struct printf*)fe;
-	char*	argp = *pp->nextarg;
+	char*		argp = *pp->nextarg;
 	char		*w,*s;
 	if(fe->n_str>0 && (format=='T'||format=='Q') && varname(fe->t_str,fe->n_str) && (!argp || varname(argp,-1)))
 	{
@@ -1163,7 +1164,7 @@ static int fmtvecho(const char *string, struct printf *pp)
 		return -1;
 	c = --cp - string;
 	if(c>0)
-		stakwrite((void*)string,c);
+		stakwrite(string,c);
 	for(; c= *cp; cp++)
 	{
 		if (mbwide() && ((chlen = mbsize(cp)) > 1))

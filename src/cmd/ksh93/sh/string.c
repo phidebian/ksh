@@ -48,7 +48,7 @@ const Shtable_t *sh_locate(const char *sp,const Shtable_t *table,int size)
 	int			first;
 	const Shtable_t		*tp;
 	int			c;
-	static const Shtable_t		empty = {0,0};
+	static const Shtable_t	empty = {0,0};
 	if(sp==0 || (first= *sp)==0)
 		return &empty;
 	tp=table;
@@ -226,7 +226,7 @@ found:
 	stakputs(newsp);
 	/* copy rest of string */
 	stakputs(sp);
-	return(stakfreeze(1));
+	return stakfreeze(1);
 }
 
 /*
@@ -277,7 +277,7 @@ static char	*sh_fmtcsv(const char *string)
 	offset = staktell();
 	while((c=mbchar(cp)),isaname(c));
 	if(c==0)
-		return((char*)string);
+		return (char*)string;
 	stakputc('"');
 	stakwrite(string,cp-string);
 	if(c=='"')
@@ -296,7 +296,7 @@ static char	*sh_fmtcsv(const char *string)
 		stakwrite(string,cp-string);
 	stakputc('"');
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 /*
@@ -308,11 +308,13 @@ static char	*sh_fmtcsv(const char *string)
 static int	sh_isprint(int c)
 {
 	if(!mbwide())					/* not in multibyte locale? */
-		return(isprint(c));			/* use plain isprint(3) */
+		return isprint(c);			/* use plain isprint(3) */
+	else if(c == ' ')				/* optimisation: check ASCII space first */
+		return 1;				/* return true like isprint(3) */
 	else if(iswgraph(0x5E38) && !iswgraph(0xFEFF))	/* can we use iswgraph(3)? */
-		return(c == ' ' || iswgraph(c));	/* use iswgraph(3) */
+		return iswgraph(c);			/* use iswgraph(3) */
 	else						/* fallback: */
-		return(!(c <= 0x001F ||			/* control characters */
+		return !(c <= 0x001F ||			/* control characters */
 			c >= 0x007F && c <= 0x009F ||	/* control characters */
 			c == 0x00A0 ||			/* non-breaking space */
 			c == 0x061C ||			/* arabic letter mark */
@@ -322,7 +324,7 @@ static int	sh_isprint(int c)
 			c >= 0x2028 && c <= 0x202F ||	/* separators and format characters */
 			c >= 0x205F && c <= 0x206F ||	/* various format characters */
 			c == 0x3000 ||			/* ideographic space */
-			c == 0xFEFF));			/* zero-width non-breaking space */
+			c == 0xFEFF);			/* zero-width non-breaking space */
 }
 
 /*
@@ -344,11 +346,11 @@ char	*sh_fmtq(const char *string)
 		while((c=mbchar(cp)), isaname(c) || c=='.')
 			;
 		if(c==0)
-			return((char*)string);
+			return (char*)string;
 		if(c=='=' || c=='+' && *cp=='=')
 		{
 			if(*cp==0)
-				return((char*)string);
+				return (char*)string;
 			if(*cp=='=')
 				cp++;
 			c = cp - string;
@@ -445,7 +447,7 @@ char	*sh_fmtq(const char *string)
 		stakputc('\'');
 	}
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 /*
@@ -654,7 +656,7 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 		}
 	} while (c);
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 /*
@@ -686,7 +688,7 @@ int sh_strchr(const char *string, const char *dp)
 
 const char *_sh_translate(const char *message)
 {
-	return(ERROR_translate(0,0,e_dict,message));
+	return ERROR_translate(0,0,e_dict,message);
 }
 
 /*

@@ -183,7 +183,7 @@ Sfoff_t sfmove(Sfio_t*	fr,	/* moving data from this stream */
 		{	/* move leftover to read stream */
 			if(w > fr->size)
 				w = fr->size;
-			memmove((void*)fr->data,(void*)cp,w);
+			memmove(fr->data,cp,w);
 			fr->endb = fr->data+w;
 			if((w = endb - (cp+w)) > 0)
 				(void)SFSK(fr,(Sfoff_t)(-w),SEEK_CUR,fr->disc);
@@ -193,10 +193,10 @@ Sfoff_t sfmove(Sfio_t*	fr,	/* moving data from this stream */
 		{	if(direct == SF_WRITE)
 				fw->next += r;
 			else if(r <= (fw->endb-fw->next) )
-			{	memmove((void*)fw->next,(void*)next,r);
+			{	memmove(fw->next,next,r);
 				fw->next += r;
 			}
-			else if((w = SFWRITE(fw,(void*)next,r)) != r)
+			else if((w = SFWRITE(fw,next,r)) != r)
 			{	/* a write error happened */
 				if(w > 0)
 				{	r -= w;

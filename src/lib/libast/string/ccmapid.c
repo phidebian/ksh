@@ -166,5 +166,5 @@ ccmapname(int id)
 	for (mp = maps; mp->name; mp++)
 		if (id == mp->ccode)
 			return (char*)mp->name;
-	return 0;
+	return NULL;
 }

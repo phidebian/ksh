@@ -76,7 +76,7 @@ extern char*	sh_setenviron(const char*);
 #define exitset()	(sh.savexit=sh.exitval)
 
 #ifndef SH_DICT
-#define SH_DICT		(void*)e_dict
+#define SH_DICT		e_dict
 #endif
 
 #ifndef SH_CMDLIB_DIR

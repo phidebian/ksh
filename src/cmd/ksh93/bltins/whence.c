@@ -98,10 +98,10 @@ int	b_command(int argc,char *argv[],Shbltin_t *context)
 		UNREACHABLE();
 	}
 	if(!*argv)
-		return((flags & (X_FLAG|V_FLAG)) != 0 ? 2 : 0);
+		return (flags & (X_FLAG|V_FLAG)) != 0 ? 2 : 0;
 	if(flags & P_FLAG)
 		sh_onstate(SH_XARG);
-	return(whence(argv, flags));
+	return whence(argv, flags);
 }
 
 /*
@@ -148,7 +148,7 @@ int	b_whence(int argc,char *argv[],Shbltin_t *context)
 		errormsg(SH_DICT,ERROR_usage(2),optusage(NULL));
 		UNREACHABLE();
 	}
-	return(whence(argv, flags));
+	return whence(argv, flags);
 }
 
 static int whence(char **argv, int flags)

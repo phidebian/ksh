@@ -101,7 +101,7 @@ pathcanon_20100601(char* path, size_t size, int flags)
 					if (stat(phys, &st))
 					{
 						strcpy(path, s);
-						return 0;
+						return NULL;
 					}
 					*(t - 2) = '.';
 				}
@@ -138,7 +138,7 @@ pathcanon_20100601(char* path, size_t size, int flags)
 						if (flags & PATH_EXISTS)
 						{
 							strcpy(path, s);
-							return 0;
+							return NULL;
 						}
 						flags &= ~(PATH_PHYSICAL|PATH_DOTDOT);
 					}
@@ -154,7 +154,7 @@ pathcanon_20100601(char* path, size_t size, int flags)
 				if (stat(phys, &st))
 				{
 					strcpy(path, s);
-					return 0;
+					return NULL;
 				}
 				v = t;
 				if (*s) *(t - 1) = '/';

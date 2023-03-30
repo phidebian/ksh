@@ -382,14 +382,14 @@ alloc(regdisc_t* disc, void* p, size_t n)
 	if (disc->re_resizef)
 	{
 		if (!n && (disc->re_flags & REG_NOFREE))
-			return 0;
+			return NULL;
 		return (*disc->re_resizef)(disc->re_resizehandle, p, n);
 	}
 	else if (!n)
 	{
 		if (!(disc->re_flags & REG_NOFREE))
 			free(p);
-		return 0;
+		return NULL;
 	}
 	else if (p)
 		return realloc(p, n);

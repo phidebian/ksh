@@ -61,7 +61,7 @@ Sfio_t* sfnew(Sfio_t*	oldf,	/* old stream to be reused */
 
 			if(f->data && ((flags&SF_STRING) || size != (size_t)SF_UNBOUND) )
 			{	if(sflags&SF_MALLOC)
-					free((void*)f->data);
+					free(f->data);
 				f->data = NULL;
 			}
 			if(!f->data)

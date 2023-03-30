@@ -174,7 +174,7 @@ _asometh(int type, void* data)
 		for (i = 0; i < elementsof(method) - 1; i++)
 			if (meth == method[i])
 				return method[i+1];
-		return 0;
+		return NULL;
 	}
 	if (type)
 	{
@@ -184,7 +184,7 @@ _asometh(int type, void* data)
 				method[i]->details = (char*)data;
 				return method[i];
 			}
-		return 0;
+		return NULL;
 	}
 	if (!(name = (char*)data))
 		return state.meth;
@@ -196,7 +196,7 @@ _asometh(int type, void* data)
 				method[i]->details = e + 1;
 			return method[i];
 		}
-	return 0;
+	return NULL;
 }
 
 /*

@@ -41,7 +41,7 @@ memccpy(void* as1, const void* as2, int c, size_t n)
 	while (s2 < ep)
 		if ((*s1++ = *s2++) == c)
 			return s1;
-	return 0;
+	return NULL;
 }
 
 #endif

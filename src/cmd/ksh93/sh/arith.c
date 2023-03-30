@@ -68,7 +68,7 @@ static Namval_t *scope(Namval_t *np,struct lval *lvalue,int assign)
 	assign = assign?NV_ASSIGN:0;
 	lvalue->nosub = 0;
 	if(nosub<0 && lvalue->ovalue)
-		return((Namval_t*)lvalue->ovalue);
+		return (Namval_t*)lvalue->ovalue;
 	lvalue->ovalue = 0;
 	if(cp>=lvalue->expr &&  cp < lvalue->expr+lvalue->elen)
 	{
@@ -89,7 +89,7 @@ static Namval_t *scope(Namval_t *np,struct lval *lvalue,int assign)
 			np = nv_open(cp,sh.var_tree,assign|NV_VARNAME);
 		cp[flag] = c;
 		if(!np)
-			return 0;
+			return NULL;
 		root = sh.last_root;
 		if(cp[flag+1]=='[')
 			flag++;
@@ -208,12 +208,12 @@ static Math_f sh_mathstdfun(const char *fname, size_t fsize, short * nargs)
 			return tp->fnptr;
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 int	sh_mathstd(const char *name)
 {
-	return(sh_mathstdfun(name,strlen(name),NULL)!=0);
+	return sh_mathstdfun(name,strlen(name),NULL)!=0;
 }
 
 static Sfdouble_t arith(const char **ptr, struct lval *lvalue, int type, Sfdouble_t n)
@@ -250,7 +250,7 @@ static Sfdouble_t arith(const char **ptr, struct lval *lvalue, int type, Sfdoubl
 		}
 		nv_putval(np, (char*)&n, NV_LDOUBLE);
 		if(lvalue->eflag)
-			lvalue->ptr = (void*)nv_hasdisc(np,&ENUM_disc);
+			lvalue->ptr = nv_hasdisc(np,&ENUM_disc);
 		lvalue->eflag = 0;
 		r=nv_getnum(np);
 		lvalue->value = (char*)np;
@@ -476,7 +476,7 @@ static Sfdouble_t arith(const char **ptr, struct lval *lvalue, int type, Sfdoubl
 		}
 		lvalue->ovalue = (char*)np;
 		if(lvalue->eflag)
-			lvalue->ptr = (void*)nv_hasdisc(np,&ENUM_disc);
+			lvalue->ptr = nv_hasdisc(np,&ENUM_disc);
 		else if((Namfun_t*)lvalue->ptr && !nv_hasdisc(np,&ENUM_disc) && !nv_isattr(np,NV_INTEGER))
 		{
 			Namval_t *mp,node;
@@ -486,7 +486,7 @@ static Sfdouble_t arith(const char **ptr, struct lval *lvalue, int type, Sfdoubl
 			nv_offattr(&node,NV_RDONLY|NV_NOFREE);
 			nv_putval(&node,np->nvname,0);
 			if(nv_isattr(&node,NV_NOFREE))
-				return(r=nv_getnum(&node));
+				return r=nv_getnum(&node);
 		}
 		lvalue->eflag = 0;
 		if(((lvalue->emode&2) || lvalue->level>1 || sh_isoption(SH_NOUNSET)) && nv_isnull(np) && !nv_isattr(np,NV_INTEGER))
@@ -576,7 +576,7 @@ Sfdouble_t sh_strnum(const char *str, char** ptr, int mode)
 
 Sfdouble_t sh_arith(const char *str)
 {
-	return(sh_strnum(str, NULL, 1));
+	return sh_strnum(str, NULL, 1);
 }
 
 void	*sh_arithcomp(char *str)
@@ -589,5 +589,5 @@ void	*sh_arithcomp(char *str)
 		errormsg(SH_DICT,ERROR_exit(1),e_lexbadchar,*ptr,str);
 		UNREACHABLE();
 	}
-	return((void*)ep);
+	return ep;
 }

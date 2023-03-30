@@ -207,7 +207,7 @@ pathtemp(char* buf, size_t len, const char* dir, const char* pfx, int* fdp)
 			tmp.tmppath = dir ? strdup(dir) : NULL;
 			return (char*)pfx;
 		}
-		return 0;
+		return NULL;
 	}
 	if (tmp.seed)
 		tv.tv_nsec = 0;
@@ -227,7 +227,7 @@ pathtemp(char* buf, size_t len, const char* dir, const char* pfx, int* fdp)
 					n++;
 				}
 				if (!(tmp.vec = newof(0, char*, n, strlen(x) + 1)))
-					return 0;
+					return NULL;
 				tmp.dir = tmp.vec;
 				x = strcpy((char*)(tmp.dir + n), x);
 				*tmp.dir++ = x;
@@ -247,7 +247,7 @@ pathtemp(char* buf, size_t len, const char* dir, const char* pfx, int* fdp)
 				if (((d = tmp.tmpdir) || (d = getenv(TMP_ENV))) && !VALID(d))
 					d = 0;
 				if (!(tmp.vec = newof(0, char*, 2, d ? (strlen(d) + 1) : 0)))
-					return 0;
+					return NULL;
 				if (d)
 					*tmp.vec = strcpy((char*)(tmp.vec + 2), d);
 			}
@@ -259,13 +259,13 @@ pathtemp(char* buf, size_t len, const char* dir, const char* pfx, int* fdp)
 			d = *tmp.dir++;
 		}
 		if (!d && (!*(d = astconf("TMP", NULL, NULL)) || xaccess(d, W_OK|X_OK)) && xaccess(d = TMP1, W_OK|X_OK) && xaccess(d = TMP2, W_OK|X_OK))
-			return 0;
+			return NULL;
 	}
 	if (!len)
 		len = PATH_MAX;
 	len--;
 	if (!(b = buf) && !(b = newof(0, char, len, 1)))
-		return 0;
+		return NULL;
 	z = 0;
 	if (!pfx && !(pfx = tmp.pfx))
 		pfx = "ast";
@@ -364,5 +364,5 @@ pathtemp(char* buf, size_t len, const char* dir, const char* pfx, int* fdp)
 	}
 	if (!buf)
 		free(b);
-	return 0;
+	return NULL;
 }

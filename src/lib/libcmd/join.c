@@ -198,7 +198,7 @@ init(void)
 		    !(jp->file[1].fields = newof(0, Field_t, NFIELD + 1, 0)))
 		{
 			done(jp);
-			return 0;
+			return NULL;
 		}
 		jp->file[0].maxfields = NFIELD;
 		jp->file[1].maxfields = NFIELD;
@@ -300,7 +300,7 @@ getrec(Join_t* jp, int index, int discard)
 	char*		tp;
 
 	if (sh_checksig(jp->context))
-		return 0;
+		return NULL;
 	if (discard && fp->discard)
 		sfraise(fp->iop, SFSK_DISCARD, NULL);
 	fp->spaces = 0;
@@ -308,7 +308,7 @@ getrec(Join_t* jp, int index, int discard)
 	if (!(cp = sfgetr(fp->iop, '\n', 0)))
 	{
 		jp->outmode &= ~(1<<index);
-		return 0;
+		return NULL;
 	}
 	fp->recptr = cp;
 	fp->reclen = sfvalue(fp->iop);

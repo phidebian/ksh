@@ -116,7 +116,7 @@ ssize_t sfputr(Sfio_t*		f,	/* write to this stream	*/
 	{	if(n > w)
 			n = w;
 		f->next -= n;
-		(void)SFWRITE(f,(void*)f->next,n);
+		(void)SFWRITE(f,f->next,n);
 	}
 
 	SFOPEN(f,0);

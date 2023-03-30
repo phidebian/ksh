@@ -155,7 +155,7 @@ pathprobe_20100601(const char* lang, const char* tool, const char* aproc, int op
 	}
 	e = strncopy(p, probe, x - p);
 	if (!pathpath(lib, "", PATH_ABSOLUTE|PATH_EXECUTE, path, pathsize) || stat(path, &ps))
-		return 0;
+		return NULL;
 	for (;;)
 	{
 		ptime = ps.st_mtime;
@@ -185,7 +185,7 @@ pathprobe_20100601(const char* lang, const char* tool, const char* aproc, int op
 		for (;;)
 		{
 			if (!(dir = dirs))
-				return 0;
+				return NULL;
 			dirs = pathcat(dir, ':', "..", exe, path, pathsize);
 			pathcanon(path, pathsize, 0);
 			if (*path == '/' && pathexists(path, PATH_REGULAR|PATH_EXECUTE))
@@ -204,7 +204,7 @@ pathprobe_20100601(const char* lang, const char* tool, const char* aproc, int op
 	if (op >= -1 && (!(st.st_mode & S_ISUID) && ps.st_uid != geteuid() || rofs(path)))
 	{
 		if (!(p = getenv("HOME")))
-			return 0;
+			return NULL;
 		p = path + sfsprintf(path, PATH_MAX - 1, "%s/.%s/%s/", p, probe, HOSTTYPE);
 	}
 	strncopy(p, k, x - p);
@@ -314,9 +314,9 @@ pathprobe_20100601(const char* lang, const char* tool, const char* aproc, int op
 		*ap++ = proc;
 		*ap = 0;
 		if (procrun(exe, arg, 0))
-			return 0;
+			return NULL;
 		if (eaccess(path, R_OK))
-			return 0;
+			return NULL;
 	}
 	return path == buf ? strdup(path) : path;
 }

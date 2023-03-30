@@ -48,7 +48,7 @@ opendir(const char* path)
 	int		fd;
 	struct stat	st;
 
-	if ((fd = open(path, O_RDONLY|O_cloexec)) < 0) return 0;
+	if ((fd = open(path, O_RDONLY|O_cloexec)) < 0) return NULL;
 	if (fstat(fd, &st) < 0 ||
 	   !S_ISDIR(st.st_mode) && (errno = ENOTDIR) ||
 #if !O_cloexec
@@ -68,13 +68,13 @@ opendir(const char* path)
 			if (!freedirp) freedirp = dirp;
 			else free(dirp);
 		}
-		return 0;
+		return NULL;
 	}
 	freedirp = 0;
 	dirp->dd_fd = fd;
 	dirp->dd_loc = dirp->dd_size = 0;	/* refill needed */
 #if defined(_DIR_PRIVATE_) || _ptr_dd_buf
-	dirp->dd_buf = (void*)((char*)dirp + sizeof(DIR));
+	dirp->dd_buf = ((char*)dirp + sizeof(DIR));
 #endif
 	return dirp;
 }

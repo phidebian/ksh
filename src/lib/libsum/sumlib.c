@@ -283,7 +283,7 @@ sumopen(const char* name)
 	for (n = 0; n < elementsof(methods); n++)
 		if (match(name, methods[n].match))
 			return (*methods[n].open)(&methods[n], name);
-	return 0;
+	return NULL;
 }
 
 /*

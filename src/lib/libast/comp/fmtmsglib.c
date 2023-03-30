@@ -190,7 +190,7 @@ display(const MM_table_t* tab, int value, int mask)
 			return (char*)tab->display;
 		tab++;
 	}
-	return 0;
+	return NULL;
 }
 
 int

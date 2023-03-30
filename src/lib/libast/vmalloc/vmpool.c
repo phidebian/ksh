@@ -93,7 +93,7 @@ done:
 
 	CLRLOCK(vm, local);
 
-	return (void*)tp;
+	return tp;
 }
 
 static long pooladdr(Vmalloc_t* vm, void* addr, int local)

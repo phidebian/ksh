@@ -82,7 +82,7 @@ static int _tmprmfile(Sfio_t* f, int type, void* val, Sfdisc_t* disc)
 			while(remove(ff->name) < 0 && errno == EINTR)
 				errno = 0;
 
-			free((void*)ff);
+			free(ff);
 		}
 	}
 
@@ -191,8 +191,8 @@ static int _tmpexcept(Sfio_t* f, int type, void* val, Sfdisc_t* disc)
 	sfset(sf, (f->mode&(SF_READ|SF_WRITE)), 1);
 
 	/* now remake the old stream into the new image */
-	memcpy((void*)(&savf), (void*)f, sizeof(Sfio_t));
-	memcpy((void*)f, (void*)sf, sizeof(Sfio_t));
+	memcpy(&savf, f, sizeof(Sfio_t));
+	memcpy(f, sf, sizeof(Sfio_t));
 	f->push = savf.push;
 	f->pool = savf.pool;
 	f->rsrv = savf.rsrv;
@@ -206,12 +206,12 @@ static int _tmpexcept(Sfio_t* f, int type, void* val, Sfdisc_t* disc)
 	if(savf.data)
 	{	SFSTRSIZE(&savf);
 		if(!(savf.flags&SF_MALLOC) )
-			(void)sfsetbuf(f,(void*)savf.data,savf.size);
+			(void)sfsetbuf(f,savf.data,savf.size);
 		if(savf.extent > 0)
-			(void)sfwrite(f,(void*)savf.data,(size_t)savf.extent);
+			(void)sfwrite(f,savf.data,(size_t)savf.extent);
 		(void)sfseek(f,(Sfoff_t)(savf.next - savf.data),SEEK_SET);
 		if((savf.flags&SF_MALLOC) )
-			free((void*)savf.data);
+			free(savf.data);
 	}
 
 	/* announce change of status */

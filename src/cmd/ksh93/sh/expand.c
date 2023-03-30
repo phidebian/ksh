@@ -56,10 +56,10 @@ static char *nextdir(glob_t *gp, char *dir)
 		pp = path_get(Empty);
 	else
 		pp = pp->next;
-	gp->gl_handle = (void*)pp;
+	gp->gl_handle = pp;
 	if(pp)
 		return pp->name;
-	return 0;
+	return NULL;
 }
 
 int path_expand(const char *pattern, struct argnod **arghead)
@@ -145,7 +145,7 @@ int path_complete(const char *name,const char *suffix, struct argnod **arghead)
 {
 	sufstr = suffix;
 	suflen = strlen(suffix);
-	return(path_expand(name,arghead));
+	return path_expand(name,arghead);
 }
 
 #if SHOPT_BRACEPAT

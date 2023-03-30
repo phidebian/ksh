@@ -60,7 +60,7 @@ ssize_t sfnputc(Sfio_t*		f,	/* file to write */
 
 	for(;;)
 	{	/* hard write of data */
-		if((p = SFWRITE(f,(void*)ps,p)) <= 0 || (n -= p) <= 0)
+		if((p = SFWRITE(f,ps,p)) <= 0 || (n -= p) <= 0)
 		{	w -= n;
 			goto done;
 		}

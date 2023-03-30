@@ -40,7 +40,7 @@
 #define peekchr(ex)	(*(ex)->nextchr)
 #define ungetchr(ex)	((ex)->nextchr--)
 
-#define err(ex,msg)	return(seterror(ex,msg))
+#define err(ex,msg)	return seterror(ex,msg)
 
 typedef struct				/* expression handle		*/
 {

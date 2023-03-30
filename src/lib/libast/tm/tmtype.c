@@ -49,5 +49,5 @@ tmtype(const char* s, char** e)
 		if (zp == tm_info.local) zp = tm_data.zone;
 		else zp++;
 	} while (zp->standard);
-	return 0;
+	return NULL;
 }

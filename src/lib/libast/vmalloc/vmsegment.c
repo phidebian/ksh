@@ -39,5 +39,5 @@ void* vmsegment(Vmalloc_t*	vm,	/* region	*/
 
 	CLRLOCK(vm, 0);
 
-	return seg ? (void*)seg->addr : NULL;
+	return seg ? seg->addr : NULL;
 }

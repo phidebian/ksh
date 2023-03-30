@@ -37,22 +37,22 @@ static const char sh_opttype[] =
 	"variables of this type are written to standard output.]" 
 "[+?\b\f?\f\b is built in to the shell as a declaration command so that "
 	"field splitting and pathname expansion are not performed on "
-	"the arguments.  Tilde expansion occurs on \avalue\a.]"
-"[r?Enables readonly.  Once enabled, the value cannot be changed or unset.]"
+	"the arguments. Tilde expansion occurs on \avalue\a.]"
+"[r?Enables readonly. Once enabled, the value cannot be changed or unset.]"
 "[a]:?[type?Indexed array. Each \aname\a is converted to an indexed "
-	"array of type \b\f?\f\b.  If a variable already exists, the current "
-	"value will become index \b0\b.  If \b[\b\atype\a\b]]\b is "
+	"array of type \b\f?\f\b. If a variable already exists, the current "
+	"value will become index \b0\b. If \b[\b\atype\a\b]]\b is "
 	"specified, each subscript is interpreted as a value of enumeration "
 	"type \atype\a.]"
 "[A?Associative array. Each \aname\a is converted to an associative "
-        "array of type \b\f?\f\b.  If a variable already exists, the current "
+        "array of type \b\f?\f\b. If a variable already exists, the current "
 	"value will become subscript \b0\b.]"
 "[h]:[string?Used within a type definition to provide a help string  "
-	"for variable \aname\a.  Otherwise, it is ignored.]"
+	"for variable \aname\a. Otherwise, it is ignored.]"
 "[S?Used with a type definition to indicate that the variable is shared by "
-	"each instance of the type.  When used inside a function defined "
+	"each instance of the type. When used inside a function defined "
 	"with the \bfunction\b reserved word, the specified variables "
-	"will have function static scope.  Otherwise, the variable is "
+	"will have function static scope. Otherwise, the variable is "
 	"unset prior to processing the assignment list.]"
 "[+DETAILS]\ftypes\f"
 "\n"
@@ -208,7 +208,7 @@ static char *name_chtype(Namval_t *np, Namfun_t *fp)
 		nv_arrfixed(np,sh.strbuf,1,NULL);
 #endif /* SHOPT_FIXEDARRAY */
 	sh.last_table = tp;
-	return(sfstruse(sh.strbuf));
+	return sfstruse(sh.strbuf);
 }
 
 static void put_chtype(Namval_t* np, const char* val, int flag, Namfun_t* fp)
@@ -241,8 +241,8 @@ static void put_chtype(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 static Namfun_t *clone_chtype(Namval_t* np, Namval_t *mp, int flags, Namfun_t *fp)
 {
 	if(flags&NV_NODISC)
-		return 0;
-	return(nv_clone_disc(fp,flags));
+		return NULL;
+	return nv_clone_disc(fp,flags);
 }
 
 static const Namdisc_t chtype_disc =
@@ -270,10 +270,10 @@ static Namval_t *findref(void *nodes, int n)
 		{
 			tp = nv_type(np);
 			pp = (Namtype_t*)nv_hasdisc(tp,&type_disc);
-			return(nv_namptr(pp->nodes,n-i-1));
+			return nv_namptr(pp->nodes,n-i-1);
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 static int fixnode(Namtype_t *dp, Namtype_t *pp, int i, struct Namref *nrp,int flag)
@@ -358,16 +358,16 @@ static Namfun_t *clone_type(Namval_t* np, Namval_t *mp, int flags, Namfun_t *fp)
 		return fp;
 	}
 	if(flags&NV_TYPE)
-		return(nv_clone_disc(fp,flags));
+		return nv_clone_disc(fp,flags);
 	if(size==0 && (!fp->disc || (size=fp->disc->dsize)==0)) 
 		size = sizeof(Namfun_t);
 	dp = (Namtype_t*)sh_malloc(size+pp->nref*sizeof(struct Namref));
 	if(pp->nref)
 	{
 		nrp = (struct Namref*)((char*)dp + size);
-		memset((void*)nrp,0,pp->nref*sizeof(struct Namref));
+		memset(nrp,0,pp->nref*sizeof(struct Namref));
 	}
-	memcpy((void*)dp,(void*)pp,size);
+	memcpy(dp,pp,size);
 	dp->parent = mp;
 	dp->fun.nofree = (flags&NV_RDONLY?1:0);
 	dp->np = mp;
@@ -554,7 +554,7 @@ static void put_type(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 		}
 		nv_disc(np,fp,NV_POP);
 		if(!(fp->nofree&1))
-			free((void*)fp);
+			free(fp);
 	}
 }
 
@@ -569,14 +569,14 @@ static Namval_t *next_type(Namval_t* np, Dt_t *root,Namfun_t *fp)
 		dp->current = 0;
 	}
 	else if(++dp->current>=dp->numnodes)
-		return 0;
-	return(nv_namptr(dp->nodes,dp->current));
+		return NULL;
+	return nv_namptr(dp->nodes,dp->current);
 }
 
 static Namfun_t *clone_inttype(Namval_t* np, Namval_t *mp, int flags, Namfun_t *fp)
 {
 	Namfun_t	*pp = (Namfun_t*)sh_malloc(fp->dsize);
-	memcpy((void*)pp, (void*)fp, fp->dsize);
+	memcpy(pp, fp, fp->dsize);
 	fp->nofree &= ~1;
 	if(nv_isattr(mp,NV_NOFREE) && mp->nvalue.cp)
 		memcpy((void*)mp->nvalue.cp,np->nvalue.cp, fp->dsize-sizeof(*fp));
@@ -771,8 +771,8 @@ void nv_addtype(Namval_t *np, const char *optstr, Optdisc_t *op, size_t optsz)
 		cp->optstring = optstr;
 	else
 		cp->optstring = sh_opttype;
-	memcpy((void*)dp,(void*)op, optsz);
-	cp->optinfof = (void*)dp;
+	memcpy(dp,op, optsz);
+	cp->optinfof = dp;
 	cp->tp = np;
 	mp = nv_search("typeset",sh.bltin_tree,0);
 	if(name=strrchr(np->nvname,'.'))
@@ -1176,7 +1176,7 @@ Namval_t *nv_mktype(Namval_t **nodes, int numnodes)
 		nv_adddisc(mp, (const char**)pp->names, mnodes);
 	}
 	if(mnodes!=nodes)
-		free((void*)mnodes);
+		free(mnodes);
 	nv_newtype(mp);
 	return mp;
 }
@@ -1249,7 +1249,7 @@ Namval_t *nv_type(Namval_t *np)
 		if(fp->disc && fp->disc->typef && (np= (*fp->disc->typef)(np,fp)))
 			return np;
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -1363,7 +1363,7 @@ int nv_settype(Namval_t* np, Namval_t *tp, int flags)
 	if(val)
 	{
 		nv_putval(np,val,NV_RDONLY);
-		free((void*)val);
+		free(val);
 	}
 	return 0;
 }

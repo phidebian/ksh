@@ -35,7 +35,7 @@ Dtmethod_t* dtmethod(Dt_t* dt, Dtmethod_t* meth)
 		return oldmt;
 
 	/* ask discipline if switching to new method is ok */
-	if(disc->eventf && (*disc->eventf)(dt,DT_METH,(void*)meth,disc) < 0)
+	if(disc->eventf && (*disc->eventf)(dt,DT_METH,meth,disc) < 0)
 		return NULL;
 
 	list = dtextract(dt); /* extract elements out of dictionary */

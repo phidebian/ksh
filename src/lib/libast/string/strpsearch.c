@@ -88,7 +88,7 @@ strpsearch(const void* tab, size_t num, size_t siz, const char* name, char** nex
 					{
 						if (next)
 							*next = (char*)t;
-						return (void*)mid;
+						return mid;
 					}
 					if (!sequential)
 					{
@@ -117,5 +117,5 @@ strpsearch(const void* tab, size_t num, size_t siz, const char* name, char** nex
 		else
 			hi = mid - siz;
 	}
-	return 0;
+	return NULL;
 }

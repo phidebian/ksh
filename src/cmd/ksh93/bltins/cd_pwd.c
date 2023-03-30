@@ -139,7 +139,7 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 		if((dp=sh_scoped(CDPNOD)->nvalue.cp) && !(cdpath = (Pathcomp_t*)sh.cdpathlist))
 		{
 			if(cdpath=path_addpath(NULL,dp,PATH_CDPATH))
-				sh.cdpathlist = (void*)cdpath;
+				sh.cdpathlist = cdpath;
 		}
 	}
 	if(*dir!='/')
@@ -252,7 +252,7 @@ success:
 	if(pflag && eflag)
 	{
 		/* Verify the current working directory matches $PWD */
-		return(!test_inode(e_dot,nv_getval(pwdnod)));
+		return !test_inode(e_dot,nv_getval(pwdnod));
 	}
 	return 0;
 }

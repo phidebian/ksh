@@ -36,7 +36,7 @@ dup2(int d1, int d2)
 	save_errno = errno;
 	close(d2);
 	errno = save_errno;
-	return(fcntl(d1, F_DUPFD, d2));
+	return fcntl(d1, F_DUPFD, d2);
 }
 
 #endif

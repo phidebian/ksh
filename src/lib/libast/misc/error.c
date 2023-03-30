@@ -620,7 +620,7 @@ errorctx(Error_info_t* p, int op, int flags)
 			if (p = freecontext)
 				freecontext = freecontext->context;
 			else if (!(p = newof(0, Error_info_t, 1, 0)))
-				return 0;
+				return NULL;
 			*p = *_error_infop_;
 			p->errors = p->flags = p->line = p->warnings = 0;
 			p->catalog = p->file = 0;
