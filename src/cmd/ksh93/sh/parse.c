@@ -918,7 +918,8 @@ static Shnode_t *funct(Lex_t *lexp)
 			memcpy(ap,lexp->arg,sz);
 			lexp->arg = ap;
 		}
-		t->funct.functtre = item(lexp,SH_NOIO);
+		lexp->assignok=1; /* Issue#623 Phi */
+  		t->funct.functtre = item(lexp,SH_NOIO);
 	}
 	else if(sh.shcomp)
 		exit(1);
