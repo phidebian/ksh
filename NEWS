@@ -2,6 +2,13 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-04-05:
+
+- Fixed a spurious syntax error in compound assignments upon encountering a
+  pair of repeated opening parentheses '(('. This bug behaved differently
+  depending on whether the compound assignment was outside or within a command
+  substitution of the form $(...) or ${ ...; }. Both cases are now fixed.
+
 2023-04-03:
 
 - Fixed multiple crashing bugs in discipline functions invoked from non-forked
