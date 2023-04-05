@@ -9,6 +9,11 @@ Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
   depending on whether the compound assignment was outside or within a command
   substitution of the form $(...) or ${ ...; }. Both cases are now fixed.
 
+- Fixed a parsing bug in arithmetic functions like
+	function .sh.math.add x y { .sh.value=x+y; }
+  so that the '.sh.value=x+y' is correctly interpreted as an assignment, not
+  as a command name. After this, (( z = add(x,y) )) works correctly.
+
 2023-04-03:
 
 - Fixed multiple crashing bugs in discipline functions invoked from non-forked
