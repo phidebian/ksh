@@ -28,7 +28,7 @@ NoN(unlink)
 int
 unlink(const char* path)
 {
-	return(remove(path));
+	return remove(path);
 }
 
 #endif

@@ -20,36 +20,34 @@ make install
 	make sum
 		make libsum.a archive
 			make sum.req
-				exec - set -
+				exec - set +v +x
 				exec - echo 'int main(){return 0;}' > 1.${COTEMP}.c
 				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -c 1.${COTEMP}.c &&
-				exec - x=`${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l'*' 2>&1 | sed -e 's/[][()+@?]/#/g' || :` &&
+				note * Obtain error message for library not found by linking to a library called '*';
+				note * the '*' will be repeated in the error message and serve as a wildcard for 'case' below
+				exec - x=$(${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l'*' 2>&1 | sed -e 's/[][()+@?]/#/g' || :) &&
 				exec - {
-				exec - case "" in
-				exec - *?) echo " " ;;
-				exec - esac
-				exec - for i in sum md ast
-				exec - do case $i in
-				exec - "sum"|sum)
-				exec - ;;
-				exec - *) if test -f ${INSTALLROOT}/lib/lib/$i
-				exec - then y=`cat ${INSTALLROOT}/lib/lib/$i`
-				exec - case $y in
-				exec - *-?*) echo "" $y ;;
-				exec - esac
-				exec - continue
-				exec - elif test ! -f ${INSTALLROOT}/lib/lib$i.a
-				exec - then case `{ ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -L${INSTALLROOT}/lib ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l$i 2>&1 || echo '' "$x" ;} | sed -e 's/[][()+@?]/#/g' || :` in
-				exec - *$x*) case `{ ${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l$i 2>&1 || echo '' "$x" ;} | sed -e 's/[][()+@?]/#/g' || :` in
-				exec - *$x*) continue ;;
-				exec - esac
-				exec - ;;
-				exec - esac
-				exec - fi
-				exec - ;;
-				exec - esac
-				exec - echo " -l$i"
-				exec - done
+				exec -	for i in sum md ast
+				exec -	do	case $i in
+				exec -		"sum")	;;
+				exec -		*)	if test -f ${INSTALLROOT}/lib/lib/$i
+				exec -			then	y=$(cat ${INSTALLROOT}/lib/lib/$i)
+				exec -				case $y in
+				exec -				*-?*)	echo "" $y ;;
+				exec -				esac
+				exec -				continue
+				exec -			elif	test ! -f ${INSTALLROOT}/lib/lib$i.a
+				exec -			then	case $({ ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -L${INSTALLROOT}/lib ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l$i 2>&1 && ./1.${COTEMP}.x || echo '' "$x" ;} | sed -e 's/[][()+@?]/#/g' || :) in
+				exec -				*$x*)	case $({ ${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l$i 2>&1 && ./1.${COTEMP}.x || echo '' "$x" ;} | sed -e 's/[][()+@?]/#/g' || :) in
+				exec -					*$x*)	continue ;;
+				exec -					esac
+				exec -					;;
+				exec -				esac
+				exec -			fi
+				exec -			;;
+				exec -		esac
+				exec -		echo " -l$i"
+				exec -	done
 				exec - } > sum.req
 				exec - rm -f 1.${COTEMP}.*
 			done sum.req generated
@@ -171,7 +169,7 @@ make install
 					done sum-crc.c
 				done sumlib.c
 				prev sumlib.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -c sumlib.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -c sumlib.c
 			done sumlib.o generated
 			exec - ${AR} rc libsum.a sumlib.o
 			exec - (ranlib libsum.a) >/dev/null 2>&1 || true
@@ -179,7 +177,7 @@ make install
 	done sum virtual
 	prev libsum.a archive
 	make ${INSTALLROOT}/lib
-		exec - if silent test ! -d ${INSTALLROOT}/lib
+		exec - if test ! -d ${INSTALLROOT}/lib
 		exec - then mkdir -p ${INSTALLROOT}/lib
 		exec - fi
 	done ${INSTALLROOT}/lib generated
@@ -190,7 +188,7 @@ make install
 		exec - (ranlib ${INSTALLROOT}/lib/libsum.a) >/dev/null 2>&1 || true
 	done ${INSTALLROOT}/lib/libsum.a generated
 	make ${INSTALLROOT}/lib/lib
-		exec - if silent test ! -d ${INSTALLROOT}/lib/lib
+		exec - if test ! -d ${INSTALLROOT}/lib/lib
 		exec - then mkdir -p ${INSTALLROOT}/lib/lib
 		exec - fi
 	done ${INSTALLROOT}/lib/lib generated
@@ -200,7 +198,7 @@ make install
 		exec - ${STDCMP} 2>/dev/null -s sum.req ${INSTALLROOT}/lib/lib/sum || { ${STDMV} ${INSTALLROOT}/lib/lib/sum ${INSTALLROOT}/lib/lib/sum.old 2>/dev/null || true; ${STDCP} sum.req ${INSTALLROOT}/lib/lib/sum ;}
 	done ${INSTALLROOT}/lib/lib/sum generated
 	make ${PACKAGE_ast_INCLUDE}
-		exec - if silent test ! -d ${PACKAGE_ast_INCLUDE}
+		exec - if test ! -d ${PACKAGE_ast_INCLUDE}
 		exec - then mkdir -p ${PACKAGE_ast_INCLUDE}
 		exec - fi
 	done ${PACKAGE_ast_INCLUDE} generated

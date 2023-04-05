@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -46,9 +46,9 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 	SFMBDCL(fmbs)
 
 	if(type < 0)
-		fp = NIL(Fmtpos_t*);
+		fp = NULL;
 	else if(!(fp = sffmtpos(f,form,args,ft,-1)) )
-		return NIL(Fmtpos_t*);
+		return NULL;
 
 	dollar = decimal = thousand = 0; argn = maxp = -1;
 	SFMBCLR(&fmbs);
@@ -86,7 +86,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 		}
 
 		flags = dot = 0;
-		t_str = NIL(char*); n_str = 0;
+		t_str = NULL; n_str = 0;
 		size = width = precis = base = -1;
 		for(n = 0; n < FP_INDEX; ++n)
 			need[n] = -1;
@@ -101,7 +101,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 				{
 				case 0 :	/* not balanceable, retract */
 					form = t_str;
-					t_str = NIL(char*);
+					t_str = NULL;
 					n_str = 0;
 					goto loop_flags;
 				case LEFTP :	/* increasing nested level */
@@ -297,7 +297,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 			maxp = argp;
 
 		if(dollar && fmt == '!')
-			return NIL(Fmtpos_t*);
+			return NULL;
 
 		if(fp && fp[argp].ft.fmt == 0)
 		{	fp[argp].ft.form = (char*)form;
@@ -316,7 +316,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 
 	if(!fp) /* constructing position array only */
 	{	if(!dollar || !(fp = (Fmtpos_t*)malloc((maxp+1)*sizeof(Fmtpos_t))) )
-			return NIL(Fmtpos_t*);
+			return NULL;
 		for(n = 0; n <= maxp; ++n)
 			fp[n].ft.fmt = 0;
 		return fp;
@@ -357,12 +357,12 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 			memcpy(ft,&fp[n].ft,sizeof(Sffmt_t));
 			va_copy(ft->args,args);
 			ft->flags |= SFFMT_ARGPOS;
-			v = (*ft->extf)(f, (void*)(&fp[n].argv), ft);
+			v = (*ft->extf)(f, &fp[n].argv, ft);
 			va_copy(args,ft->args);
 			memcpy(&fp[n].ft,ft,sizeof(Sffmt_t));
 			if(v < 0)
 			{	memcpy(ft,&savft,sizeof(Sffmt_t));
-				ft = NIL(Sffmt_t*);
+				ft = NULL;
 			}
 
 			if(!(fp[n].ft.flags&SFFMT_VALUE) )
@@ -397,7 +397,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 					memcpy(ft,&savft,sizeof(Sffmt_t));
 				fp[n].argv.ft = ft = va_arg(args, Sffmt_t*);
 				if(ft->form)
-					ft = NIL(Sffmt_t*);
+					ft = NULL;
 				if(ft)
 					memcpy(&savft,ft,sizeof(Sffmt_t));
 			}
@@ -462,7 +462,7 @@ static const unsigned char	ldbl_inf[] = { _ast_ldbl_inf_init };
 
 /* function to initialize conversion tables */
 static int sfcvinit()
-{	reg int		d, l;
+{	int		d, l;
 
 	for(d = 0; d <= SF_MAXCHAR; ++d)
 	{	_Sfcv36[d] = SF_RADIX;

@@ -14,15 +14,16 @@ std	noreturn note{ noreturn ok }end compile{
 }end
 
 cat{
-	#pragma clang diagnostic ignored "-Wdeprecated-register"
 	#pragma clang diagnostic ignored "-Wparentheses"
 	#pragma clang diagnostic ignored "-Wstring-plus-int"
 	#pragma clang diagnostic ignored "-Wunused-value"
+	#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
 	#pragma GCC diagnostic ignored "-Wunused-result"
+	#endif
 
-	/* AST backwards compatibility macros */
+	/* AST backward compatibility macros */
 	#undef	_NIL_
-	#define	_NIL_(x)	((x)0)
+	#define	_NIL_(x)	NULL
 	#undef	_STD_
 	#define	_STD_		1
 	#undef	_ARG_
@@ -174,11 +175,11 @@ tst	- -DN=1 - -DN=2 - -DN=3 - -DN=4 - -DN=5 - -DN=6 - -DN=7 - -DN=8 - -DN=0 outp
 	int
 	main()
 	{
-		register int	t;
-		register int	s;
-		register int	m = 1;
-		register int	b = 1;
-		register int	w = 0;
+		int	t;
+		int	s;
+		int	m = 1;
+		int	b = 1;
+		int	w = 0;
 	
 	#ifdef _ast_int8_t
 		unsigned _ast_int8_t	p;
@@ -263,7 +264,7 @@ tst	- output{
 	int
 	main()
 	{
-		register int	t;
+		int	t;
 
 		for (t = 0; t < elementsof(types); t++)
 	#if COND
@@ -314,8 +315,8 @@ tst	- -DN=1 - -DN=0 output{
 	int
 	main()
 	{
-		register int	t;
-		register int	m = 1;
+		int	t;
+		int	m = 1;
 	
 	#ifdef _typ_long_double
 		long double	p;

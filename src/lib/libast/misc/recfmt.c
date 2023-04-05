@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -31,27 +31,27 @@
 
 typedef struct
 {
-	unsigned int	rep[4 * 1024];
-	unsigned int	hit[UCHAR_MAX + 1];
+	unsigned int		rep[4 * 1024];
+	unsigned int		hit[UCHAR_MAX + 1];
 } Sample_t;
 
 Recfmt_t
 recfmt(const void* buf, size_t size, off_t total)
 {
-	register unsigned char*		s;
-	register unsigned char*		t;
-	register Sample_t*		q;
-	register unsigned int*		h;
-	register unsigned int		i;
-	unsigned int			j;
-	unsigned int			k;
-	unsigned int			n;
-	unsigned int			m;
-	unsigned int			x;
-	unsigned long			f;
-	unsigned long			g;
+	unsigned char*		s;
+	unsigned char*		t;
+	Sample_t*		q;
+	unsigned int*		h;
+	unsigned int		i;
+	unsigned int		j;
+	unsigned int		k;
+	unsigned int		n;
+	unsigned int		m;
+	unsigned int		x;
+	unsigned long		f;
+	unsigned long		g;
 
-	static unsigned char		terminators[] = { '\n', 0x15, 0x25 };
+	static unsigned char	terminators[] = { '\n', 0x15, 0x25 };
 
 	/*
 	 * check for V format
@@ -74,7 +74,7 @@ recfmt(const void* buf, size_t size, off_t total)
 	 */
 
 	for (i = 0; i < elementsof(terminators); i++)
-		if ((t = (unsigned char*)memchr((void*)s, k = terminators[i], size / 2)) && (n = t - s + 1) > 1 && (total <= 0 || !(total % n)))
+		if ((t = (unsigned char*)memchr(s, k = terminators[i], size / 2)) && (n = t - s + 1) > 1 && (total <= 0 || !(total % n)))
 		{
 			for (j = n - 1; j < size; j += n)
 				if (s[j] != k)

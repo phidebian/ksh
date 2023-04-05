@@ -1,3 +1,21 @@
+		ksh 93u+m/1.1 vs. 93u+m/1.0
+
+The following is a list of changes between ksh 93u+m/1.1.* and the previous
+93u+m/1.0.* series that could cause incompatibilities in rare corner cases.
+For more details, see the NEWS file and for complete details, see the git log.
+
+1.	Type attributes of variables are no longer exported to or imported
+	from the environment. Any script that depends on this will need to
+	be changed to typeset the expected attributes itself.
+
+2.	In the ${parameter/pattern/string} search-and-replace expansion, an
+	anchored empty pattern will now match the beginning or the end of the
+	string, so that ${parameter/#/string} will prefix the string to the
+	parameter value and ${parameter/%/string} will append it. This change
+	brings ksh 93u+m/1.1 into line with mksh, bash, yash and zsh.
+
+____________________________________________________________________________
+
 		ksh 93u+m vs. ksh 93u+
 
 The following is a list of changes between ksh 93u+ 2012-08-01 and the new
@@ -91,6 +109,8 @@ For more details, see the NEWS file and for complete details, see the git log.
 14.	The DEBUG trap has reverted to pre-93t behavior. It is now once again
 	reset like other traps upon entering a subshell or ksh-style function,
 	as documented, and it is no longer prone to crash or get corrupted.
+	A new --functrace shell option has been added that, when turned on,
+	makes subshells and functions correctly inherit the DEBUG trap.
 
 15.	'command -x' now always runs an external command, bypassing built-ins.
 

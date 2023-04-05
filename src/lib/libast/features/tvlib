@@ -84,19 +84,19 @@ tst	- -DN=1 - -DN=2 - -DN=3 - -DN=4 output{
 		struct timeval	tv;
 #if N == 1
 		struct timezone	tz;
-		if (gettimeofday(&tv, (struct timezone*)0) < 0)
+		if (gettimeofday(&tv, NULL) < 0)
 			return 1;
-		printf("#define tmgettimeofday(p)	gettimeofday(p,(struct timezone*)0)\n");
+		printf("#define tmgettimeofday(p)	gettimeofday(p,NULL)\n");
 #if _lib_settimeofday
-		printf("#define tmsettimeofday(p)	settimeofday(p,(struct timezone*)0)\n");
+		printf("#define tmsettimeofday(p)	settimeofday(p,NULL)\n");
 #endif
 #endif
 #if N == 2
-		if (gettimeofday(&tv, (void*)0) < 0)
+		if (gettimeofday(&tv, NULL) < 0)
 			return 1;
-		printf("#define tmgettimeofday(p)	gettimeofday(p,(void*)0)\n");
+		printf("#define tmgettimeofday(p)	gettimeofday(p,NULL)\n");
 #if _lib_settimeofday
-		printf("#define tmsettimeofday(p)	gettimeofday(p,(void*)0)\n");
+		printf("#define tmsettimeofday(p)	gettimeofday(p,NULL)\n");
 #endif
 #endif
 #if N == 3

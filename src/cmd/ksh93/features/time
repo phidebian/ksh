@@ -27,7 +27,7 @@ cat{
 	#define _def_time	1
 	#undef timeofday
 	#if _lib_2_timeofday
-	#define timeofday(p)	gettimeofday(p,(struct timezone*)0)
+	#define timeofday(p)	gettimeofday(p,NULL)
 	#else
 	#if _lib_1_timeofday
 	#define timeofday(p)	gettimeofday(p)

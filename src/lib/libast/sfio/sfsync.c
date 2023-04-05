@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -26,10 +26,10 @@
 
 static int _sfall(void)
 {
-	reg Sfpool_t	*p, *next;
-	reg Sfio_t*	f;
-	reg int		n, rv;
-	reg int		nsync, count, loop;
+	Sfpool_t	*p, *next;
+	Sfio_t*		f;
+	int		n, rv;
+	int		nsync, count, loop;
 #define MAXLOOP 3
 
 	for(loop = 0; loop < MAXLOOP; ++loop)
@@ -72,7 +72,7 @@ static int _sfall(void)
 	return rv;
 }
 
-int sfsync(reg Sfio_t* f)
+int sfsync(Sfio_t* f)
 {
 	int	local, rv, mode, lock;
 	Sfio_t*	origf;
@@ -85,7 +85,7 @@ int sfsync(reg Sfio_t* f)
 	GETLOCAL(origf,local);
 
 	if(origf->disc == _Sfudisc)	/* throw away ungetc */
-		(void)sfclose((*_Sfstack)(origf,NIL(Sfio_t*)));
+		(void)sfclose((*_Sfstack)(origf,NULL));
 
 	rv = 0;
 
@@ -115,7 +115,7 @@ int sfsync(reg Sfio_t* f)
 
 		if((f->mode&SF_WRITE) && (f->next > f->data || (f->bits&SF_HOLE)) )
 		{	/* sync the buffer, make sure pool don't move */
-			reg int pool = f->mode&SF_POOL;
+			int pool = f->mode&SF_POOL;
 			f->mode &= ~SF_POOL;
 			if(f->next > f->data && (SFWRALL(f), SFFLSBUF(f,-1)) < 0)
 				rv = -1;

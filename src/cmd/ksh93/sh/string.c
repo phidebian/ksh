@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -43,22 +43,22 @@
  *  <table> is searched for string <sp> and corresponding value is returned
  *  This is only used for small tables and is used to save non-shareable memory
  */
-const Shtable_t *sh_locate(register const char *sp,const Shtable_t *table,int size)
+const Shtable_t *sh_locate(const char *sp,const Shtable_t *table,int size)
 {
-	register int			first;
-	register const Shtable_t	*tp;
-	register int			c;
-	static const Shtable_t		empty = {0,0};
+	int			first;
+	const Shtable_t		*tp;
+	int			c;
+	static const Shtable_t	empty = {0,0};
 	if(sp==0 || (first= *sp)==0)
-		return(&empty);
+		return &empty;
 	tp=table;
 	while((c= *tp->sh_name) && (CC_NATIVE!=CC_ASCII || c <= first))
 	{
 		if(first == c && strcmp(sp,tp->sh_name)==0)
-			return(tp);
+			return tp;
 		tp = (Shtable_t*)((char*)tp+size);
 	}
-	return(&empty);
+	return &empty;
 }
 
 /*
@@ -73,18 +73,18 @@ const Shtable_t *sh_locate(register const char *sp,const Shtable_t *table,int si
 
 #define sep(c)		((c)=='-'||(c)=='_')
 
-int sh_lookopt(register const char *sp, int *invert)
+int sh_lookopt(const char *sp, int *invert)
 {
-	register int			first;
-	register const Shtable_t	*tp;
-	register int			c;
-	register const char		*s, *t, *sw, *tw;
-	int				amb;
-	int				hit;
-	int				inv;
-	int				no;
+	int			first;
+	const Shtable_t		*tp;
+	int			c;
+	const char		*s, *t, *sw, *tw;
+	int			amb;
+	int			hit;
+	int			inv;
+	int			no;
 	if(sp==0)
-		return(0);
+		return 0;
 	if(*sp=='n' && *(sp+1)=='o' && (*(sp+2)!='t' || *(sp+3)!='i'))
 	{
 		sp+=2;
@@ -93,7 +93,7 @@ int sh_lookopt(register const char *sp, int *invert)
 		*invert = !*invert;
 	}
 	if((first= *sp)==0)
-		return(0);
+		return 0;
 	tp=shtab_options;
 	amb=hit=0;
 	for(;;)
@@ -108,7 +108,7 @@ int sh_lookopt(register const char *sp, int *invert)
 			if(strcmp(sp,t)==0)
 			{
 				*invert ^= no;
-				return(tp->sh_number);
+				return tp->sh_number;
 			}
 			s=sw=sp;
 			tw=t;
@@ -116,12 +116,12 @@ int sh_lookopt(register const char *sp, int *invert)
 			{
 				if(!*s || *s=='=')
 				{
-					if (*s == '=' && !strtol(s+1, NiL, 0))
+					if (*s == '=' && !strtol(s+1, NULL, 0))
 						no = !no;
 					if (!*t)
 					{
 						*invert ^= no;
-						return(tp->sh_number);
+						return tp->sh_number;
 					}
 					if (hit || amb)
 					{
@@ -167,7 +167,7 @@ int sh_lookopt(register const char *sp, int *invert)
 	}
 	if(hit)
 		*invert ^= inv;
-	return(amb ? -1 : hit);
+	return amb ? -1 : hit;
 }
 
 /*
@@ -181,12 +181,12 @@ char *sh_substitute(const char *string,const char *oldsp,char *newsp)
 		strlen(x)==(strlen(in string)+strlen(in newsp)-strlen(in oldsp));
 @*/
 {
-	register const char *sp = string;
-	register const char *cp;
+	const char *sp = string;
+	const char *cp;
 	const char *savesp = 0;
 	stakseek(0);
 	if(*sp==0)
-		return((char*)0);
+		return NULL;
 	if(*(cp=oldsp) == 0)
 		goto found;
 	mbinit();
@@ -205,7 +205,7 @@ char *sh_substitute(const char *string,const char *oldsp,char *newsp)
 			stakputc(*sp++);
 		}
 		if(*sp == 0)
-			return((char*)0);
+			return NULL;
 		savesp = sp;
 	        for(;*cp;cp++)
 		{
@@ -219,28 +219,28 @@ char *sh_substitute(const char *string,const char *oldsp,char *newsp)
 		cp = oldsp;
 	}
 	while(*sp);
-	return((char*)0);
+	return NULL;
 
 found:
 	/* copy new */
 	stakputs(newsp);
 	/* copy rest of string */
 	stakputs(sp);
-	return(stakfreeze(1));
+	return stakfreeze(1);
 }
 
 /*
  * TRIM(sp)
  * Remove escape characters from characters in <sp> and eliminate quoted nulls.
  */
-void	sh_trim(register char *sp)
+void	sh_trim(char *sp)
 /*@
 	assume sp!=NULL;
 	promise strlen(in sp) <= in strlen(sp);
 @*/
 {
-	register char *dp;
-	register int c;
+	char *dp;
+	int c;
 	if(sp)
 	{
 		dp = sp;
@@ -269,15 +269,15 @@ void	sh_trim(register char *sp)
  */
 static char	*sh_fmtcsv(const char *string)
 {
-	register const char *cp = string;
-	register int c;
+	const char *cp = string;
+	int c;
 	int offset;
 	if(!cp)
-		return((char*)0);
+		return NULL;
 	offset = staktell();
 	while((c=mbchar(cp)),isaname(c));
 	if(c==0)
-		return((char*)string);
+		return (char*)string;
 	stakputc('"');
 	stakwrite(string,cp-string);
 	if(c=='"')
@@ -296,7 +296,7 @@ static char	*sh_fmtcsv(const char *string)
 		stakwrite(string,cp-string);
 	stakputc('"');
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 /*
@@ -308,11 +308,13 @@ static char	*sh_fmtcsv(const char *string)
 static int	sh_isprint(int c)
 {
 	if(!mbwide())					/* not in multibyte locale? */
-		return(isprint(c));			/* use plain isprint(3) */
+		return isprint(c);			/* use plain isprint(3) */
+	else if(c == ' ')				/* optimisation: check ASCII space first */
+		return 1;				/* return true like isprint(3) */
 	else if(iswgraph(0x5E38) && !iswgraph(0xFEFF))	/* can we use iswgraph(3)? */
-		return(c == ' ' || iswgraph(c));	/* use iswgraph(3) */
+		return iswgraph(c);			/* use iswgraph(3) */
 	else						/* fallback: */
-		return(!(c <= 0x001F ||			/* control characters */
+		return !(c <= 0x001F ||			/* control characters */
 			c >= 0x007F && c <= 0x009F ||	/* control characters */
 			c == 0x00A0 ||			/* non-breaking space */
 			c == 0x061C ||			/* arabic letter mark */
@@ -322,7 +324,7 @@ static int	sh_isprint(int c)
 			c >= 0x2028 && c <= 0x202F ||	/* separators and format characters */
 			c >= 0x205F && c <= 0x206F ||	/* various format characters */
 			c == 0x3000 ||			/* ideographic space */
-			c == 0xFEFF));			/* zero-width non-breaking space */
+			c == 0xFEFF);			/* zero-width non-breaking space */
 }
 
 /*
@@ -331,11 +333,11 @@ static int	sh_isprint(int c)
  */
 char	*sh_fmtq(const char *string)
 {
-	register const char *cp = string, *op;
-	register int c, state;
+	const char *cp = string, *op;
+	int c, state;
 	int offset;
 	if(!cp)
-		return((char*)0);
+		return NULL;
 	mbinit();
 	offset = staktell();
 	state = ((c= mbchar(cp))==0);
@@ -344,11 +346,11 @@ char	*sh_fmtq(const char *string)
 		while((c=mbchar(cp)), isaname(c) || c=='.')
 			;
 		if(c==0)
-			return((char*)string);
+			return (char*)string;
 		if(c=='=' || c=='+' && *cp=='=')
 		{
 			if(*cp==0)
-				return((char*)string);
+				return (char*)string;
 			if(*cp=='=')
 				cp++;
 			c = cp - string;
@@ -445,7 +447,7 @@ char	*sh_fmtq(const char *string)
 		stakputc('\'');
 	}
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 /*
@@ -457,13 +459,13 @@ char	*sh_fmtq(const char *string)
  */
 char	*sh_fmtqf(const char *string, int single, int fold)
 {
-	register const char *cp = string;
-	register const char *bp;
-	register const char *vp;
-	register int c;
-	register int n;
-	register int q;
-	register int a;
+	const char *cp = string;
+	const char *bp;
+	const char *vp;
+	int c;
+	int n;
+	int q;
+	int a;
 	int offset;
 
 	if (--fold < 8)
@@ -654,14 +656,14 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 		}
 	} while (c);
 	stakputc(0);
-	return(stakptr(offset));
+	return stakptr(offset);
 }
 
 /*
  * Find a multi-byte character in a string.
  * NOTE: Unlike strchr(3), the return value is an integer offset or -1 if not found.
  */
-int sh_strchr(const char *string, register const char *dp)
+int sh_strchr(const char *string, const char *dp)
 {
 	const char *cp;
 	if(mbwide())
@@ -674,19 +676,19 @@ int sh_strchr(const char *string, register const char *dp)
 		while(c = mbchar(cp))
 		{
 			if(c==d)
-				return(cp-string);
+				return cp-string;
 		}
 		if(d==0)
-			return(cp-string);
-		return(-1);
+			return cp-string;
+		return -1;
 	}
 	cp = strchr(string,*dp);
-	return(cp ? cp-string : -1);
+	return cp ? cp-string : -1;
 }
 
 const char *_sh_translate(const char *message)
 {
-	return(ERROR_translate(0,0,e_dict,message));
+	return ERROR_translate(0,0,e_dict,message);
 }
 
 /*
@@ -696,9 +698,9 @@ const char *_sh_translate(const char *message)
  */
 char *sh_checkid(char *str, char *last)
 {
-	register unsigned char *cp = (unsigned char*)str;
-	register unsigned char *v = cp;
-	register int c;
+	unsigned char *cp = (unsigned char*)str;
+	unsigned char *v = cp;
+	int c;
 	if(c=mbchar(cp),isaletter(c))
 		while(c=mbchar(cp),isaname(c));
 	if(c==']' && (!last || ((char*)cp==last)))
@@ -722,5 +724,5 @@ char *sh_checkid(char *str, char *last)
 			last = (char*)v;
 		}
 	}
-	return(last);
+	return last;
 }

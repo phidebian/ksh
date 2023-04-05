@@ -18,7 +18,6 @@
 #include	"shopt.h"
 #include	"shell.h"
 #include	"shlex.h"
-#include	"FEATURE/options"
 
 /*
  * table of reserved words in shell language

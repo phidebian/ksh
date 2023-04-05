@@ -148,6 +148,9 @@ This can be used both for AST libraries shipped with the distribution and for sy
 If the library file is found in the distribution,
 its time stamp is checked and the current target is marked as outdated if it is newer.
 
+The effect of `bind` is global, not scoped; it takes effect for all commands
+physically following it, regardless of `make`…`done` nesting level.
+
 There is also a mechanism to communicate library dependency information across Mamfiles and `mamake` invocations.
 If a file named *libraryname* in the current directory
 or an `${INSTALLROOT}/lib/lib/`*libraryname*`.req` file

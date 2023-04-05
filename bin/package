@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1994-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2023 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -26,6 +26,7 @@
 ########################################################################
 
 # Escape from a non-POSIX shell
+min_posix=/if/this/is/csh/ignore/the/error/message || exec sh $0:q $argv:q
 # ('test X -ef Y' is technically non-POSIX, but practically universal)
 min_posix='test / -ef / && path=Bad && case $PATH in (Bad) exit 1;; esac && '\
 'PWD=Bad && cd -P -- / && case $PWD in (/) ;; (*) exit 1;; esac && '\
@@ -110,7 +111,7 @@ command=${0##*/}
 case $(getopts '[-][123:xyz]' opt --xyz 2>/dev/null; echo 0$opt) in
 0123)	USAGE=$'
 [-?
-@(#)$Id: '$command$' (ksh 93u+m) 2022-10-23 $
+@(#)$Id: '$command$' (ksh 93u+m) 2023-03-11 $
 ]
 [-author?Glenn Fowler <gsf@research.att.com>]
 [-author?Contributors to https://github.com/ksh93/ksh]
@@ -278,7 +279,7 @@ case $(getopts '[-][123:xyz]' opt --xyz 2>/dev/null; echo 0$opt) in
 
 [ qualifier ... ] [ action ] [ arg ... ] [ n=v ... ]
 
-[+SEE ALSO?\bautoconfig\b(1), \bcksum\b(1), \bexecrate\b(1), \bexpmake\b(1),
+[+SEE ALSO?\bautoconfig\b(1), \bcksum\b(1), \bexpmake\b(1),
 	\bgzip\b(1), \bmake\b(1), \bmamake\b(1), \bpax\b(1),
 	\bpkgadd\b(1), \bpkgmk\b(1), \brpm\b(1),
 	\bsh\b(1), \btar\b(1), \boptget\b(3)]
@@ -331,7 +332,6 @@ tab="        "
 verbose=0
 AUTHORIZE=
 DEBUG=
-SHELLMAGIC=-
 
 unset FIGNORE BINDIR DLLDIR ETCDIR FUNDIR INCLUDEDIR LIBDIR LOCALEDIR MANDIR SHAREDIR 2>/dev/null || true
 
@@ -340,7 +340,7 @@ do	case $# in
 	0)	set host type ;;
 	esac
 	case $1 in
-	clean|clobber|export|host|install|make|remove|results|test|use|view)
+	clean|clobber|export|host|install|make|results|test|use|view)
 		action=$1
 		shift
 		break
@@ -534,11 +534,11 @@ DETAILS
   a new $INSTALLROOT.
 
 SEE ALSO
-  autoconfig(1), cksum(1), execrate(1), expmake(1), gzip(1), make(1),
-  mamake(1), pax(1), pkgadd(1), pkgmk(1), rpm(1), sh(1), tar(1), optget(3)
+  autoconfig(1), cksum(1), expmake(1), gzip(1), make(1), mamake(1), pax(1),
+  pkgadd(1), pkgmk(1), rpm(1), sh(1), tar(1), optget(3)
 
 IMPLEMENTATION
-  version         package (ksh 93u+m) 2022-10-23
+  version         package (ksh 93u+m) 2023-03-11
   author          Glenn Fowler <gsf@research.att.com>
   author          Contributors to https://github.com/ksh93/ksh
   copyright       (c) 1994-2012 AT&T Intellectual Property
@@ -568,9 +568,8 @@ hostopts()
 {
 	_ifs_=$IFS
 	IFS=,
-	set '' $HOSTTYPE
+	set -- $HOSTTYPE
 	IFS=$_ifs_
-	shift
 	while	:
 	do	case $# in
 		0|1)	break ;;
@@ -702,23 +701,6 @@ executable() # [!] command
 	esac
 }
 
-# initialize SHELLMAGIC
-# tangible proof of Cygwin's disdain for Unix (well, this and execrate)
-
-shellmagic()
-{
-	case $SHELLMAGIC in
-	'')	;;
-	-)	if	test -f /emx/bin/sh.exe
-		then	SHELLMAGIC='#!/emx/bin/sh.exe'$nl
-		elif	test -f /bin/env.exe
-		then	SHELLMAGIC='#!/bin/env sh'$nl
-		else	SHELLMAGIC=
-		fi
-		;;
-	esac
-}
-
 # true if arg is executable command on $PATH
 
 onpath() # command
@@ -733,9 +715,8 @@ onpath() # command
 		;;
 	esac
 	IFS=':'
-	set '' $PATH
+	set -- $PATH
 	IFS=$ifs
-	shift
 	for _onpath_d
 	do	case $_onpath_d in
 		'')	_onpath_d=. ;;
@@ -992,6 +973,10 @@ int main()
 			'')	canon=$a ;;
 			esac
 			;;
+		*-*)	case $canon in
+			'')	canon=${a%-*}-unknown-${a#*-} ;;
+			esac
+			;;
 		*)	_hostinfo_="$_hostinfo_ $a"
 			continue
 			;;
@@ -1037,6 +1022,13 @@ int main()
 
 		# inconsistent -dumpmachine filtered here
 
+		case $canon in
+		*-*-linux-gnu*)
+			;;
+		*-linux-gnu*)
+			# fix missing machine field, e.g. aarch64-linux-gnu => aarch64-unknown-linux-gnu
+			canon=${canon%%-*}-unknown-${canon#*-} ;;
+		esac
 		case -${canon}- in
 		--|*-powerpc-*)
 			h=$(hostname || uname -n || cat /etc/whoami)
@@ -1087,6 +1079,12 @@ int main()
 		type=unknown
 		case $host in
 		*.*)	host=$(echo $host | sed -e 's/\..*//') ;;
+		esac
+		case $arch in
+		aarch64)
+			# some call it aarch64, some arm64 -- let's stick to one
+			arch=arm64
+			;;
 		esac
 		case $mach in
 		unknown)
@@ -1439,7 +1437,8 @@ int main()
 			bsdi)			lhs=bsd ;;
 			darwin)			case $(/usr/bin/cc --version) in
 						*'(GCC)'*)	case $rel in
-								[0-9].*|10.*)	lhs=darwin07 ;;
+								'' | [0-9].* | 10.*)
+										lhs=darwin07 ;;
 								*)		lhs=darwin11 ;;
 								esac ;;
 						esac
@@ -1574,8 +1573,7 @@ int b() { return 0; }
 		;;
 	esac
 	done
-	set '' $_hostinfo_
-	shift
+	set -- $_hostinfo_
 	_hostinfo_=$*
 
 	# restore the global state
@@ -1699,8 +1697,7 @@ case $x in
 			case $show in
 			echo)	exec=echo make=echo show=echo ;;
 			esac
-			set '' $args
-			shift
+			set -- $args
 			case $# in
 			0)	;;
 			*)	case $1 in
@@ -1796,7 +1793,7 @@ case $x in
 	export HOSTTYPE
 	INSTALLROOT=$PACKAGEROOT/arch/$HOSTTYPE
 	case $action in
-	install|make|remove|test|view)
+	install|make|test|view)
 		;;
 	*)	if	test ! -d $INSTALLROOT
 		then	INSTALLROOT=$PACKAGEROOT
@@ -1842,29 +1839,12 @@ case $x in
 		then
 			# update the basic package commands
 
-			for i in execrate ignore mamprobe silent
+			for i in mamprobe
 			do	test -h $PACKAGEROOT/bin/$i 2>/dev/null ||
 				case $(ls -t $INITROOT/$i.sh $PACKAGEROOT/bin/$i 2>/dev/null) in
 				"$INITROOT/$i.sh"*)
 					note "update $PACKAGEROOT/bin/$i"
-					shellmagic
-					case $SHELLMAGIC in
-					'')	$exec cp $INITROOT/$i.sh $PACKAGEROOT/bin/$i || exit
-						;;
-					*)	case $exec in
-						'')	{
-							echo "$SHELLMAGIC"
-							cat $INITROOT/$i.sh
-							} > $PACKAGEROOT/bin/$i || exit
-							;;
-						*)	echo "{
-echo \"$SHELLMAGIC\"
-cat $INITROOT/$i.sh
-} > $PACKAGEROOT/bin/$i"
-							;;
-						esac
-						;;
-					esac
+					$exec cp $INITROOT/$i.sh $PACKAGEROOT/bin/$i || exit
 					$exec chmod +x $PACKAGEROOT/bin/$i || exit
 					;;
 				esac
@@ -2140,8 +2120,7 @@ cat $INITROOT/$i.sh
 	case $USER_VPATH in
 	'')	case $VPATH in
 		?*)	IFS=':'
-			set '' $VPATH
-			shift
+			set -- $VPATH
 			IFS=$ifs
 			USER_VPATH=
 			for i
@@ -2162,8 +2141,7 @@ cat $INITROOT/$i.sh
 	esac
 	case $USER_VPATH in
 	?*)	IFS=':'
-		set '' $USER_VPATH
-		shift
+		set -- $USER_VPATH
 		IFS=$ifs
 		USER_VPATH=
 		USER_VPATH_CHAIN=
@@ -2185,8 +2163,7 @@ esac
 
 PACKAGEBIN=$INSTALLROOT/lib/package
 case $action:$run in
-use:-)	set '' $args
-	shift
+use:-)	set -- $args
 	case $# in
 	0)	;;
 	*)	shift ;;
@@ -2242,8 +2219,7 @@ $show VPATH=$VPATH
 $show export VPATH
 export VPATH
 IFS=':'
-set '' $VPATH
-shift
+set -- $VPATH
 IFS=$ifs
 for i
 do	case $i in
@@ -2305,13 +2281,9 @@ view() # [test] [-|type] [src|bin|all] file
 case $action in
 *)	package=
 	target=
-	set '' $args
-	while	:
-	do	shift
-		case $# in
-		0)	break ;;
-		esac
-		case $1 in
+	set -- $args
+	while	test "$#" -gt 0
+	do	case $1 in
 		''|-)	target="$target $package"
 			package=
 			;;
@@ -2322,6 +2294,7 @@ case $action in
 			fi
 			;;
 		esac
+		shift
 	done
 	;;
 esac
@@ -2542,57 +2515,45 @@ do_install() # dir [ command ... ]
 {
 	cd "$INSTALLROOT"
 	printf 'install: installing from %s\n' "$PWD"
-	set -o errexit
 	dd=$1
 	shift
 	case $dd in
 	'' | [!/]*)
 		err_out "ERROR: destination directory '$dd' must begin with a /" ;;
+	/)
+		# avoid //foo
+		dd='' ;;
 	esac
 	# commands to install by default
-	test "$#" -eq 0 && set -- ksh shcomp  # pty suid_exec
+	test "$#" -eq 0 && set -- ksh shcomp
 	for f
 	do	test -f "bin/$f" || err_out "Not found: $f" "Build first? Run $0 make"
 	done
 	# set install directories
 	bindir=$dd/bin
-	mandir=$dd/share/man
-	man1dir=$mandir/man1
+	man1dir=${dd:-/usr}/share/man/man1
 	# and off we go
-	trace mkdir -p "$bindir" "$man1dir"
+	trace mkdir -p "$bindir" "$man1dir" || exit
 	for f
 	do	# install executable
-		trace cp "bin/$f" "$bindir/"
+		trace cp "bin/$f" "$bindir/" || exit
 		# install manual
 		case $f in
-		ksh)	trace cp "$PACKAGEROOT/src/cmd/ksh93/sh.1" "$man1dir/ksh.1"
+		ksh)	trace cp "$PACKAGEROOT/src/cmd/ksh93/sh.1" "$man1dir/ksh.1" || exit
 			;;
 		*)	# AT&T --man, etc. is a glorified error message: writes to stderr and exits with status 2 :-/
+			# So we cannot reliably check for success; must check the result, too.
 			manfile=$man1dir/${f##*/}.1
-			bin/ksh -c '"$@" 2>&1; exit 0' _ "bin/$f" --nroff >$manfile
-			# ...so we cannot check for success; instead, check the result.
-			if	grep -q '^.TH .* 1' "$manfile"
-			then	printf "install: wrote '%s --nroff' output into %s\n" "bin/$f" "$manfile"
+			bin/ksh -c '"$@" 2>&1' _ "bin/$f" --\?\?nroff >$manfile
+			if	test "$?" -eq 2 &&
+				read -r magic < "$manfile" &&
+				test "X$magic" = 'X.\" format with nroff|troff|groff -man'  # string from optget.c
+			then	printf '%s: executing: %s --\\?\\?nroff > %s\n' "$action" "bin/$f" "$manfile"
 			else	rm "$manfile"
 			fi
 			;;
 		esac
 	done
-}
-
-# check for native ASCII 0:yes 1:no
-
-__isascii__=
-
-isascii()
-{
-	case $__isascii__ in
-	'')	case $(echo A | od -o | sed -e 's/[ 	]*$//' -e '/[ 	]/!d' -e 's/.*[ 	]//') in
-		005101|040412)	__isascii__=0 ;;
-		*)		__isascii__=1 ;;
-		esac
-	esac
-	return $__isascii__
 }
 
 error_status=0
@@ -2635,17 +2596,12 @@ export)	case $INSTALLROOT in
 	0)	v='$i=' ;;
 	*)	v= ;;
 	esac
-	set '' $target $package
-	case $# in
-	1)	set '' $env ;;
-	esac
-	while	:
-	do	case $# in
-		1)	break ;;
-		esac
-		shift
-		i=$1
+	set -- $target $package
+	test "$#" -eq 0 && set -- $env
+	while	test "$#" -gt 0
+	do	i=$1
 		eval echo ${v}'$'${i}
+		shift
 	done
 	;;
 
@@ -2915,19 +2871,10 @@ make|view)
 		$i*)	;;
 		*)	if	test -f "$j" && test -f "$k"
 			then	note "update $i"
-				shellmagic
 				case $exec in
-				'')	{
-					case $SHELLMAGIC in
-					?*)	echo "$SHELLMAGIC" ;;
-					esac
-					cat $j $k
-					} > $i || exit
+				'')	cat $j $k > $i || exit
 					;;
-				*)	echo "{
-echo $SHELLMAGIC
-cat $j $k
-} > $i"
+				*)	echo "cat $j $k > $i"
 					;;
 				esac
 				$exec chmod +x $i || exit
@@ -2940,28 +2887,6 @@ cat $j $k
 
 	checkaout mamake || exit
 
-	# execrate if necessary
-
-	if	(execrate) >/dev/null 2>&1
-	then	execrate=execrate
-		$make cd $INSTALLROOT/bin
-		for i in chmod chgrp cmp cp ln mv rm
-		do	if	test ! -x "ok/$i" && test -x "/bin/$i.exe"
-			then	shellmagic
-				case $exec in
-				'')	echo "$SHELLMAGIC"'execrate /bin/'$i' "$@"' > ok/$i
-					chmod +x ok/$i
-					;;
-				*)	$exec echo \'"$SHELLMAGIC"'execrate /bin/'$i' "$@"'\'' >' ok/$i
-					$exec chmod +x ok/$i
-					;;
-				esac
-			fi
-		done
-		PATH=$INSTALLROOT/bin/ok:$PATH
-		export PATH
-	else	execrate=
-	fi
 	case $action in
 	view)	exit 0 ;;
 	esac
@@ -3125,16 +3050,16 @@ cat $j $k
 		do	executable $i && {
 				cmp -s $i ok/$i 2>/dev/null || {
 					test -f ok/$i &&
-					$exec $execrate $rm ok/$i </dev/null
+					$exec $rm ok/$i </dev/null
 					test -f ok/$i &&
-					$exec $execrate $mv ok/$i ok/$i.old </dev/null
+					$exec $mv ok/$i ok/$i.old </dev/null
 					test -f ok/$i &&
 					case $exec:$i in
 					:ksh)
 						err_out "ok/$i: cannot update [may be in use by a running process] remove manually and try again"
 						;;
 					esac
-					$exec $execrate $cp $i ok/$i
+					$exec $cp $i ok/$i
 				}
 			}
 		done
@@ -3203,8 +3128,7 @@ cat $j $k
 	esac
 	;;
 
-results)set '' $target
-	shift
+results)set -- $target
 	def=make
 	dir=$PACKAGEBIN/gen
 	case $verbose in

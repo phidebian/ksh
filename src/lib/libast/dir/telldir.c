@@ -33,7 +33,7 @@ NoN(telldir)
 long
 telldir(DIR* dirp)
 {
-	return(lseek(dirp->dd_fd, 0L, SEEK_CUR) + (long)dirp->dd_loc);
+	return lseek(dirp->dd_fd, 0L, SEEK_CUR) + (long)dirp->dd_loc;
 }
 
 #endif

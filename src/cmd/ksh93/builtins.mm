@@ -161,10 +161,10 @@ int b_hello(int argc, char *argv[], void *context)
         if(argc != 2)
         {
                 fprintf(stderr,"Usage: hello arg\en");
-                return(2);
+                return 2;
         }
         printf("hello %s\en",argv[1]);
-        return(0);
+        return 0;
 }
 SHLIB(hello)
 .EE

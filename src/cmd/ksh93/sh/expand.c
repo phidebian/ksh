@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -42,7 +42,6 @@ static	int		scantree(Dt_t*,const char*, struct argnod**);
 
 /*
  * This routine builds a list of files that match a given pathname
- * Uses external routine strgrpmatch() to match each component
  * A leading . must match explicitly
  */
 
@@ -57,18 +56,18 @@ static char *nextdir(glob_t *gp, char *dir)
 		pp = path_get(Empty);
 	else
 		pp = pp->next;
-	gp->gl_handle = (void*)pp;
+	gp->gl_handle = pp;
 	if(pp)
-		return(pp->name);
-	return(0);
+		return pp->name;
+	return NULL;
 }
 
 int path_expand(const char *pattern, struct argnod **arghead)
 {
 	glob_t gdata;
-	register struct argnod *ap;
-	register glob_t *gp= &gdata;
-	register int flags,extra=0;
+	struct argnod *ap;
+	glob_t *gp= &gdata;
+	int flags,extra=0;
 	sh_stats(STAT_GLOBS);
 	memset(gp,0,sizeof(gdata));
 	flags = GLOB_GROUP|GLOB_AUGMENTED|GLOB_NOCHECK|GLOB_NOSORT|GLOB_STACK|GLOB_LIST|GLOB_DISC;
@@ -107,7 +106,7 @@ int path_expand(const char *pattern, struct argnod **arghead)
 	}
 	if(gp->gl_list)
 		*arghead = (struct argnod*)gp->gl_list;
-	return(gp->gl_pathc+extra);
+	return gp->gl_pathc+extra;
 }
 
 /*
@@ -115,10 +114,10 @@ int path_expand(const char *pattern, struct argnod **arghead)
  */
 static int scantree(Dt_t *tree, const char *pattern, struct argnod **arghead)
 {
-	register Namval_t *np;
-	register struct argnod *ap;
-	register int nmatch=0;
-	register char *cp;
+	Namval_t *np;
+	struct argnod *ap;
+	int nmatch=0;
+	char *cp;
 	np = (Namval_t*)dtfirst(tree);
 	for(;np && !nv_isnull(np);(np = (Namval_t*)dtnext(tree,np)))
 	{
@@ -127,14 +126,14 @@ static int scantree(Dt_t *tree, const char *pattern, struct argnod **arghead)
 			(void)stakseek(ARGVAL);
 			stakputs(cp);
 			ap = (struct argnod*)stakfreeze(1);
-			ap->argbegin = NIL(char*);
+			ap->argbegin = NULL;
 			ap->argchn.ap = *arghead;
 			ap->argflag = ARG_RAW|ARG_MAKE;
 			*arghead = ap;
 			nmatch++;
 		}
 	}
-	return(nmatch);
+	return nmatch;
 }
 
 /*
@@ -142,11 +141,11 @@ static int scantree(Dt_t *tree, const char *pattern, struct argnod **arghead)
  * generate the list of files found by adding an suffix to end of name
  * The number of matches is returned
  */
-int path_complete(const char *name,register const char *suffix, struct argnod **arghead)
+int path_complete(const char *name,const char *suffix, struct argnod **arghead)
 {
 	sufstr = suffix;
 	suflen = strlen(suffix);
-	return(path_expand(name,arghead));
+	return path_expand(name,arghead);
 }
 
 #if SHOPT_BRACEPAT
@@ -162,9 +161,9 @@ int path_generate(struct argnod *todo, struct argnod **arghead)
 	return count satisfying count>=1;
 @*/
 {
-	register char *cp;
-	register int brace;
-	register struct argnod *ap;
+	char *cp;
+	int brace;
+	struct argnod *ap;
 	struct argnod *top = 0;
 	struct argnod *apin;
 	char *pat, *rescan;
@@ -295,7 +294,7 @@ again:
 					(*arghead)->argflag |= ARG_MAKE;
 				}
 			}
-			return(count);
+			return count;
 	}
 endloop1:
 	rescan = cp;

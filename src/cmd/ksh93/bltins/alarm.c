@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -63,11 +63,11 @@ static void	trap_timeout(void*);
  */
 static void *time_add(struct tevent *item, void *list)
 {
-	register struct tevent *tp = (struct tevent*)list;
+	struct tevent *tp = (struct tevent*)list;
 	if(!tp || item->milli < tp->milli)
 	{
 		item->next = tp;
-		list = (void*)item;
+		list = item;
 	}
 	else
 	{
@@ -77,18 +77,18 @@ static void *time_add(struct tevent *item, void *list)
 		tp->next = item;
 	}
 	tp = item;
-	tp->timeout = (void*)sh_timeradd(tp->milli,tp->flags&R_FLAG,trap_timeout,(void*)tp);
-	return(list);
+	tp->timeout = sh_timeradd(tp->milli,tp->flags&R_FLAG,trap_timeout,tp);
+	return list;
 }
 
 /*
  * delete timeout item from current given list, delete timer
  */
-static 	void *time_delete(register struct tevent *item, void *list)
+static 	void *time_delete(struct tevent *item, void *list)
 {
-	register struct tevent *tp = (struct tevent*)list;
+	struct tevent *tp = (struct tevent*)list;
 	if(item==tp)
-		list = (void*)tp->next;
+		list = tp->next;
 	else
 	{
 		while(tp && tp->next != item)
@@ -97,18 +97,18 @@ static 	void *time_delete(register struct tevent *item, void *list)
 			tp->next = item->next;
 	}
 	if(item->timeout)
-		sh_timerdel((void*)item->timeout);
-	return(list);
+		sh_timerdel(item->timeout);
+	return list;
 }
 
 static void	print_alarms(void *list)
 {
-	register struct tevent *tp = (struct tevent*)list;
+	struct tevent *tp = (struct tevent*)list;
 	while(tp)
 	{
 		if(tp->timeout)
 		{
-			register char *name = nv_name(tp->node);
+			char *name = nv_name(tp->node);
 			if(tp->flags&R_FLAG)
 			{
 				double d = tp->milli;
@@ -123,7 +123,7 @@ static void	print_alarms(void *list)
 
 static void	trap_timeout(void* handle)
 {
-	register struct tevent *tp = (struct tevent*)handle;
+	struct tevent *tp = (struct tevent*)handle;
 	sh.trapnote |= SH_SIGALRM;
 	if(!(tp->flags&R_FLAG))
 		tp->timeout = 0;
@@ -135,8 +135,8 @@ static void	trap_timeout(void* handle)
 
 void	sh_timetraps(void)
 {
-	register struct tevent *tp, *tpnext;
-	register struct tevent *tptop;
+	struct tevent *tp, *tpnext;
+	struct tevent *tptop;
 	while(1)
 	{
 		sh.sigflag[SIGALRM] &= ~SH_SIGALRM;
@@ -148,7 +148,7 @@ void	sh_timetraps(void)
 			{
 				tp->flags &= ~L_FLAG;
 				if(tp->action)
-					sh_fun(tp->action,tp->node,(char**)0);
+					sh_fun(tp->action,tp->node,NULL);
 				tp->flags &= ~L_FLAG;
 				if(!tp->flags)
 					nv_unset(tp->node);
@@ -165,19 +165,19 @@ void	sh_timetraps(void)
  */
 static char *setdisc(Namval_t *np, const char *event, Namval_t* action, Namfun_t *fp)
 {
-        register struct tevent *tp = (struct tevent*)fp;
+        struct tevent *tp = (struct tevent*)fp;
 	if(!event)
-		return(action ? Empty : (char*)ALARM);
+		return action ? Empty : (char*)ALARM;
 	if(strcmp(event,ALARM)!=0)
 	{
 		/* try the next level */
-		return(nv_setdisc(np, event, action, fp));
+		return nv_setdisc(np, event, action, fp);
 	}
 	if(action==np)
 		action = tp->action;
 	else
 		tp->action = action;
-	return(action ? (char*)action : Empty);
+	return action ? (char*)action : Empty;
 }
 
 /*
@@ -185,8 +185,8 @@ static char *setdisc(Namval_t *np, const char *event, Namval_t* action, Namfun_t
  */
 static void putval(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 {
-	register struct tevent	*tp = (struct tevent*)fp;
-	register double d;
+	struct tevent	*tp = (struct tevent*)fp;
+	double d;
 	if(val)
 	{
 		double now;
@@ -195,7 +195,7 @@ static void putval(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 		timeofday(&tmp);
 		now = tmp.tv_sec + 1.e-6*tmp.tv_usec;
 #else
-		now = (double)time(NIL(time_t*));
+		now = (double)time(NULL);
 #endif /* timeofday */
 		nv_putv(np,val,flag,fp);
 		d = nv_getnum(np);
@@ -214,10 +214,10 @@ static void putval(Namval_t* np, const char* val, int flag, Namfun_t* fp)
 	}
 	else
 	{
-		tp = (struct tevent*)nv_stack(np, (Namfun_t*)0);
+		tp = (struct tevent*)nv_stack(np, NULL);
 		sh.st.timetrap = time_delete(tp,sh.st.timetrap);
 		nv_unset(np);
-		free((void*)fp);
+		free(fp);
 	}
 }
 
@@ -232,9 +232,9 @@ static const Namdisc_t alarmdisc =
 
 int	b_alarm(int argc,char *argv[],Shbltin_t *context)
 {
-	register int n,rflag=0;
-	register Namval_t *np;
-	register struct tevent *tp;
+	int n,rflag=0;
+	Namval_t *np;
+	struct tevent *tp;
 	while (n = optget(argv, sh_optalarm)) switch (n)
 	{
 	    case 'r':
@@ -251,28 +251,28 @@ int	b_alarm(int argc,char *argv[],Shbltin_t *context)
 	argv += opt_info.index;
 	if(error_info.errors)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),optusage(NULL));
 		UNREACHABLE();
 	}
 	if(argc==0)
 	{
 		print_alarms(sh.st.timetrap);
-		return(0);
+		return 0;
 	}
 	if(argc!=2)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),optusage(NULL));
 		UNREACHABLE();
 	}
 	np = nv_open(argv[0],sh.var_tree,NV_NOARRAY|NV_VARNAME);
 	if(!nv_isnull(np))
 		nv_unset(np);
 	nv_setattr(np, NV_DOUBLE);
-	tp = sh_newof(NIL(struct tevent*),struct tevent,1,0);
+	tp = sh_newof(NULL,struct tevent,1,0);
 	tp->fun.disc = &alarmdisc;
 	tp->flags = rflag;
 	tp->node = np;
 	nv_stack(np,(Namfun_t*)tp);
 	nv_putval(np, argv[1], 0);
-	return(0);
+	return 0;
 }

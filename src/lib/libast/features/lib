@@ -3,7 +3,7 @@ ref	-D_def_map_ast=1
 cmd	universe
 
 hdr	dirent,direntry,filio,fmtmsg,fnmatch,jioctl,libgen,limits
-hdr	locale,ndir,nl_types,process,spawn,syslog,utime,vfork
+hdr	locale,ndir,nl_types,process,spawn,syslog,utime
 hdr	linux/fs,linux/msdos_fs,sys/ioctl
 hdr	wctype
 hdr	wchar note{ <wchar.h> and isw*() really work }end execute{
@@ -52,7 +52,7 @@ mem	DIR.dd_fd sys/types.h - dirent.h - sys/dir.h
 mem	inheritance.pgroup spawn.h
 
 sys	dir,filio,jioctl,localedef,ptem,resource
-sys	socket,stream,systeminfo,universe,vfork
+sys	socket,stream,systeminfo,universe
 
 tst	tst_errno note{ errno can be assigned }end link{
 	#define error		______error
@@ -120,10 +120,10 @@ tst	lib_poll_notimer note{ poll with no fds ignores timeout }end execute{
 		unsigned long	start;
 		unsigned long	finish;
 		struct pollfd	fd;
-		start = time((time_t*)0);
+		start = time(NULL);
 		if (poll(&fd, 0, TIMEOUT * 1000) < 0)
 			return 0;
-		finish = time((time_t*)0);
+		finish = time(NULL);
 		return (finish - start) > (TIMEOUT / 2);
 	}
 }end
@@ -140,7 +140,7 @@ tst	lib_select sys/select.h note{ select() has standard 5 arg interface }end lin
 		FD_SET(0,&rd);
 		tmb.tv_sec = 0;
 		tmb.tv_usec = 0;
-		select(1,&rd,(fd_set*)0,(fd_set*)0,&tmb);
+		select(1,&rd,NULL,NULL,&tmb);
 		return 0;
 	}
 }end
@@ -155,7 +155,7 @@ tst	sys_select note{ select() requires <sys/select.h> }end link{
 		FD_SET(0,&rd);
 		tmb.tv_sec = 0;
 		tmb.tv_usec = 0;
-		select(1,&rd,(fd_set*)0,(fd_set*)0,&tmb);
+		select(1,&rd,NULL,NULL,&tmb);
 		return 0;
 	}
 }end
@@ -184,49 +184,6 @@ tst	pipe_rw note{ full duplex pipes }end execute{
 		if (strcmp(test, buf)) return 1;
 		return 0;
 	#endif
-	}
-}end
-
-tst	lib_vfork unistd.h stdlib.h vfork.h note{ vfork exists and it works }end execute{
-	#include <signal.h>
-	#include <sys/wait.h>
-	int
-	main(argc, argv)
-	int	argc;
-	char**	argv;
-	{
-		int	status;
-		char*	cmd[3];
-		if (argv[1])
-			_exit(signal(SIGHUP, SIG_DFL) != SIG_IGN);
-		signal(SIGHUP, SIG_IGN);
-		switch (vfork())
-		{
-		case -1:
-			_exit(1);
-		case 0:
-			cmd[0] = argv[0];
-			cmd[1] = "test";
-			cmd[2] = 0;
-			execv(cmd[0], cmd);
-			_exit(2);
-		}
-		status = 1;
-		_exit(wait(&status) < 0 || status != 0);
- 	}
-}end
- 
-tst	real_vfork note{ vfork child shares data with parent }end execute{
-	extern int	_exit(int);
-	extern int	vfork(void);
-	int		code;
-	int
-	main()
-	{
-		code = 1;
-		if (!vfork())
-			code = 0;
-		_exit(code);
 	}
 }end
 
@@ -474,13 +431,13 @@ tst	lib_memccpy string.h unistd.h stdlib.h fcntl.h signal.h sys/types.h sys/stat
 				close(d);
 				return 1;
 			}
-		if (lseek(d, (off_t)0, SEEK_SET))
+		if (lseek(d, 0, SEEK_SET))
 		{
 			close(d);
 			return 1;
 		}
 		m = n * (sizeof(x)-1);
-		if ((b = mmap((void*)0, m, PROT_READ|PROT_WRITE, MAP_PRIVATE, d, (off_t)0)) == MAP_FAILED)
+		if ((b = mmap(NULL, m, PROT_READ|PROT_WRITE, MAP_PRIVATE, d, 0)) == MAP_FAILED)
 		{
 			close(d);
 			return 1;
@@ -568,7 +525,7 @@ tst	lib_utime_now note{ utime works with 0 time vector }end execute{
 	int
 	main()
 	{
-		return utime(".", (void*)0) == -1;
+		return utime(".", NULL) == -1;
 	}
 }end
 
@@ -629,14 +586,14 @@ std	strtold stdlib.h note{ stuck with standard strtold }end nostatic{
 std	strtol note{ stuck with standard strtol }end nostatic{
 	extern long atol(const char*);
 	long strtol(const char* s, char** e, int b) { return 0; }
-	int main() { printf(""); return (atol("1") + strtol("1",(char**)0,0)) != 0; }
+	int main() { printf(""); return (atol("1") + strtol("1",NULL,0)) != 0; }
 }end
 
 tst	- output{
 	int
 	main()
 	{
-	#if _lib_posix_spawn || _lib_spawn_mode || _lib_spawn && _hdr_spawn && _mem_pgroup_inheritance || _lib_vfork && _real_vfork
+	#if _lib_posix_spawn || _lib_spawn_mode || _lib_spawn && _hdr_spawn && _mem_pgroup_inheritance
 		printf("#if !_AST_no_spawnveg\n");
 		printf("#define _use_spawnveg	1\n");
 		printf("#endif\n");

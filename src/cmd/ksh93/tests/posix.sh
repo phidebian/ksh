@@ -1,7 +1,7 @@
 ########################################################################
 #                                                                      #
 #              This file is part of the ksh 93u+m package              #
-#          Copyright (c) 2022-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2022-2023 Contributors to ksh 93u+m           #
 #                    <https://github.com/ksh93/ksh>                    #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
@@ -63,8 +63,6 @@ fi
 # Furthermore, the posix option is automatically turned on upon invocation if the shell is invoked as sh or rsh,
 # or if -o posix or --posix is specified on the shell invocation command line, or when executing scripts
 # without a #! path with this option active in the invoking shell.
-# In that case, the invoked shell will not set the preset aliases even if interactive, and will not import
-# type attributes for variables (such as integer or left/right justify) from the environment.
 set --noposix
 ln -s "$SHELL" sh
 ln -s "$SHELL" rsh
@@ -98,7 +96,7 @@ got=$("$SHELL" --posix -c "$(<script)")
 [[ $got == "$exp" ]] || err_exit "incorrect --posix settings on invoking -c script from posix shell" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 set --noposix
-exp=$'1\ntypeset -x -i testint=123'
+exp=$'1\ntypeset -x testint=123'
 got=$(./script)
 [[ $got == "$exp" ]] || err_exit "incorrect --posix settings on invoking hashbangless script from noposix shell" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
@@ -106,18 +104,6 @@ set --posix
 
 # In addition, while on, the posix option:
 #
-# disables exporting variable type attributes to the environment for other ksh processes to import;
-exp='typeset -x testint=123'
-got=$("$SHELL" -c 'typeset -p testint')
-[[ $got == "$exp" ]] || err_exit "variable attributes incorrectly exported in --posix mode" \
-	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
-set --noposix
-exp='typeset -x -i testint=123'
-got=$("$SHELL" -c 'typeset -p testint')
-[[ $got == "$exp" ]] || err_exit "variable attributes not exported in --noposix mode" \
-	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
-set --posix
-
 # disables the special handling of repeated isspace class characters in the IFS variable;
 IFS=$'x\t\ty' val=$'\tun\t\tduo\ttres\t'
 got=$(set $val; echo "$#")
@@ -228,14 +214,28 @@ got=$(set --noposix; PATH=.:$PATH; source scrunction)
 [[ $got == "$exp" ]] || err_exit "'source' does not find ksh function in --noposix mode" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
+# disables the recognition of unexpanded shell arithmetic expressions for the numerical
+# conversion specifiers of the printf built-in command, causing them to print a warning for
+# operands that are not valid decimal, 0x-prefixed hexadecimal or 0-prefixed octal numbers;
+for c in o x X u U d D i a e f g A E F G
+do	printf "%$c" 1+1 2>/dev/null && err_exit "POSIX printf %$c fails to warn on bad number"
+	print -f "%$c" 1+1 2>/dev/null || err_exit "non-POSIX print -f %$c fails to recognise arithmetic expression"
+done >/dev/null
+for c in o x X u U d D i
+do	printf "%$c" 1.5 2>/dev/null && err_exit "POSIX printf %$c fails to warn on floating point operand"
+done >/dev/null
+for c in a e f g A E F G
+do	printf "%$c" 1.5 2>/dev/null || err_exit "POSIX printf %$c fails to accept floating point operand"
+done >/dev/null
+
 # changes the test/[ built-in command to make its deprecated expr1 -a expr2 and expr1 -o expr2 operators work
 # even if expr1 equals "!" or "(" (which means the nonstandard unary -a file and -o option operators cannot
 # be directly negated using ! or wrapped in parentheses);
 # https://github.com/ksh93/ksh/issues/330
 test ! -a "" && err_exit "POSIX test/[: binary -a operator does not work with '!' as left-hand expression"
 test \( -a \) 2>/dev/null || err_exit "POSIX test/[: binary -a operator does not work with '(' as left-hand expression"
-(set --trackall; test ! -o trackall) || err_exit "POSIX test/[: binary -o operator does not work with '!' as left-hand expression"
-(set --noposix --trackall; test ! -o trackall) && err_exit "ksh test/[: unary -o operator does not work with '!' negator"
+(set --allexport; test ! -o allexport) || err_exit "POSIX test/[: binary -o operator does not work with '!' as left-hand expression"
+(set --noposix --allexport; test ! -o allexport) && err_exit "ksh test/[: unary -o operator does not work with '!' negator"
 test \( -o \) 2>/dev/null || err_exit "POSIX test/[: binary -o operator does not work with '(' as left-hand expression"
 
 # disables a hack that makes test -t ([ -t ]) equivalent to test -t 1 ([ -t 1 ]).

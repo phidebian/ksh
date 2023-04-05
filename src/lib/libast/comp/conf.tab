@@ -71,7 +71,7 @@ CHILD_MAX			POSIX	SC 1 CDLMUX	6	cc{
 		int	n;
 		for (i = 3; i < 512 && (n = fork()) >= 0; i++)
 			if (!n) _exit(0);
-		while (wait((int*)0) > 0);
+		while (wait(NULL) > 0);
 		for (n = 8; n < i; n <<= 1);
 		printf("%d", n);
 		return 0;
@@ -404,7 +404,7 @@ PID_MAX				SVID	SC 1 LMU	30000	cc{
 		if ((fd = open("/proc/sys/kernel/pid_max", 0)) >= 0 && (n = read(fd, buf, sizeof(buf)-1)) > 1)
 		{
 			buf[n] = 0;
-			v = strtol(buf, (char**)0, 0);
+			v = strtol(buf, NULL, 0);
 		}
 		else
 		{

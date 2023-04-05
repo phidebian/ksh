@@ -20,7 +20,7 @@ make install
 	make dll
 		make libdll.a archive
 			make dll.req
-				exec - set -
+				exec - set +v +x
 				exec - echo 'int main(){return 0;}' > 1.${COTEMP}.c
 				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -c 1.${COTEMP}.c &&
 				exec - x=`${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS} -o 1.${COTEMP}.x 1.${COTEMP}.o -l'*' 2>&1 | sed -e 's/[][()+@?]/#/g' || :` &&
@@ -142,12 +142,12 @@ make install
 							bind -last
 							exec - iffe ${IFFEFLAGS} -v -c "${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS}" ref ${mam_cc_L+-L.} ${mam_cc_L+-L${INSTALLROOT}/lib} -I${PACKAGE_ast_INCLUDE} -I${INSTALLROOT}/include ${mam_libdl} ${mam_libast} : run features/dll
 						done FEATURE/dll generated
-						exec - cmp -s FEATURE/dll dlldefs.h || { rm -f dlldefs.h; silent test -d . || mkdir .; cp FEATURE/dll dlldefs.h; }
+						exec - cmp -s FEATURE/dll dlldefs.h || { rm -f dlldefs.h; cp FEATURE/dll dlldefs.h; }
 					done dlldefs.h generated
 					prev ${PACKAGE_ast_INCLUDE}/ast.h implicit
 				done dlfcn.c
 				prev dlfcn.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -D_PACKAGE_ast -c dlfcn.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dlfcn.c
 			done dlfcn.o generated
 			make dllopen.o
 				make dllopen.c
@@ -158,7 +158,7 @@ make install
 					done dlllib.h
 				done dllopen.c
 				prev dllopen.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -D_BLD_dll -c dllopen.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllopen.c
 			done dllopen.o generated
 			make dllfind.o
 				make dllfind.c
@@ -167,21 +167,21 @@ make install
 					prev ${PACKAGE_ast_INCLUDE}/ast.h implicit
 				done dllfind.c
 				prev dllfind.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -D_BLD_dll -c dllfind.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllfind.c
 			done dllfind.o generated
 			make dllplug.o
 				make dllplug.c
 					prev dlllib.h implicit
 				done dllplug.c
 				prev dllplug.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -D_BLD_dll -c dllplug.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllplug.c
 			done dllplug.o generated
 			make dll_lib.o
 				make dll_lib.c
 					prev dlllib.h implicit
 				done dll_lib.c
 				prev dll_lib.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -D_BLD_dll -c dll_lib.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dll_lib.c
 			done dll_lib.o generated
 			make dllnext.o
 				make dllnext.c
@@ -191,7 +191,7 @@ make install
 					prev ${PACKAGE_ast_INCLUDE}/ast.h implicit
 				done dllnext.c
 				prev dllnext.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -D_PACKAGE_ast -c dllnext.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllnext.c
 			done dllnext.o generated
 			make dlllook.o
 				make dlllook.c
@@ -200,7 +200,7 @@ make install
 					prev ${PACKAGE_ast_INCLUDE}/ast.h implicit
 				done dlllook.c
 				prev dlllook.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -D_PACKAGE_ast -c dlllook.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dlllook.c
 			done dlllook.o generated
 			make dllscan.o
 				make dllscan.c
@@ -221,21 +221,21 @@ make install
 					prev ${PACKAGE_ast_INCLUDE}/ast.h implicit
 				done dllscan.c
 				prev dllscan.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${-debug-symbols?1?${mam_cc_DEBUG} -D_BLD_DEBUG?${CCFLAGS.FORCE}?} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -D_PACKAGE_ast -c dllscan.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${-debug-symbols?1?${mam_cc_DEBUG} -D_BLD_DEBUG?${CCFLAGS.FORCE}?} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllscan.c
 			done dllscan.o generated
 			make dllcheck.o
 				make dllcheck.c
 					prev dlllib.h implicit
 				done dllcheck.c
 				prev dllcheck.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -D_BLD_dll -c dllcheck.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllcheck.c
 			done dllcheck.o generated
 			make dllerror.o
 				make dllerror.c
 					prev dlllib.h implicit
 				done dllerror.c
 				prev dllerror.c
-				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_PACKAGE_ast -D_BLD_dll -c dllerror.c
+				exec - ${CC} ${mam_cc_FLAGS} ${CCFLAGS} -I. -I${PACKAGE_ast_INCLUDE} -D_BLD_dll -c dllerror.c
 			done dllerror.o generated
 			exec - ${AR} rc libdll.a dlfcn.o dllopen.o dllfind.o dllplug.o dll_lib.o dllnext.o dlllook.o dllscan.o dllcheck.o dllerror.o
 			exec - (ranlib libdll.a) >/dev/null 2>&1 || true
@@ -243,7 +243,7 @@ make install
 	done dll virtual
 	prev libdll.a archive
 	make ${INSTALLROOT}/lib
-		exec - if silent test ! -d ${INSTALLROOT}/lib
+		exec - if test ! -d ${INSTALLROOT}/lib
 		exec - then mkdir -p ${INSTALLROOT}/lib
 		exec - fi
 	done ${INSTALLROOT}/lib generated
@@ -254,7 +254,7 @@ make install
 		exec - (ranlib ${INSTALLROOT}/lib/libdll.a) >/dev/null 2>&1 || true
 	done ${INSTALLROOT}/lib/libdll.a generated
 	make ${INSTALLROOT}/lib/lib
-		exec - if silent test ! -d ${INSTALLROOT}/lib/lib
+		exec - if test ! -d ${INSTALLROOT}/lib/lib
 		exec - then mkdir -p ${INSTALLROOT}/lib/lib
 		exec - fi
 	done ${INSTALLROOT}/lib/lib generated
@@ -264,7 +264,7 @@ make install
 		exec - ${STDCMP} 2>/dev/null -s dll.req ${INSTALLROOT}/lib/lib/dll || { ${STDMV} ${INSTALLROOT}/lib/lib/dll ${INSTALLROOT}/lib/lib/dll.old 2>/dev/null || true; ${STDCP} dll.req ${INSTALLROOT}/lib/lib/dll ;}
 	done ${INSTALLROOT}/lib/lib/dll generated
 	make ${PACKAGE_ast_INCLUDE}
-		exec - if silent test ! -d ${PACKAGE_ast_INCLUDE}
+		exec - if test ! -d ${PACKAGE_ast_INCLUDE}
 		exec - then mkdir -p ${PACKAGE_ast_INCLUDE}
 		exec - fi
 	done ${PACKAGE_ast_INCLUDE} generated

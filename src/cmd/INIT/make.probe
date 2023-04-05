@@ -3,7 +3,7 @@
 # Glenn Fowler
 # AT&T Research
 #
-# @(#)make.probe (AT&T Research) 2011-06-01
+# @(#)make.probe (ksh 93u+m) 2023-03-09
 #
 # C probe for make
 #
@@ -66,12 +66,12 @@ echo '#include "implc_x.h"
 int main(){f(1);return 0;}' > implc.$src
 echo 'template <class T> void f(T){}' > implc_x.$src
 echo 'template <class T> void f(T);' > implc_x.h
-echo 'extern int NotalL(){return(0);}' > notall.$src
+echo 'extern int NotalL() { return 0; }' > notall.$src
 echo '#include <stdio.h>
 extern int i;
 int i = 1;
-extern int f(){return(!i);}
-int main(){FILE* fp=stdin;return(f());}' > pic.$src
+extern int f() { return !i; }
+int main() { FILE* fp=stdin; return f(); }' > pic.$src
 echo 'int prefix(){return 0;}' > prefix.$src
 echo 'template<class T> int gt(T a, T b);
 template<class T> int gt(T a, T b) { return a > b; }
@@ -88,8 +88,7 @@ echo '#if mips && !sgi || __CYGWIN__ || __HAIKU__ || __APPLE__
 CONST char x[]={1,2,3,4,5,6,7,8,9,0};
 int main(){*(char*)x=0; return x[0];}
 #endif' > readonly.$src
-# NOTE:	sfclose() defined on UWIN, not defined on all other systems
-echo 'extern int sfclose(); extern int ShareD(){return(sfclose());}' > shared.$src
+echo 'extern int sfclose(); extern int ShareD() { return sfclose(); }' > shared.$src
 echo '#define g(a,b) a ## b
 volatile int a;
 const int g(x,y)=1;
@@ -102,7 +101,7 @@ int main(){int j;j = i * 10;return j;}' > strip.$src
 echo 'template <class T> void f(T){}
 int main(){f(1);return 0;}' > toucho.$src
 echo 'extern type call(int);
-int main() {call(0);return(0);}' > tstlib.$src
+int main() { call(0); return 0; }' > tstlib.$src
 echo 'int main(){return 0;}' > warn.$src
 echo 'int f(){return 0;}' > warn1.$src
 echo 'int f(){}' > warn2.$src
@@ -1261,7 +1260,7 @@ case $stdlib in
 		*)	case " $stdlib " in
 			*\ $d\ *)
 				;;
-			*)	if	ls $d ${PREROOT+$PREROOT/../$d} > tmp.tmp && test -s tmp.tmp
+			*)	if	ls $d > tmp.tmp && test -s tmp.tmp
 				then	for i in $probe_lib $obj
 					do	if	grep -i "\\.$i\$" tmp.tmp >/dev/null
 						then	case " $probe_lib_append " in
@@ -1330,9 +1329,9 @@ case $stdlib in
 	for f in $probe_libdir
 	do	for d in $stdlib $libstd $tstlib
 		do	if	test -d ${d}${f}
-			then	ls ${d}${f} ${PREROOT:+$PREROOT/../${d}${f}} |
+			then	ls ${d}${f} |
 				while read i
-				do	for j in ${d}${f}/${i} ${PREROOT:+$PREROOT/../${d}${f}/${i}}
+				do	for j in ${d}${f}/${i}
 					do	if	test -f $j -a -r $j -a -s $j
 						then	echo $i
 							break

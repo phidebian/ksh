@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -13,6 +13,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*               K. Eugene Carlson <kvngncrlsn@gmail.com>               *
 *                                                                      *
 ***********************************************************************/
 #ifndef SEARCHSIZE
@@ -26,9 +27,7 @@
 
 #define SEARCHSIZE	80
 
-#include	"FEATURE/options"
 #include        "FEATURE/locale"
-#include	"FEATURE/setjmp"
 #include	"terminal.h"
 
 #define STRIP		0377
@@ -81,6 +80,9 @@ typedef struct edit
 	int	e_lookahead;	/* index in look-ahead buffer */
 	int	e_fcol;		/* first column */
 	int	e_wsize;	/* width of display window */
+#if SHOPT_MULTIBYTE
+	int	e_savedwidth;	/* saved width of a character */
+#endif /* SHOPT_MULTIBYTE */
 	char	*e_outbase;	/* pointer to start of output buffer */
 	char	*e_outptr;	/* pointer to position in output buffer */
 	char	*e_outlast;	/* pointer to end of output buffer */

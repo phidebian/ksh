@@ -25,13 +25,13 @@
 #undef dtflatten
 extern Dtlink_t* dtflatten(Dt_t* d)
 {
-	return (Dtlink_t*)(*(_DT(d)->searchf))((d),(void*)(0),DT_FLATTEN);
+	return (Dtlink_t*)(*(_DT(d)->searchf))((d),NULL,DT_FLATTEN);
 }
 
 #undef dtextract
 extern Dtlink_t* dtextract(Dt_t* d)
 {
-	return (Dtlink_t*)(*(_DT(d)->searchf))((d),(void*)(0),DT_EXTRACT);
+	return (Dtlink_t*)(*(_DT(d)->searchf))((d),NULL,DT_EXTRACT);
 }
 
 #undef dtrestore
@@ -43,5 +43,5 @@ extern Dtlink_t* dtrestore(Dt_t* d, void* l)
 #undef dtsize
 extern ssize_t dtsize(Dt_t* d)
 {
-	return (ssize_t)(*(_DT(d)->searchf))((d),(void*)(0),DT_STAT);
+	return (ssize_t)(*(_DT(d)->searchf))((d),NULL,DT_STAT);
 }

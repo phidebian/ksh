@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -38,12 +38,12 @@
  */
 
 Tm_t*
-tmfix(register Tm_t* tm)
+tmfix(Tm_t* tm)
 {
-	register int	n;
-	register int	w;
-	Tm_t*		p;
-	time_t		t;
+	int	n;
+	int	w;
+	Tm_t*	p;
+	time_t	t;
 
 	/*
 	 * check for special case that adjusts tm_wday at the end

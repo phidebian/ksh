@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2023 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -502,7 +502,7 @@ then
 	got=$(PATH=$tmp; command -vx echo 2>&1)
 	[[ $got == "$exp" ]] || err_exit "'command -v -x' failed to look up external command in \$PATH" \
 		"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
-	exp="echo is a tracked alias for $exp"
+	exp="echo is $exp"
 	got=$(PATH=$tmp; command -Vx echo 2>&1)
 	[[ $got == "$exp" ]] || err_exit "'command -V -x' failed to look up external command in \$PATH" \
 		"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
@@ -738,7 +738,7 @@ PATH=$savePATH
 # POSIX: If a command is found but isn't executable, the exit status should be 126.
 # The tests are arranged as follows:
 #   Test *A runs commands with the -c execve(2) optimization.
-#   Test *B runs commands with spawnveg (i.e., with posix_spawn(3) or vfork(2)).
+#   Test *B runs commands with spawnveg (i.e., with posix_spawn(3) where available).
 #   Test *C runs commands with fork(2) in an interactive shell.
 #   Test *D runs commands with 'command -x'.
 #   Test *E runs commands with 'exec'.
@@ -755,10 +755,12 @@ PATH=$PWD $SHELL -c 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 1B: exit status of non-executable command wrong" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 PATH=$PWD $SHELL -ic 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 1C: exit status of non-executable command wrong" \
 	"(expected $exp, got $got)"
+fi # !SHOPT_SCRIPTONLY
 PATH=$PWD $SHELL -c 'command -x noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 1D: exit status of non-executable command wrong" \
@@ -777,10 +779,12 @@ PATH=$PWD:$PWD/emptydir $SHELL -c 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 2B: exit status of non-executable command wrong" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 PATH=$PWD:$PWD/emptydir $SHELL -ic 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 2C: exit status of non-executable command wrong" \
 	"(expected $exp, got $got)"
+fi # !SHOPT_SCRIPTONLY
 PATH=$PWD:$PWD/emptydir $SHELL -c 'command -x noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 2D: exit status of non-executable command wrong" \
@@ -802,6 +806,7 @@ PATH=$PWD:$PWD/cmddir $SHELL -c 'noexecute; exit $?'
 got=$?
 [[ $exp == $got ]] || err_exit "Test 3B: failed to run executable command after encountering non-executable command" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 case $(uname -s) in
 AIX)
 	# ksh -ic hangs on AIX
@@ -813,6 +818,7 @@ AIX)
 		"(expected $exp, got $got)"
 	;;
 esac
+fi # !SHOPT_SCRIPTONLY
 PATH=$PWD:$PWD/cmddir $SHELL -c 'command -x noexecute; exit $?'
 got=$?
 [[ $exp == $got ]] || err_exit "Test 3D: failed to run executable command after encountering non-executable command" \
@@ -833,10 +839,12 @@ PATH=$PWD:$PWD/cmddir $SHELL -c 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 4B: failed to run executable command after encountering directory with same name in PATH" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 PATH=$PWD:$PWD/cmddir $SHELL -ic 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 4C: failed to run executable command after encountering directory with same name in PATH" \
 	"(expected $exp, got $got)"
+fi # !SHOPT_SCRIPTONLY
 PATH=$PWD:$PWD/cmddir $SHELL -c 'command -x noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 4D: failed to run executable command after encountering directory with same name in PATH" \
@@ -860,10 +868,12 @@ PATH=$PWD $SHELL -c 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 5B: exit status of non-executable command wrong" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 PATH=$PWD $SHELL -ic 'noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 5C: exit status of non-executable command wrong" \
 	"(expected $exp, got $got)"
+fi # !SHOPT_SCRIPTONLY
 PATH=$PWD $SHELL -c 'command -x noexecute; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 5D: exit status of non-executable command wrong" \
@@ -883,10 +893,12 @@ PATH=/dev/null $SHELL -c 'nonexist; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 6B: exit status of non-existent command wrong" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 PATH=/dev/null $SHELL -ic 'nonexist; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 6C: exit status of non-existent command wrong" \
 	"(expected $exp, got $got)"
+fi # !SHOPT_SCRIPTONLY
 PATH=/dev/null $SHELL -c 'command -x nonexist; exit $?' > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 6D: exit status of non-existent command wrong" \
@@ -908,10 +920,12 @@ PATH=$PWD $SHELL -c "$long_cmd; exit \$?" > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 7B: exit status or error message for command with long name wrong" \
 	"(expected $exp, got $got)"
+if((!SHOPT_SCRIPTONLY));then
 PATH=$PWD $SHELL -ic "$long_cmd; exit \$?" > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 7C: exit status or error message for command with long name wrong" \
 	"(expected $exp, got $got)"
+fi # !SHOPT_SCRIPTONLY
 PATH=$PWD $SHELL -c "command -x $long_cmd; exit \$?" > /dev/null 2>&1
 got=$?
 [[ $exp == $got ]] || err_exit "Test 7D: exit status or error message for command with long name wrong" \
@@ -980,6 +994,11 @@ then	got=$(PATH=/opt/ast/bin:$PATH "$SHELL" -c 'command -x cat /dev/null; whence
 	exp='cat is a shell builtin version of /opt/ast/bin/cat'
 	[[ $got == "$exp" ]] || err_exit "'command -x' creates tracked alias" \
 	        "(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+	# https://github.com/ksh93/ksh/issues/609
+	exp=$(builtin -d cat; whence -p cat)
+	got=$(PATH=/opt/ast/bin:$PATH "$SHELL" -c 'command -vx cat; command -x cat /dev/null' 2>&1)
+	[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit "'command -vx' breakage" \
+		"(expected status 0, $(printf %q "$exp"); got status $e, $(printf %q "$got"))"
 fi
 
 # ======

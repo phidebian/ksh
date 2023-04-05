@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2011 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -100,7 +100,7 @@ gl_dirnext(glob_t* gp, void* handle)
 #endif
 		return dp->d_name;
 	}
-	return 0;
+	return NULL;
 }
 
 /*
@@ -120,7 +120,7 @@ gl_dirclose(glob_t* gp, void* handle)
 static int
 gl_type(glob_t* gp, const char* path, int flags)
 {
-	register int	type;
+	int		type;
 	struct stat	st;
 
 	if ((flags & GLOB_STARSTAR) ? (*gp->gl_lstat)(path, &st) : (*gp->gl_stat)(path, &st))
@@ -186,7 +186,7 @@ gl_nextdir(glob_t* gp, char* dir)
  */
 
 static int
-errorcheck(register glob_t* gp, const char* path)
+errorcheck(glob_t* gp, const char* path)
 {
 	int	r = 1;
 
@@ -204,10 +204,10 @@ errorcheck(register glob_t* gp, const char* path)
  */
 
 static void
-trim(register char* sp, register char* p1, int* n1, register char* p2, int* n2)
+trim(char* sp, char* p1, int* n1, char* p2, int* n2)
 {
-	register char*	dp = sp;
-	register int	c;
+	char*	dp = sp;
+	int	c;
 
 	if (p1)
 		*n1 = 0;
@@ -231,11 +231,11 @@ trim(register char* sp, register char* p1, int* n1, register char* p2, int* n2)
 }
 
 static void
-addmatch(register glob_t* gp, const char* dir, const char* pat, register const char* rescan, char* endslash, int meta)
+addmatch(glob_t* gp, const char* dir, const char* pat, const char* rescan, char* endslash, int meta)
 {
-	register globlist_t*	ap;
-	int			offset;
-	int			type;
+	globlist_t*	ap;
+	int		offset;
+	int		type;
 
 	stakseek(MATCHPATH(gp));
 	if (dir)
@@ -295,35 +295,35 @@ addmatch(register glob_t* gp, const char* dir, const char* pat, register const c
 static void
 glob_dir(glob_t* gp, globlist_t* ap, int re_flags)
 {
-	register char*		rescan;
-	register char*		prefix;
-	register char*		pat;
-	register char*		name;
-	register int		c;
-	char*			dirname;
-	void*			dirf;
-	char			first;
-	regex_t*		ire;
-	regex_t*		pre;
-	regex_t			rec;
-	regex_t			rei;
-	int			notdir;
-	int			t1;
-	int			t2;
-	int			bracket;
+	char*		rescan;
+	char*		prefix;
+	char*		pat;
+	char*		name;
+	int		c;
+	char*		dirname;
+	void*		dirf;
+	char		first;
+	regex_t*	ire;
+	regex_t*	pre;
+	regex_t		rec;
+	regex_t		rei;
+	int		notdir;
+	int		t1;
+	int		t2;
+	int		bracket;
 
-	int			anymeta = ap->gl_flags & MATCH_META;
-	int			complete = 0;
-	int			err = 0;
-	int			meta = ((gp->re_flags & REG_ICASE) && *ap->gl_begin != '/') ? MATCH_META : 0;
-	int			quote = 0;
-	int			savequote = 0;
-	char*			restore1 = 0;
-	char*			restore2 = 0;
-	regex_t*		prec = 0;
-	regex_t*		prei = 0;
-	char*			matchdir = 0;
-	int			starstar = 0;
+	int		anymeta = ap->gl_flags & MATCH_META;
+	int		complete = 0;
+	int		err = 0;
+	int		meta = ((gp->re_flags & REG_ICASE) && *ap->gl_begin != '/') ? MATCH_META : 0;
+	int		quote = 0;
+	int		savequote = 0;
+	char*		restore1 = 0;
+	char*		restore2 = 0;
+	regex_t*	prec = 0;
+	regex_t*	prei = 0;
+	char*		matchdir = 0;
+	int		starstar = 0;
 
 	if (*gp->gl_intr)
 	{
@@ -347,7 +347,7 @@ again:
 			}
 			if (quote)
 			{
-				trim(ap->gl_begin, rescan, &t1, NiL, NiL);
+				trim(ap->gl_begin, rescan, &t1, NULL, NULL);
 				rescan -= t1;
 			}
 			if (!first && !*rescan && *(rescan - 2) == gp->gl_delim)
@@ -356,10 +356,10 @@ again:
 				c = (*gp->gl_type)(gp, prefix, 0);
 				*(rescan - 2) = gp->gl_delim;
 				if (c == GLOB_DIR)
-					addmatch(gp, NiL, prefix, NiL, rescan - 1, anymeta);
+					addmatch(gp, NULL, prefix, NULL, rescan - 1, anymeta);
 			}
 			else if ((anymeta || !(gp->gl_flags & GLOB_NOCHECK)) && (*gp->gl_type)(gp, prefix, 0))
-				addmatch(gp, NiL, prefix, NiL, NiL, anymeta);
+				addmatch(gp, NULL, prefix, NULL, NULL, anymeta);
 			return;
 		case '[':
 			if (!bracket)
@@ -457,7 +457,7 @@ skip:
 		*(restore2 = rescan - 1) = 0;
 	if (rescan && !complete && (gp->gl_flags & GLOB_STARSTAR))
 	{
-		register char*	p = rescan;
+		char*	p = rescan;
 
 		while (p[0] == '*' && p[1] == '*' && (p[2] == '/'  || p[2]==0))
 		{
@@ -484,7 +484,7 @@ skip:
 		{
 			if (!(dirname = (*gp->gl_nextdir)(gp, dirname)))
 				break;
-			prefix = streq(dirname, ".") ? (char*)0 : dirname;
+			prefix = streq(dirname, ".") ? NULL : dirname;
 		}
 		if ((!starstar && !gp->gl_starstar || (t1 = (*gp->gl_type)(gp, dirname, GLOB_STARSTAR)) == GLOB_DIR
 			|| t1 == GLOB_SYM && pat[0]=='*' && pat[1]=='\0') /* follow symlinks to dirs for non-globstar components */
@@ -553,16 +553,16 @@ skip:
 					continue;
 				if (notdir = (gp->gl_status & GLOB_NOTDIR))
 					gp->gl_status &= ~GLOB_NOTDIR;
-				if (ire && !regexec(ire, name, 0, NiL, 0))
+				if (ire && !regexec(ire, name, 0, NULL, 0))
 					continue;
 				if (matchdir && (name[0] != '.' || name[1] && (name[1] != '.' || name[2])) && !notdir)
-					addmatch(gp, prefix, name, matchdir, NiL, anymeta);
-				if (!regexec(pre, name, 0, NiL, 0))
+					addmatch(gp, prefix, name, matchdir, NULL, anymeta);
+				if (!regexec(pre, name, 0, NULL, 0))
 				{
 					if (!rescan || !notdir)
-						addmatch(gp, prefix, name, rescan, NiL, anymeta);
+						addmatch(gp, prefix, name, rescan, NULL, anymeta);
 					if (starstar==1 || (starstar==2 && !notdir))
-						addmatch(gp, prefix, name, starstar==2?"":NiL, NiL, anymeta);
+						addmatch(gp, prefix, name, starstar==2?"":NULL, NULL, anymeta);
 				}
 				errno = 0;
 			}
@@ -593,25 +593,25 @@ skip:
 }
 
 int
-_ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), register glob_t* gp)
+_ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), glob_t* gp)
 {
-	register globlist_t*	ap;
-	register char*		pat;
-	globlist_t*		top;
-	Stak_t*			oldstak;
-	char**			argv;
-	char**			av;
-	size_t			skip;
-	unsigned long		f;
-	int			n;
-	int			x;
-	int			re_flags;
+	globlist_t*	ap;
+	char*		pat;
+	globlist_t*	top;
+	Stak_t*		oldstak;
+	char**		argv;
+	char**		av;
+	size_t		skip;
+	unsigned long	f;
+	int		n;
+	int		x;
+	int		re_flags;
 
-	const char*		nocheck = pattern;
-	int			optlen = 0;
-	int			suflen = 0;
-	int			extra = 1;
-	unsigned char		intr = 0;
+	const char*	nocheck = pattern;
+	int		optlen = 0;
+	int		suflen = 0;
+	int		extra = 1;
+	unsigned char	intr = 0;
 
 	gp->gl_rescan = 0;
 	gp->gl_error = 0;

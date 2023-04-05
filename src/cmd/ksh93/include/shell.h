@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -144,8 +144,8 @@ typedef union Shnode_u Shnode_t;
 #define SH_POSIX	46
 #if SHOPT_ESH || SHOPT_VSH
 #define SH_MULTILINE	47
-#endif
 #define SH_NOBACKSLCTRL	48
+#endif
 #define SH_LOGIN_SHELL	67
 #define SH_NOUSRPROFILE	79	/* internal use only */
 #define SH_COMMANDLINE	0x100	/* bit flag for invocation-only options ('set -o' cannot change them) */
@@ -338,7 +338,6 @@ struct Shell_s
 	int16_t		fn_depth;	/* scoped ksh-style function call depth */
 	int16_t		dot_depth;	/* dot-script and POSIX function call depth */
 	char		invoc_local;	/* set when inside of an invocation-local scope */
-	int		hist_depth;
 	int		xargmin;
 	int		xargmax;
 	int		xargexit;
@@ -380,6 +379,9 @@ struct Shell_s
 	Namfun_t	nvfun;
 	char		*mathnodes;
 	char		*bltin_dir;
+	/* nv_putsub() hack for nv_create() to avoid double arithmetic evaluation */
+	char		nv_putsub_already_called_sh_arith;
+	int		nv_putsub_idx;	/* saves array index obtained by nv_putsub() using sh_arith() */
 #if SHOPT_FILESCAN
 	char		*cur_line;
 #endif /* SHOPT_FILESCAN */

@@ -23,7 +23,6 @@
  *
  */
 
-#include	"FEATURE/options"
 #include	"defs.h"
 #include	"shtable.h"
 /*

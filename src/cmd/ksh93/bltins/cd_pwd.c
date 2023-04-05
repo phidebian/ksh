@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -40,7 +40,7 @@
 /*
  * Invalidate path name bindings to relative paths
  */
-static void rehash(register Namval_t *np,void *data)
+static void rehash(Namval_t *np,void *data)
 {
 	Pathcomp_t *pp = (Pathcomp_t*)np->nvalue.cp;
 	if(pp && *pp->name!='/')
@@ -49,9 +49,9 @@ static void rehash(register Namval_t *np,void *data)
 
 int	b_cd(int argc, char *argv[],Shbltin_t *context)
 {
-	register char *dir;
+	char *dir;
 	Pathcomp_t *cdpath = 0;
-	register const char *dp;
+	const char *dp;
 	int saverrno=0;
 	int rval,pflag=0,eflag=0,ret=1;
 	char *oldpwd;
@@ -92,7 +92,7 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 	dir =  argv[0];
 	if(error_info.errors>0 || argc>2)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage(NULL));
 		UNREACHABLE();
 	}
 	oldpwd = path_pwd();
@@ -107,7 +107,7 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 	if(argc==2)
 		dir = sh_substitute(oldpwd,dir,argv[1]);
 	else if(!dir)
-		dir = nv_getval(HOME);
+		dir = nv_getval(sh_scoped(HOME));
 	else if(*dir == '-' && dir[1]==0)
 		dir = nv_getval(opwdnod);
 	if(!dir || *dir==0)
@@ -138,8 +138,8 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 	{
 		if((dp=sh_scoped(CDPNOD)->nvalue.cp) && !(cdpath = (Pathcomp_t*)sh.cdpathlist))
 		{
-			if(cdpath=path_addpath((Pathcomp_t*)0,dp,PATH_CDPATH))
-				sh.cdpathlist = (void*)cdpath;
+			if(cdpath=path_addpath(NULL,dp,PATH_CDPATH))
+				sh.cdpathlist = cdpath;
 		}
 	}
 	if(*dir!='/')
@@ -175,7 +175,7 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 			char *last=(char*)stakfreeze(1);
 			stakseek(PATH_OFFSET);
 			stakputs(oldpwd);
-			/* don't add '/' of oldpwd is / itself */
+			/* don't add '/' if oldpwd is / itself */
 			if(*oldpwd!='/' || oldpwd[1])
 				stakputc('/');
 			stakputs(last+PATH_OFFSET);
@@ -183,7 +183,7 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 		}
 		if(!pflag)
 		{
-			register char *cp;
+			char *cp;
 			stakseek(PATH_MAX+PATH_OFFSET);
 			if(*(cp=stakptr(PATH_OFFSET))=='/')
 				if(!pathcanon(cp,PATH_DOTDOT))
@@ -238,7 +238,7 @@ success:
 	{
 		/* pathcanon() failed to canonicalize the directory, which happens when 'cd' is invoked from a
 		   nonexistent PWD with a relative path as the argument. Reinitialize $PWD as it will be wrong. */
-		sh.pwd = NIL(const char*);
+		sh.pwd = NULL;
 		path_pwd();
 		if(*sh.pwd != '/')
 		{
@@ -246,21 +246,21 @@ success:
 			UNREACHABLE();
 		}
 	}
-	nv_scan(sh_subtracktree(1),rehash,(void*)0,NV_TAGGED,NV_TAGGED);
+	nv_scan(sh_subtracktree(1),rehash,NULL,NV_TAGGED,NV_TAGGED);
 	path_newdir(sh.pathlist);
 	path_newdir(sh.cdpathlist);
 	if(pflag && eflag)
 	{
 		/* Verify the current working directory matches $PWD */
-		return(!test_inode(e_dot,nv_getval(pwdnod)));
+		return !test_inode(e_dot,nv_getval(pwdnod));
 	}
-	return(0);
+	return 0;
 }
 
 int	b_pwd(int argc, char *argv[],Shbltin_t *context)
 {
-	register int n, flag = 0;
-	register char *cp;
+	int n, flag = 0;
+	char *cp;
 	NOT_USED(argc);
 	NOT_USED(context);
 	while((n = optget(argv,sh_optpwd))) switch(n)
@@ -280,7 +280,7 @@ int	b_pwd(int argc, char *argv[],Shbltin_t *context)
 	}
 	if(error_info.errors)
 	{
-		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage((char*)0));
+		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage(NULL));
 		UNREACHABLE();
 	}
 	if(*(cp = path_pwd()) != '/' || !test_inode(cp,e_dot))
@@ -294,5 +294,5 @@ int	b_pwd(int argc, char *argv[],Shbltin_t *context)
 		pathcanon(cp,PATH_PHYSICAL);
 	}
 	sfputr(sfstdout,cp,'\n');
-	return(0);
+	return 0;
 }

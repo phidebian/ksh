@@ -23,7 +23,6 @@
  */
 
 #include	<cdt.h>
-#include	"FEATURE/options"
 #include	"shnodes.h"
 #include	"shtable.h"
 #include	"lexstates.h"
@@ -46,7 +45,9 @@ struct _shlex_pvt_lexdata_
 {
 	char		nocopy;
 	char		paren;
-	char		dolparen;
+	char		dolparen;	/* set during the comsub() lexical analysis hack */
+	unsigned short	dolparen_eqparen;	/* flags up =( ... ) within a comsub */
+	char		dolparen_arithexp;	/* set while comsub() is lexing an arithmetic expansion */
 	char		nest;
 	char		docword;
 	char		nested_tilde;

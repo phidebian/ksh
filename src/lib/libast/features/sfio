@@ -90,14 +90,14 @@ more long_int note{ long is larger than int }end execute{
 	}
 }end
 
-tst	vax_asm note{ register layout ok for vax string operations }end execute{
+tst	vax_asm note{ layout ok for vax string operations }end execute{
 	int
 	main()
 	{
 	#ifndef vax
 		return absurd = -1;
 	#else
-		register int	r11, r10, r9, r8, r7, r6;
+		int	r11, r10, r9, r8, r7, r6;
 		r11 = r10 = r9 = r8 = r7 = r6 = -1;
 		asm("clrw	r11");
 		asm("clrw	r10");

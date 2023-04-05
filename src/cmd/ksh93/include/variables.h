@@ -19,7 +19,6 @@
 #ifndef SH_VALNOD
 
 #include        <option.h>
-#include        "FEATURE/options"
 #include        "FEATURE/dynamic"
 #include	<nval.h>
 

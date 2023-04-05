@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1985-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -30,11 +30,7 @@
 typedef struct _sfio_s		Sfio_t;
 typedef struct _sfdisc_s	Sfdisc_t;
 
-#if defined(_AST_STD_H) || defined(_PACKAGE_ast) && defined(_SFIO_PRIVATE)
 #include	<ast_std.h>
-#else
-#include	<ast_common.h>
-#endif /* _PACKAGE_ast */
 
 /* Sfoff_t should be large enough for largest file address */
 #define Sfoff_t		intmax_t
@@ -82,8 +78,6 @@ struct _sffmt_s
 	ssize_t		n_str;	/* length of t_str 			*/
 
 	void*		mbs;	/* multibyte state for format string	*/
-
-	void*		none;	/* unused for now			*/
 };
 #define sffmtversion(fe,type) \
 		((type) ? ((fe)->version = SFIO_VERSION) : (fe)->version)
@@ -112,9 +106,6 @@ struct _sffmt_s
 #define SFFMT_SET	037777770 /* flags settable on calling extf	*/
 
 /* various constants */
-#ifndef NULL
-#define NULL		0
-#endif
 #ifndef EOF
 #define EOF		(-1)
 #endif
@@ -171,8 +162,8 @@ struct _sffmt_s
 #define SF_EVENT	100	/* start of user-defined events		*/
 
 /* for stack and disciplines */
-#define SF_POPSTACK	((Sfio_t*)0)	/* pop the stream stack		*/
-#define SF_POPDISC	((Sfdisc_t*)0)	/* pop the discipline stack	*/
+#define SF_POPSTACK	NULL	/* pop the stream stack		*/
+#define SF_POPDISC	NULL	/* pop the discipline stack	*/
 
 /* for the notify function and discipline exception */
 #define SF_NEW		0	/* new stream				*/
@@ -323,7 +314,7 @@ extern ssize_t		sfmaxr(ssize_t, int);
 #define __sf_eof(f)	(_SF_(f)->_flags&SF_EOF)
 #define __sf_error(f)	(_SF_(f)->_flags&SF_ERROR)
 #define __sf_clrerr(f)	(_SF_(f)->_flags &= ~(SF_ERROR|SF_EOF))
-#define __sf_stacked(f)	(_SF_(f)->_push != (Sfio_t*)0)
+#define __sf_stacked(f)	(_SF_(f)->_push != NULL)
 #define __sf_value(f)	(_SF_(f)->_val)
 #define __sf_slen()	(_Sfi)
 #define __sf_maxr(n,s)	((s)?((_Sfi=_Sfmaxr),(_Sfmaxr=(n)),_Sfi):_Sfmaxr)
@@ -403,7 +394,7 @@ __INLINE__ ssize_t sfmaxr(ssize_t n, int s)	{ return __sf_maxr(n,s); }
 #define sfstrbase(f)		((char*)(f)->_data)
 
 #define sfstruse(f) \
-	(sfputc((f),0) < 0 ? (char*)0 : (char*)((f)->_next = (f)->_data) \
+	(sfputc((f),0) < 0 ? NULL : (char*)((f)->_next = (f)->_data) \
 	)
 
 #define sfstrrsrv(f,n) \

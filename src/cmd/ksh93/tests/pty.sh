@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2023 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -14,6 +14,7 @@
 #                  Martijn Dekker <martijn@inlv.org>                   #
 #            Johnothan King <johnothanking@protonmail.com>             #
 #                Govind Kamat <govind_kamat@yahoo.com>                 #
+#               K. Eugene Carlson <kvngncrlsn@gmail.com>               #
 #                                                                      #
 ########################################################################
 
@@ -29,6 +30,7 @@
 # the trickiest part of the tests is avoiding typeahead
 # in the pty dialogue
 
+((!SHOPT_SCRIPTONLY)) || { warning "interactive shell was compiled out -- tests skipped"; exit 0; }
 whence -q pty || { warning "pty command not found -- tests skipped"; exit 0; }
 case $(uname -s) in
 Darwin | FreeBSD | Linux )
@@ -1115,6 +1117,50 @@ p :test-5:
 c p\E[A\E[A\E[A\E[B\E[B
 w t
 u Correct
+!
+
+((SHOPT_ESH)) && mkdir -p fullcomplete/foe && VISUAL=emacs tst $LINENO <<"!"
+L full-word completion in emacs mode
+# https://github.com/ksh93/ksh/pull/580
+
+d 15
+p :test-1:
+w true fullcomplete/foi\cb\t
+r ^:test-1: true fullcomplete/foi\r\n
+p :test-2:
+w true fullcomplete/foi\cb=
+r ^:test-2: true fullcomplete/foi\r\n
+p :test-3:
+w true fullcomplete/foi\cb*
+r ^:test-3: true fullcomplete/foi\r\n
+!
+
+((SHOPT_VSH)) && mkdir -p fullcomplete/fov && VISUAL=vi tst $LINENO <<"!"
+L full-word completion in vi mode
+# https://github.com/ksh93/ksh/pull/580
+
+d 15
+p :test-1:
+w true fullcomplete/foi\Eh\\a
+r ^:test-1: true fullcomplete/foi\r\n
+p :test-2:
+w true fullcomplete/foi\Eh=a
+r ^:test-2: true fullcomplete/foi\r\n
+p :test-3:
+w true fullcomplete/foi\Eh*a
+r ^:test-3: true fullcomplete/foi\r\n
+!
+
+((SHOPT_VSH && SHOPT_MULTIBYTE)) &&
+[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} =~ [Uu][Tt][Ff]-?8 ]] &&
+mkdir -p vitest/aあb && VISUAL=vi tst $LINENO <<"!"
+L vi completion from wide produces corrupt characters
+# https://github.com/ksh93/ksh/issues/571
+
+d 15
+p :test-1:
+w cd vitest/aあ\t
+r ^:test-1: cd vitest/aあb/\r\n$
 !
 
 # ======

@@ -2,7 +2,7 @@
 *                                                                      *
 *               This software is part of the ast package               *
 *          Copyright (c) 1982-2012 AT&T Intellectual Property          *
-*          Copyright (c) 2020-2022 Contributors to ksh 93u+m           *
+*          Copyright (c) 2020-2023 Contributors to ksh 93u+m           *
 *                      and is licensed under the                       *
 *                 Eclipse Public License, Version 2.0                  *
 *                                                                      *
@@ -105,10 +105,10 @@ typedef int        (*Math_3i_f)(Sfdouble_t,Sfdouble_t,Sfdouble_t);
 #endif
 
 #define seterror(v,msg)		_seterror(v,ERROR_dictionary(msg))
-#define ERROR(vp,msg)		return(seterror((vp),msg))
+#define ERROR(vp,msg)		return seterror((vp),msg)
 
 /*
- * set error message string and return(0)
+ * set error message string and return 0
  */
 static int _seterror(struct vars *vp,const char *msg)
 {
@@ -116,7 +116,7 @@ static int _seterror(struct vars *vp,const char *msg)
 		vp->errmsg.value = (char*)msg;
 	vp->errchr = vp->nextchr;
 	vp->nextchr = "";
-	return(0);
+	return 0;
 }
 
 
@@ -147,16 +147,16 @@ static Sfdouble_t U2F(Sfulong_t u)
 
 Sfdouble_t	arith_exec(Arith_t *ep)
 {
-	register Sfdouble_t num=0,*dp,*sp;
-	register unsigned char *cp = ep->code;
-	register int c,type=0;
-	register char *tp;
-	Sfdouble_t small_stack[SMALL_STACK+1],arg[9];
-	const char *ptr = "";
-	char	*lastval=0;
-	int	lastsub;
-	Math_f fun;
-	struct lval node;
+	Sfdouble_t	num=0,*dp,*sp;
+	unsigned char	*cp = ep->code;
+	int		c,type=0;
+	char		*tp;
+	Sfdouble_t	small_stack[SMALL_STACK+1],arg[9];
+	const char	*ptr = "";
+	char		*lastval=0;
+	int		lastsub;
+	Math_f		fun;
+	struct lval	node;
 	node.emode = ep->emode;
 	node.expr = ep->expr;
 	node.elen = ep->elen;
@@ -168,7 +168,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 	if(sh.arithrecursion++ >= MAXLEVEL)
 	{
 		arith_error(e_recursive,ep->expr,ep->emode);
-		return(0);
+		return 0;
 	}
 	if(ep->staksize < SMALL_STACK)
 		sp = small_stack;
@@ -422,7 +422,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 				c &= ~T_BINARY;
 				arg[0] = num;
 				arg[1] = 0;
-				num = sh_mathfun((void*)fun,1,arg);
+				num = sh_mathfun(fun,1,arg);
 				break;
 			}
 			num = (*((Math_1f_f)fun))(num);
@@ -443,7 +443,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 				arg[0] = sp[1];
 				arg[1] = num;
 				arg[2] = 0;
-				num = sh_mathfun((void*)fun,2,arg);
+				num = sh_mathfun(fun,2,arg);
 				break;
 			}
 			if(c&T_NOFLOAT)
@@ -468,7 +468,7 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 				arg[1] = sp[2];
 				arg[2] = num;
 				arg[3] = 0;
-				num = sh_mathfun((void*)fun,3,arg);
+				num = sh_mathfun(fun,3,arg);
 				break;
 			}
 			num = (*((Math_3f_f)fun))(sp[1],sp[2],num);
@@ -489,15 +489,15 @@ Sfdouble_t	arith_exec(Arith_t *ep)
 		sh.arithrecursion--;
 	if(type==0 && !num)
 		num = 0;
-	return(num);
+	return num;
 }
 
 /*
  * This returns operator tokens or A_REG or A_NUM
  */
-static int gettok(register struct vars *vp)
+static int gettok(struct vars *vp)
 {
-	register int c,op;
+	int c,op;
 	vp->errchr = vp->nextchr;
 	while(1)
 	{
@@ -555,16 +555,16 @@ static int gettok(register struct vars *vp)
 				op--;
 			}
 		}
-		return(op);
+		return op;
 	}
 }
 
 /*   
  * evaluate a subexpression with precedence
  */
-static int expr(register struct vars *vp,register int precedence)
+static int expr(struct vars *vp,int precedence)
 {
-	register int	c, op;
+	int		c, op;
 	int		invalid,wasop=0;
 	struct lval	lvalue,assignop;
 	const char	*pos;
@@ -583,7 +583,7 @@ again:
 	    case A_EOF:
 		if(precedence>2)
 			ERROR(vp,e_moretokens);
-		return(1);
+		return 1;
 	    case A_MINUS:
 		op =  A_UMINUS;
 		goto common;
@@ -601,7 +601,7 @@ again:
 		op |= T_NOFLOAT;
 	    common:
 		if(!expr(vp,c))
-			return(0);
+			return 0;
 		stakputc(op);
 		break;
 	    default:
@@ -669,7 +669,7 @@ again:
 		{
 			wasop = 0;
 			if(!expr(vp,c))
-				return(0);
+				return 0;
 		}
 		switch(op)
 		{
@@ -692,7 +692,7 @@ again:
 			if(!expr(vp,c))
 			{
 				stakseek(staktell()-1);
-				return(0);
+				return 0;
 			}
 			lvalue.value = 0;
 			break;
@@ -726,7 +726,7 @@ again:
 				ERROR(vp,e_synbad);
 			vp->paren++;
 			if(!expr(vp,1))
-				return(0);
+				return 0;
 			vp->paren--;
 			if(fun)
 			{
@@ -773,7 +773,7 @@ again:
 			offset1 = stakpush(vp,0,short);
 			stakputc(A_POP);
 			if(!expr(vp,1))
-				return(0);
+				return 0;
 			if(gettok(vp)!=A_COLON)
 				ERROR(vp,e_questcolon);
 			stakputc(A_JMP);
@@ -781,7 +781,7 @@ again:
 			*((short*)stakptr(offset1)) = staktell();
 			stakputc(A_POP);
 			if(!expr(vp,3))
-				return(0);
+				return 0;
 			*((short*)stakptr(offset2)) = staktell();
 			lvalue.value = 0;
 			wasop = 0;
@@ -805,7 +805,7 @@ again:
 			offset = stakpush(vp,0,short);
 			stakputc(A_POP);
 			if(!expr(vp,c))
-				return(0);
+				return 0;
 			*((short*)stakptr(offset)) = staktell();
 			if(op!=A_QCOLON)
 				stakputc(A_NOTNOT);
@@ -886,15 +886,15 @@ again:
 	}
  done:
 	vp->nextchr = vp->errchr;
-	return(1);
+	return 1;
 }
 
 Arith_t *arith_compile(const char *string,char **last,Sfdouble_t(*fun)(const char**,struct lval*,int,Sfdouble_t),int emode)
 {
 	struct vars cur;
-	register Arith_t *ep;
+	Arith_t *ep;
 	int offset;
-	memset((void*)&cur,0,sizeof(cur));
+	memset(&cur,0,sizeof(cur));
      	cur.expr = cur.nextchr = string;
 	cur.convert = fun;
 	cur.emode = emode;
@@ -909,7 +909,7 @@ Arith_t *arith_compile(const char *string,char **last,Sfdouble_t(*fun)(const cha
 		{
 			stakseek(0);
 			*last = (char*)Empty;
-			return(0);
+			return NULL;
 		}
 		cur.nextchr = cur.errchr;
 	}
@@ -925,7 +925,7 @@ Arith_t *arith_compile(const char *string,char **last,Sfdouble_t(*fun)(const cha
 	ep->staksize = cur.stakmaxsize+1;
 	if(last)
 		*last = (char*)(cur.nextchr);
-	return(ep);
+	return ep;
 }
 
 /*
@@ -952,7 +952,7 @@ Sfdouble_t arith_strval(const char *s, char **end, Sfdouble_t(*convert)(const ch
 	ep->emode = emode;
 	d = arith_exec(ep);
 	stakset(sp?sp:(char*)ep,offset);
-	return(d);
+	return d;
 }
 
 #if _mem_name__exception
@@ -998,7 +998,7 @@ Sfdouble_t arith_strval(const char *s, char **end, Sfdouble_t(*convert)(const ch
 		break;
 #endif
 	    default:
-		return(1);
+		return 1;
 	}
 	errormsg(SH_DICT,ERROR_exit(1),message,ep->name);
 	UNREACHABLE();

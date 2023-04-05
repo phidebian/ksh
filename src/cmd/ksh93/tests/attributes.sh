@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2023 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -89,11 +89,14 @@ fi
 if	[[ $($SHELL -c 'echo $x') != export ]]
 then	err_exit export fails
 fi
-if	[[ $($SHELL -c 'xi=xi+4;echo $xi') != 24 ]]
-then	err_exit export attributes fails
+if	[[ $($SHELL -c 'xi=xi+4;echo $xi') != "xi+4" ]]
+then	err_exit "attributes exported"
 fi
 if	[[ -o ?posix && $(set -o posix; "$SHELL" -c 'xi=xi+4;echo $xi') != "xi+4" ]]
 then	err_exit "attributes exported despite posix mode (-o posix)"
+fi
+if	[[ $("$SHELL" -c 'xi=xi+4;echo $xi') != "xi+4" ]]
+then	err_exit "attributes imported"
 fi
 if	[[ -o ?posix && $("$SHELL" -o posix -c 'xi=xi+4;echo $xi') != "xi+4" ]]
 then	err_exit "attributes imported despite posix mode (-o posix)"
@@ -339,11 +342,11 @@ unset foo
 typeset  -b -A foo
 read -N10 foo[4] <<< 'abcdefghijklmnop'
 [[ ${foo[4]} == "$expected" ]] || err_exit 'read -N10 foo, where foo is "typeset  -b -A" foo not working'
+[[ $(printf %B foo[4]) == abcdefghij ]] || err_exit 'printf %B for binary associative array element not working'
 unset foo
 typeset  -b -a foo
 read -N10 foo[4] <<< 'abcdefghijklmnop'
 [[ ${foo[4]} == "$expected" ]] || err_exit 'read -N10 foo, where foo is "typeset  -b -a" foo not working'
-[[ $(printf %B foo[4]) == abcdefghij ]] || err_exit 'printf %B for binary associative array element not working'
 [[ $(printf %B foo[4]) == abcdefghij ]] || err_exit 'printf %B for binary indexed array element not working'
 unset foo
 
@@ -797,13 +800,13 @@ got=${got/ -x/}
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # ======
-# Check import of float attribute/value from environment
-exp='typeset -x -F 5 num=7.75000'
+# Check non-import of float attribute/value from environment
+exp='typeset -x num=7.75000'
 got=$(typeset -xF5 num=7.75; "$SHELL" -c 'typeset -p num')
 [[ $got == "$exp" ]] || err_exit "floating '.' attribute/value not imported correctly" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 # try again with AST debug locale which has the comma as the radix point
-exp='typeset -x -F 5 num=7,75000'
+exp='typeset -x num=7,75000'
 got=$(export LC_NUMERIC=debug; typeset -xF5 num=7,75; "$SHELL" -c 'typeset -p num')
 [[ $got == "$exp" ]] || err_exit "floating ',' attribute/value not imported correctly" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
@@ -811,10 +814,11 @@ got=$(export LC_NUMERIC=debug; typeset -xF5 num=7,75; "$SHELL" -c 'typeset -p nu
 # ======
 # Check that assignments preceding commands correctly honour existing attributes
 # https://github.com/ksh93/ksh/issues/465
-exp='typeset -x -F 5 num=7.75000'
+exp='typeset -x num=7.75000'
 got=$(typeset -F5 num; num=3.25+4.5 "$SHELL" -c 'typeset -p num')
 [[ $got == "$exp" ]] || err_exit 'assignment preceding external command call does not honour pre-set attributes' \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+exp='typeset -x -F 5 num=7.75000'
 got=$(typeset -F5 num; num=3.25+4.5 command eval 'typeset -p num')
 [[ $got == "$exp" ]] || err_exit 'assignment preceding built-in command call does not honour pre-set attributes' \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
@@ -829,6 +833,21 @@ unset foo
 	typeset -Z foo=
 	typeset -i foo
 ) || err_exit 'failed to convert from -Z to -i'
+
+# ======
+# Bug in the 'for' loop optimizer which could falsely treat 'typeset -b' variables as loop invariants
+# Fix backported from ksh 93v- 2013-03-18
+# (hint: use 'base64 -d' to decode base64-encoded values)
+unset var i
+exp='dGhyZWV0'
+typeset -bZ6 var
+for i in first second
+do	read -r -N6 var
+	set -- "$var"
+	[[ $i == first ]] && continue
+	got=$1
+	[[ $got == "$exp" ]] || err_exit "loop optimization bug with 'typeset -b' variables (expected '$exp', got '$got')"
+done <<< 'twotowthreetfourro'
 
 # ======
 exit $((Errors<125?Errors:125))

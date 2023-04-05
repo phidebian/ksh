@@ -312,7 +312,7 @@ built-in below.
 A
 .I command\^
 is either a \fIsimple-command\fR
-or one of the following.
+or a \fIcompound-command\fR, which is one of the following.
 Unless otherwise stated,
 the value returned by a command is that of the
 last \fIsimple-command\fR executed in the command.
@@ -600,9 +600,9 @@ below, for a description of
 .IR expression .
 .TP
 .PD 0
-\f3function\fP \f2varname\^\fP \f3{\fP \f2list\^\fP \f3;}\fP
+\f3function\fP \f2varname\^\fP \f3{\fP \f2list\^\fP \f3;}\fP \*(OK \f2redirection\^\fP ... \*(CK
 .TP
-\f2varname\^\fP \f3() {\fP \f2list\^\fP \f3;}\fP
+\f2varname\^\fP \f3()\fP \f2compound-command\^\fP \*(OK \f2redirection\^\fP ... \*(CK
 .PD
 Define a function which is referenced by
 .IR varname .
@@ -640,18 +640,6 @@ in this name space.
 (See
 .I Name Spaces\^
 below.)
-.TP
-\f3&\fP \*(OK \f2name\^\fP \*(OK \f2arg...\^\fP \*(CK  \*(CK
-Causes subsequent
-.I list\^
-commands terminated by
-.B &
-to be placed in the background job pool
-.IR name .
-If
-.I name\^
-is omitted a default unnamed pool is used.
-Commands in a named background pool may be executed remotely.
 .TP
 \f3time\fP \*(OK \f2pipeline\^\fP \*(CK
 .br
@@ -1114,9 +1102,6 @@ The attributes supported by the shell are described
 later with the
 .B typeset\^
 special built-in command.
-Exported variables pass their attributes to the environment so that a newly
-invoked ksh that is a child or exec'd process of the current shell will
-automatically import them, unless the \fBposix\fR shell option is on.
 .PP
 The shell supports both indexed and associative arrays.
 An element of an array variable is referenced by a
@@ -1579,13 +1564,13 @@ or
 the substring operation is applied to each element in turn.
 .TP
 .PD 0
-\f3${\fP\f2parameter\^\fP\f3/\fP\f2pattern\^\fP\f3/\f2string\^\fP\f3}\fP
+\f3${\fP\f2parameter\^\fP\f3/\fP\f2pattern\^\fP\f3/\fP\f2string\^\fP\f3}\fP
 .TP
-\f3${\fP\f2parameter\^\fP\f3//\fP\f2pattern\^\fP\f3/\f2string\^\fP\f3}\fP
+\f3${\fP\f2parameter\^\fP\f3//\fP\f2pattern\^\fP\f3/\fP\f2string\^\fP\f3}\fP
 .TP
-\f3${\fP\f2parameter\^\fP\f3/#\fP\f2pattern\^\fP\f3/\f2string\^\fP\f3}\fP
+\f3${\fP\f2parameter\^\fP\f3/#\fP\f2pattern\^\fP\f3/\fP\f2string\^\fP\f3}\fP
 .TP
-\f3${\fP\f2parameter\^\fP\f3/%\fP\f2pattern\^\fP\f3/\f2string\^\fP\f3}\fP
+\f3${\fP\f2parameter\^\fP\f3/%\fP\f2pattern\^\fP\f3/\fP\f2string\^\fP\f3}\fP
 .PD
 Expands
 .I parameter\^
@@ -1609,6 +1594,12 @@ is replaced by the given
 The third form restricts the pattern match to the beginning of the string
 while the fourth form restricts the pattern match to the end of
 the string.
+In the first and second forms, an empty
+.I pattern\^
+never matches.
+In the third and fourth forms, an empty
+.I pattern\^
+matches the beginning or the end of the string, respectively.
 When
 .I string\^
 is empty, the
@@ -1695,17 +1686,10 @@ the new type is derived from the type of the first variable. (See
 below.)
 .TP
 .B !
-The process ID or the pool name and job number of the last background command
+The process ID of the last background command
 invoked or the most recent job put in the background with the
 .B bg
 built-in command.
-Background jobs started in a named pool will be in the form
-.IB pool . number
-where
-.I pool\^
-is the pool name and
-.I number\^
-is the job number within that pool.
 .TP
 .B .sh.command
 When processing a
@@ -1747,7 +1731,7 @@ Upon executing a
 trap action, the value of this variable is set
 to the ESC control character if the shell is in
 .B vi
-insert mode (See
+input mode (See
 .I "Vi Editing Mode"\^
 below), or to the empty string value otherwise.
 .TP
@@ -1784,17 +1768,23 @@ Set during a
 trap to the line number for the caller of each function.
 .TP
 .B .sh.match
-An indexed array which stores the most recent match and subpattern
-matches after conditional pattern matches that match and after
-variables expansions using the operators
-.BR # ,
-.BR % ,
-or
-.BR / .
+Whenever a match is found in a pattern matching operation using either the
+.B [[
+compound command (see
+.I "Conditional Expressions\^"
+below) or the expansions
+\f3${\fP\f2parameter\^\fP\f3#\fP\f2pattern\^\fP\f3}\fP,
+\f3${\fP\f2parameter\^\fP\f3%\fP\f2pattern\^\fP\f3}\fP,
+\f3${\fP\f2parameter\^\fP\f3/\fP\f2pattern\^\fP\f3/\fP\f2string\^\fP\f3}\fP,
+or one of their variants (see
+.I "Parameter Expansion\^"
+above),
+the match and its subpattern matches are stored in this indexed array,
+overwriting its previous values.
 The
 .BR 0 -th
 element stores the complete match and the
-.IR i\^ -th.
+.IR i\^ -th
 element stores the
 .IR i\^ -th
 submatch.
@@ -1805,11 +1795,12 @@ most recent match and subpattern match, and the second subscript indicating
 which match with
 .B 0
 representing the first match.
-The
+If no match is found,
 .B .sh.match
-variable
-becomes unset when the variable that has expanded
-is assigned a new value.
+is not reset or modified.
+Note that even matching operations performed on the
+.B .sh.match
+variable itself will overwrite it upon finding a match.
 .TP
 .B .sh.math
 Used for defining arithmetic functions
@@ -4312,11 +4303,6 @@ If you set this
 tty option, then background jobs will stop when they try to produce
 output like they do when they try to read input.
 .PP
-A job pool is a collection of jobs started with
-.I list\^
-.B &
-associated with a name.
-.PP
 There are several ways to refer to jobs in the shell.
 A job can be referred to by the process ID of any process of the job
 or by one of the following:
@@ -4325,16 +4311,6 @@ or by one of the following:
 .TP
 .BI % number
 The job with the given number.
-.TP
-.I  pool\^
-All the jobs in the job pool named by
-.IR pool .
-.TP
-.IB  pool . number
-The job number
-.I number\^
-in the job pool named by
-.IR pool .
 .TP
 .BI % string
 Any job whose command line begins with
@@ -4355,10 +4331,6 @@ Equivalent to
 Previous job.
 .RE
 .PD
-.PP
-In addition, unless noted otherwise, wherever a job can be specified,
-the name of a background job pool can be used to represent all the
-jobs in that pool.
 .PP
 The shell learns immediately whenever a process changes state.
 It normally informs you whenever a job becomes blocked so that
@@ -4709,7 +4681,7 @@ The second \f3?\fP can be omitted if it is immediately followed by a newline.
 .PP
 For example, consider this bit of someone's history list as might be
 output by the \f3hist -l\fP command:
-.IP "" 4
+.IP " " 4
 9        nroff \-man wumpus.man
 .br
 10       cp wumpus.man wumpus.man.old
@@ -5025,7 +4997,7 @@ is set to
 ESC
 when in
 .B vi
-insert mode (see below)
+input mode (see below)
 and set to the empty string otherwise.
 Prepending
 .B ${.sh.editmode}
@@ -5582,8 +5554,6 @@ Delete previous character.
 .TP 10
 .BI ^W
 Delete the previous blank separated word.
-On some systems the \f3viraw\fP option
-may be required for this to work.
 .TP 10
 .I eof
 As the first character of the line causes
@@ -5600,8 +5570,6 @@ or
 if not defined.)
 Removes the next character's
 editing features (if any).
-On some systems the \f3viraw\fP option
-may be required for this to work.
 .TP 10
 .BI \e
 If the
@@ -6993,8 +6961,7 @@ option or by name with the
 option
 (as given in
 .BR <signal.h> ,
-stripped of the prefix ``SIG'' with
-the exception that SIGCLD is named CHLD).
+stripped of the prefix ``SIG''.
 For backward compatibility, the
 .B n
 and
@@ -7472,6 +7439,9 @@ Same as
 Causes the read to continue to the first character of
 .I delim\^
 instead of the newline control character.
+Multibyte characters for
+.I delim\^
+are not supported.
 .TP 8
 .B \-n
 Causes at most
@@ -7760,9 +7730,12 @@ Same as
 .BR \-B .
 .TP 8
 .B emacs
-Puts you in an
-.I emacs
-style in-line editor for command entry.
+Activates the
+.IR emacs -style
+command line editor.
+See
+.I "Emacs Editing Mode\^"
+above.
 .TP 8
 .B errexit
 Same as
@@ -7805,9 +7778,13 @@ Same as
 .BR \-G .
 .TP 8
 .B gmacs
-Puts you in a
-.I gmacs
-style in-line editor for command entry.
+Activates the
+.IR emacs -style
+command line editor with modified
+.BR ^T .
+See
+.I "Emacs Editing Mode\^"
+above.
 .TP 8
 .B histexpand
 Same as
@@ -7896,18 +7873,13 @@ controlled independently in between.) Furthermore, the \fBposix\fR option
 is automatically turned on upon invocation if the shell is invoked as \fBsh\fR
 or \fBrsh\fR, or if \fB\-o posix\fR or \fB\-\-posix\fR is specified on the
 shell invocation command line, or when executing scripts without a \fB#!\fR path
-with this option active in the invoking shell. In that case, the invoked shell
-will not import type attributes for variables (such as integer or left/right
-justify) from the environment.
+with this option active in the invoking shell.
 .RS 8
 .PP
-In addition, while on, the \fBposix\fR option
-.IP \[bu] 3
-disables exporting variable type attributes to the environment for other ksh
-processes to import;
+While on, the \fBposix\fR option
 .IP \[bu]
-if the \fB\-B\fR/\fBbraceexpand\fR option is turned back on,
-disallows brace expansion on the results of unquoted expansions;
+disallows brace expansion on the results of unquoted expansions
+(if the \fB\-B\fR/\fBbraceexpand\fR option is turned back on);
 .IP \[bu]
 disables the special handling of repeated
 .I isspace
@@ -7957,6 +7929,12 @@ built-ins;
 stops the \fB.\fR command (but not \fBsource\fR) from looking up functions
 defined with the \fBfunction\fR syntax;
 .IP \[bu]
+disables the recognition of unexpanded shell arithmetic expressions for the
+numerical conversion specifiers of the
+.B printf
+built-in command, causing them to print a warning for operands that are not
+valid decimal, \fB0x\fR-prefixed hexadecimal or \fB0\fR-prefixed octal numbers;
+.IP \[bu]
 disables the recognition of unexpanded shell arithmetic expressions in the
 numerical comparison operators
 .BR \-eq ,
@@ -7971,7 +7949,7 @@ decimal numbers as operands;
 .IP \[bu]
 changes the \fBtest\fR/\fB[\fR built-in command to make its deprecated
 \fIexpr1\fR \fB-a\fR \fIexpr2\fR and \fIexpr1\fR \fB-o\fR \fIexpr2\fR operators
-work even if \fIexpr1\fR equals "\fB!\fR" or "\fb(\fR" (which means the
+work even if \fIexpr1\fR equals "\fB!\fR" or "\fB(\fR" (which means the
 nonstandard unary \fB-a\fR \fIfile\fR and \fB-o\fR \fIoption\fR operators
 cannot be directly negated using \fB!\fR or wrapped in parentheses);
 and
@@ -8003,31 +7981,15 @@ Same as
 .BR \-v .
 .TP 8
 .B vi
-Puts you in insert mode of a
-.I vi\^
-style in-line editor
-until you hit the escape character
-.BR 033 .
-This puts you in control mode.
-A return sends the line.
+Activates the
+.IR vi -style
+command line editor, initially in input mode.
+See
+.I "Vi Editing Mode\^"
+above.
 .TP 8
 .B viraw
-Each character is processed as it is typed
-in
-.I vi\^
-mode.
-The shell may have been compiled to force this option on at all times.
-Otherwise, canonical processing (line-by-line input) is initially enabled
-and the command line will be echoed again if the speed is 1200 baud or
-greater and it contains any control characters or less than one second has
-elapsed since the prompt was printed. The ESC character terminates canonical
-processing for the remainder of the command and the user can then modify the
-command line. This scheme has the advantages of canonical processing with
-the type-ahead echoing of raw mode. If the
-.B viraw
-option is set, the terminal will always have canonical processing disabled.
-This mode is implicit for systems that do not support two alternate end of
-line delimiters, and may be helpful for certain terminals.
+Obsolete; has no effect.
 .TP 8
 .B xtrace
 Same as

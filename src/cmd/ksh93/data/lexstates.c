@@ -18,7 +18,6 @@
 
 #include	"shopt.h"
 #include	<ast.h>
-#include	"FEATURE/options"
 #include	"lexstates.h"
 
 /* The ST_* state table names are defined in include/lexstates.h */

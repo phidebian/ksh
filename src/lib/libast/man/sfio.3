@@ -642,7 +642,7 @@ Otherwise, \f3n\fP indicates the number of objects to move.
 If either \f3fr\fP or \f3fw\fP is \f3NULL\fP, it acts
 as if it is a stream corresponding to \f3/dev/null\fP,
 the UNIX device that has no read data and throws away any write data.
-For example, the call \f3sfmove(f,(Sfio_t*)0,(Sfoff_t)(-1),'\en')\fP
+For example, the call \f3sfmove(f,NULL,(Sfoff_t)(-1),'\en')\fP
 counts the number of complete lines in stream \f3f\fP.
 .Ss "  ssize_t sfread(Sfio_t* f, void* buf, size_t n)"
 This function reads up to \f3n\fP bytes from \f3f\fP into buffer \f3buf\fP.
@@ -810,7 +810,7 @@ original formatting pair and without any extension functions.
 The top environment of a stack, say \f3fe\fP, is automatically popped whenever
 its format string is completely processed.
 In this case, its event-handling function (if any) is called
-as \f3(*eventf)(f,SF_FINAL,NIL(void*),fe)\fP.
+as \f3(*eventf)(f,SF_FINAL,NULL,fe)\fP.
 The top environment
 can also be popped by giving an argument \f3NULL\fP to \f3%!\fP
 or by returning a negative value in an extension function.
@@ -1539,7 +1539,7 @@ to traverse the entire discipline stack of a stream \f3f\fP as follows:
 .ft 1
 .fi
 
-If \f3disc\fP is \f3SF_POPDISC\fP or \f3(Sfdisc_t*)0\fP,
+If \f3disc\fP is \f3SF_POPDISC\fP or \f3NULL\fP,
 the top element of the stack, if any, is popped and its address is returned.
 Otherwise, \f3disc\fP is pushed onto the discipline stack.
 In this case, if successful, \f3sfdisc()\fP returns
@@ -1564,7 +1564,7 @@ The first three fields of \f3Sfdisc_t\fP specify alternative I/O functions.
 If any of them is \f3NULL\fP, it is inherited
 from a discipline pushed earlier on the stack.
 Note that a file stream always
-has \f3read(2)\fP, \f3write(2)\fP, \f3lseek(2)\fP and \f3NIL(Sfexcept_f)\fP
+has \f3read(2)\fP, \f3write(2)\fP, \f3lseek(2)\fP and \f3NULL\fP
 as the \fIlogical bottom discipline\fP.
 Arguments to I/O discipline functions
 have the same meaning as that of the
@@ -1758,7 +1758,7 @@ This is the base stream of the stack.
 If it is \f3NULL\fP, \f3sfstack()\fP does nothing and returns \f3top\fP.
 .Tp
 \f3top\fP:
-If this is \f3SF_POPSTACK\fP or \f3(Sfio_t*)0\fP,
+If this is \f3SF_POPSTACK\fP or \f3NULL\fP,
 the stack is popped and \f3sfstack()\fP returns the popped stream.
 Otherwise, \f3top\fP is pushed on top of the stack identified by \f3base\fP
 and \f3sfstack()\fP returns the \f3base\fP stream.
