@@ -16,6 +16,8 @@
 #                                                                      #
 ########################################################################
 
+. "${SHTESTS_COMMON:-${0%/*}/_common}"
+
 # PHI: Initial version.
 #      The intent is to check Issue #182, but other printf issues can
 #      be hosted here.
@@ -30,7 +32,7 @@
 # Don't edit line after the #-- Lines ... ----- marker, this script regen
 # them based on the generation section.
 #
-# Run this script as "ksh ./printf.sh gen" to regen the lines after the
+# Run this script as 'tmp=$PWD ksh ./printf-1.sh gen' to regen the lines after the
 #-- Lines ... ----- marker
 # The newly gen'ed printf.sh can then be committed in GIT.
 
@@ -38,11 +40,23 @@
 { echo "must be run from a ksh" ; exit 1
 }
 
-# This test require a descent gnudate, on system with no gnudate, we skip
+# This test requires a decent gnudate. On a system with no gnudate, we skip
 # the test with a warning (don't count as an error).
 #
-gd=$(command -v gnudate || command -v gdate || command -v date)
-$gd --version | grep -q GNU ||
+gd=$(	set -o noglob
+	IFS=:
+	search=$PATH:$userPATH:
+	for p in $search
+	do	[[ -z $p ]] && p=.
+		for c in gnudate gdate date
+		do	if	[[ -x $p/$c && $(LC_ALL=C "$p/$c" --version 2>/dev/null) == 'date (GNU coreutils)'* ]]
+			then	print -r -- "$p/$c"
+				exit 0
+			fi
+		done
+	done
+	exit 1
+) ||
 { warning "GNU date(1) required -- tests skipped"; exit 0
 }
 
@@ -74,7 +88,7 @@ f='%Y-%m-%d %H:%M:%S'
 function cdp # 1:date-STRING [2:printf-STRING]
 { integer i
   for((i=0;i<2;i++))
-  { M=$(date +"$f" --date="$1")
+  { M=$("$gd" +"$f" --date="$1")
     printf -v p "%($f)T" "exact ${2:-$1}"  
     [[ $p == $M ]] && return
   }
@@ -87,7 +101,6 @@ function cdp # 1:date-STRING [2:printf-STRING]
 { integer i
   for((i=0;i<2;i++)){ case $i in
   1) #===== Test lines generation ============================================
-     echo '. "${SHTESTS_COMMON:-${0%/*}/_common}"'
 
      # Trivial
      gen cdp now
@@ -115,7 +128,6 @@ function cdp # 1:date-STRING [2:printf-STRING]
   esac }
 }>$0
 #-- Lines after this point are gen'd, don't edit (you've been warned) ---------
-. "${SHTESTS_COMMON:-${0%/*}/_common}"
 cdp 'now'                                            || err_exit $(f $LINENO)
 cdp '@1234567890.987654321' '#1234567890.987654321'  || err_exit $(f $LINENO)
 cdp '-40 years '                                     || err_exit $(f $LINENO)

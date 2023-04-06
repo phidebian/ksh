@@ -16,6 +16,8 @@
 #                                                                      #
 ########################################################################
 
+. "${SHTESTS_COMMON:-${0%/*}/_common}"
+
 # PHI: Initial version.
 #      The intent is to check Issue #182, but other printf issues can
 #      be hosted here.
@@ -30,7 +32,7 @@
 # Don't edit line after the #-- Lines ... ----- marker, this script regen
 # them based on the generation section.
 #
-# Run this script as "ksh ./printf.sh gen" to regen the lines after the
+# Run this script as 'tmp=$PWD ksh ./printf-6.sh gen' to regen the lines after the
 #-- Lines ... ----- marker
 # The newly gen'ed printf.sh can then be committed in GIT.
 
@@ -38,11 +40,23 @@
 { echo "must be run from a ksh" ; exit 1
 }
 
-# This test require a descent gnudate, on system with no gnudate, we skip
+# This test requires a decent gnudate. On a system with no gnudate, we skip
 # the test with a warning (don't count as an error).
 #
-gd=$(command -v gnudate || command -v gdate || command -v date)
-$gd --version | grep -q GNU ||
+gd=$(	set -o noglob
+	IFS=:
+	search=$PATH:$userPATH:
+	for p in $search
+	do	[[ -z $p ]] && p=.
+		for c in gnudate gdate date
+		do	if	[[ -x $p/$c && $(LC_ALL=C "$p/$c" --version 2>/dev/null) == 'date (GNU coreutils)'* ]]
+			then	print -r -- "$p/$c"
+				exit 0
+			fi
+		done
+	done
+	exit 1
+) ||
 { warning "GNU date(1) required -- tests skipped"; exit 0
 }
 
@@ -83,7 +97,6 @@ function cps # $1:printf-STRING $2:match-string
 { integer i
   for((i=0;i<2;i++)){ case $i in
   1) #===== Test lines generation ============================================
-     echo '. "${SHTESTS_COMMON:-${0%/*}/_common}"'
 
      # Ordinal Time (ksh only support the extended form)
      gen cps "2020-2-3T12:34:56"             "2020-02-03 12:34:56"
@@ -107,7 +120,6 @@ function cps # $1:printf-STRING $2:match-string
   esac }
 }>$0
 #-- Lines after this point are gen'd, don't edit (you've been warned) ---------
-. "${SHTESTS_COMMON:-${0%/*}/_common}"
 cps '2020-2-3T12:34:56' '2020-02-03 12:34:56'        || err_exit $(f $LINENO)
 cps '2020-2-3 12:34:56' '2020-02-03 12:34:56'        || err_exit $(f $LINENO)
 cps '2020-2-3 12:34:56 next fri' '2020-02-14 12:34:56'  || err_exit $(f $LINENO)
