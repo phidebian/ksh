@@ -1594,6 +1594,12 @@ is replaced by the given
 The third form restricts the pattern match to the beginning of the string
 while the fourth form restricts the pattern match to the end of
 the string.
+In the first and second forms, an empty
+.I pattern\^
+never matches.
+In the third and fourth forms, an empty
+.I pattern\^
+matches the beginning or the end of the string, respectively.
 When
 .I string\^
 is empty, the

@@ -830,13 +830,26 @@ exp=$'typeset -A a=([0]=1 [1]=2 [2]=3)\ntypeset -a a=(1 2 3)'
 # ======
 # spurious command execution of a word starting with '[' but not containing ']=' in associative array assignments
 # https://github.com/ksh93/ksh/issues/427
-exp='*: syntax error at line *: `\[badword]'\'' unexpected'
-got=$(set +x; PATH=/dev/null; eval 'typeset -A badword=([x]=1 \[badword])' 2>&1)
-case $((e=$?)),$got in
-3,$exp)	;;
-*)	err_exit 'spurious command execution in invalid associative array assignment' \
-		"(expected status 3 and $(printf %q "$exp"), got status $e and $(printf %q "$got"))" ;;
-esac
+exp=': syntax error at line 1: `[badword]'\'' unexpected'
+got=$(set +x -f; PATH=/dev/null; eval 'typeset -A badword=([x]=1 \[badword])' 2>&1)
+[[ e=$? -eq 3 && $got == *"$exp" ]] || err_exit 'issue 427 test 1' \
+		"(expected status 3 and *$(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+exp=': syntax error at line 1: `[bar_key\]=]'\'' unexpected'
+got=$(set +x -f; PATH=/dev/null; eval 'fn=([foo_key]=foo_val [bar_key\]=])' 2>&1)
+[[ e=$? -eq 3 && $got == *"$exp" ]] || err_exit 'issue 427 test 2' \
+		"(expected status 3 and *$(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+exp=': syntax error at line 1: `[abcdefg]\=r_key'\'' unexpected'
+got=$(set +x -f; PATH=/dev/null; eval 'fn=([foo]=bar [abcdefg]\=r_key)' 2>&1)
+[[ e=$? -eq 3 && $got == *"$exp" ]] || err_exit 'issue 427 test 3' \
+		"(expected status 3 and *$(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+exp=''
+got=$(set +x -f; PATH=/dev/null; eval 'fn=([foo]=bar [abcdef"g"]=r_key)' 2>&1)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit 'issue 427 test 4' \
+		"(expected status 0 and $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+exp=': syntax error at line 1: `[badword]=good'\'' unexpected'
+got=$(set +x -f; PATH=/dev/null; eval 'badword=([x]=1 \[badword]=good)' 2>&1)
+[[ e=$? -eq 3 && $got == *"$exp" ]] || err_exit 'issue 427 test 5' \
+		"(expected status 3 and *$(printf %q "$exp"), got status $e and $(printf %q "$got"))"
 
 # ======
 # arithmetic subscript that yields 0 while incrementing variable caused crash (in 'read')

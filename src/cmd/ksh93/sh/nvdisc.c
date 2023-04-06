@@ -245,6 +245,7 @@ static void	assign(Namval_t *np,const char* val,int flags,Namfun_t *handle)
 	Namval_t	node;
 	union Value	*up = np->nvalue.up;
 	Namval_t	*tp, *nr;  /* for 'typeset -T' types */
+	int		jmpval = 0;
 	if(val && (tp=nv_type(np)) && (nr=nv_open(val,sh.var_tree,NV_VARNAME|NV_ARRAY|NV_NOADD|NV_NOFAIL)) && tp==nv_type(nr)) 
 	{
 		char *sub = nv_getsub(np);
@@ -280,7 +281,6 @@ static void	assign(Namval_t *np,const char* val,int flags,Namfun_t *handle)
 	if(nq && !isblocked(bp,type))
 	{
 		struct checkpt	checkpoint;
-		int		jmpval;
 		int		savexit = sh.savexit;
 		Lex_t		*lexp = (Lex_t*)sh.lex_context, savelex;
 		int		bflag;
@@ -290,7 +290,7 @@ static void	assign(Namval_t *np,const char* val,int flags,Namfun_t *handle)
 		block(bp,type);
 		if(bflag = (type==APPEND && !isblocked(bp,LOOKUPS)))
 			block(bp,LOOKUPS);
-		sh_pushcontext(&checkpoint, 1);
+		sh_pushcontext(&checkpoint, SH_JMPFUN);
 		jmpval = sigsetjmp(checkpoint.buff, 0);
 		if(!jmpval)
 			sh_fun(nq,np,NULL);
@@ -370,6 +370,8 @@ done:
 		nq->nvalue.rp->running=0;
 		_nv_unset(nq,0);
 	}
+	if(jmpval >= SH_JMPFUN)
+		siglongjmp(*sh.jmplist,jmpval);
 }
 
 /*
@@ -384,10 +386,10 @@ static char*	lookup(Namval_t *np, int type, Sfdouble_t *dp,Namfun_t *handle)
 	char		*cp=0;
 	Namval_t	node;
 	union Value	*up = np->nvalue.up;
+	int		jmpval = 0;
 	if(nq && !isblocked(bp,type))
 	{
 		struct checkpt	checkpoint;
-		int		jmpval;
 		int		savexit = sh.savexit;
 		Lex_t		*lexp = (Lex_t*)sh.lex_context, savelex;
 		/* disciplines like PS2 may run at parse time; save, reinit and restore the lexer state */
@@ -406,7 +408,7 @@ static char*	lookup(Namval_t *np, int type, Sfdouble_t *dp,Namfun_t *handle)
 		}
 		block(bp,type);
 		block(bp, UNASSIGN);   /* make sure nv_setdisc doesn't invalidate 'vp' by freeing it */
-		sh_pushcontext(&checkpoint, 1);
+		sh_pushcontext(&checkpoint, SH_JMPFUN);
 		jmpval = sigsetjmp(checkpoint.buff, 0);
 		if(!jmpval)
 			sh_fun(nq,np,NULL);
@@ -449,6 +451,8 @@ static char*	lookup(Namval_t *np, int type, Sfdouble_t *dp,Namfun_t *handle)
 		nq->nvalue.rp->running=0;
 		_nv_unset(nq,0);
 	}
+	if(jmpval >= SH_JMPFUN)
+		siglongjmp(*sh.jmplist,jmpval);
 	return cp;
 }
 

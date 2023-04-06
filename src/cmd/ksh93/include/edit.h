@@ -28,7 +28,6 @@
 #define SEARCHSIZE	80
 
 #include        "FEATURE/locale"
-#include	"FEATURE/setjmp"
 #include	"terminal.h"
 
 #define STRIP		0377

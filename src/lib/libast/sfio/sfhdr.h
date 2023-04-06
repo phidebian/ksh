@@ -138,17 +138,6 @@
 #define X_OK	01
 #endif
 
-/* alternative process forking */
-#if _lib_vfork && !defined(fork) && !defined(__sparc) && !defined(__sparc__)
-#if _hdr_vfork
-#include	<vfork.h>
-#endif
-#if _sys_vfork
-#include	<sys/vfork.h>
-#endif
-#define fork	vfork
-#endif
-
 /* Private flags in the "bits" field */
 #define SF_MMAP		00000001	/* in memory mapping mode		*/
 #define SF_BOTH		00000002	/* both read/write			*/

@@ -2,6 +2,31 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-04-05:
+
+- Fixed a spurious syntax error in compound assignments upon encountering a
+  pair of repeated opening parentheses '(('. This bug behaved differently
+  depending on whether the compound assignment was outside or within a command
+  substitution of the form $(...) or ${ ...; }. Both cases are now fixed.
+
+- Fixed a parsing bug in arithmetic functions like
+	function .sh.math.add x y { .sh.value=x+y; }
+  so that the '.sh.value=x+y' is correctly interpreted as an assignment, not
+  as a command name. After this, (( z = add(x,y) )) works correctly.
+
+2023-04-03:
+
+- Fixed multiple crashing bugs in discipline functions invoked from non-forked
+  subshells, including corruption of the $_ variable.
+
+2023-04-02:
+
+- Corrected the 2022-07-05 fix for the detection of a syntax error in
+  compound assignments to associative arrays.
+
+- Fixed spurious syntax error in ${parameter:offset:length}: the arithmetic
+  expressions 'offset' and 'length' may now contain the operators ( ) & |.
+
 2023-03-29:
 
 - Fixed a bug in 'printf -v' (added on 2021-11-18) where using the %B format

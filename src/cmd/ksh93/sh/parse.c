@@ -13,6 +13,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*                      Phi <phi.debian@gmail.com>                      *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -918,6 +919,7 @@ static Shnode_t *funct(Lex_t *lexp)
 			memcpy(ap,lexp->arg,sz);
 			lexp->arg = ap;
 		}
+		lexp->assignok = 1;
 		t->funct.functtre = item(lexp,SH_NOIO);
 	}
 	else if(sh.shcomp)
@@ -1479,7 +1481,7 @@ static Shnode_t *simple(Lex_t *lexp,int flag, struct ionod *io)
 			lexp->token = LBRACE;
 			break;
 		}
-		if(associative && (argp->argval[0]!='[' || !strstr(argp->argval,"]=")))
+		if(associative && (!(argp->argflag&ARG_ASSIGN) || argp->argval[0]!='['))
 			sh_syntax(lexp);
 		/* check for assignment argument */
 		if((argp->argflag&ARG_ASSIGN) && assignment!=2)

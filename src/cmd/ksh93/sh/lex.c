@@ -474,20 +474,29 @@ int sh_lex(Lex_t* lp)
 				{
 					if(n==c)
 					{
-						if(c=='<')
-							lp->lexd.docword=1;
-						else if(n==LPAREN)
+						if(c==LPAREN)
 						{
-							if(lp->lex.intest)
-								return c;
-							/* '((' arithmetic command */
+							/* Avoid misdetecting EXPRSYM in [[ ... ]] or compound assignments */
+							if(lp->lex.intest || lp->comp_assign)
+								return lp->token=c;
+							/* The comsub() reading hack avoids the parser, so comp_assign is never
+							 * set; try to detect compound assignments with this workaround instead */
+							if(lp->lexd.dolparen && !lp->lexd.dolparen_arithexp
+							&& (fcpeek(-2)=='=' || lp->lexd.dolparen_eqparen))
+								return lp->token=c;
+							/* OK, maybe this is EXPRSYM (arith '((', possibly following '$').
+							 * But this cannot be concluded until a final '))' is detected.
+							 * Use a recursive lexer invocation for that. */
 							lp->lexd.nest=1;
 							lp->lastline = sh.inlineno;
 							lp->lexd.lex_state = ST_NESTED;
 							fcseek(1);
 							return sh_lex(lp);
 						}
-						c  |= SYMREP;
+						c |= SYMREP;
+						/* Here document redirection operator '<<' */
+						if(c==IODOCSYM)
+							lp->lexd.docword = 1;
 					}
 					else if(c=='(' || c==')')
 						return lp->token=c;
@@ -665,7 +674,7 @@ int sh_lex(Lex_t* lp)
 				if(mode==ST_BEGIN)
 				{
 				do_reg:
-					/* skip new-line joining if not called from comsub() */
+					/* skip new-line joining if called from comsub() */
 					if(c=='\\' && fcpeek(0)=='\n' && !lp->lexd.dolparen)
 					{
 						sh.inlineno++;
@@ -1507,19 +1516,43 @@ breakloop:
 
 /*
  * read to end of command substitution
- * of the form $(...)
+ * of the form $(...) or ${ ...;}
+ * or arithmetic expansion $((...))
+ *
+ * Ugly hack alert: At parse time, command substitutions and arithmetic expansions are read
+ * without parsing, using lexical analysis only. This is only to determine their length, so
+ * that their literal source text can be stored in the parse tree. They are then actually
+ * parsed at runtime (!) each time they are executed (!) via comsubst() in macro.c.
+ *
+ * This approach is okay for arithmetic expansions, but for command substitutions it is an
+ * unreliable hack. The lexer does not have real shell grammar knowledge; that's what the
+ * parser is for. However, a clean separation between lexical analysis and parsing is not
+ * possible, because the design of the shell language is fundamentally messy. So we need the
+ * parser to set the some flags in the lexer at the appropriate times to avoid spurious
+ * syntax errors (these are the non-private Lex_t struct members). But the parser obviously
+ * cannot do this if we're not using it.
+ *
+ * The comsub() hack below, along with all the dolparen checks in the lexer, tries to work
+ * around this fundamental problem as best we can to make it work in all but corner cases.
+ * It sets the lexd.dolparen, lexd.dolparen_eqparen and lexd.dolparen_arithexp flags for the
+ * rest of the lexer code to execute lots of workarounds.
+ *
+ * TODO: to achieve correctness, actually parse command substitutions at parse time.
  */
 static int comsub(Lex_t *lp, int endtok)
 {
-	int n,c,count=1;
+	int n,c;
+	unsigned short count=1;
 	int line=sh.inlineno;
 	struct ionod *inheredoc = lp->heredoc;
+	char save_arithexp = lp->lexd.dolparen_arithexp;
 	char *first,*cp=fcseek(0),word[5];
 	int off, messages=0, assignok=lp->assignok, csub;
 	struct _shlex_pvt_lexstate_ save = lp->lex;
 	csub = lp->comsub;
 	sh_lexopen(lp,1);
 	lp->lexd.dolparen++;
+	lp->lexd.dolparen_arithexp = endtok==LPAREN && fcpeek(1)==LPAREN;  /* $(( */
 	lp->lex.incase=0;
 	pushlevel(lp,0,0);
 	lp->comsub = (endtok==LBRACE);
@@ -1599,10 +1632,16 @@ static int comsub(Lex_t *lp, int endtok)
 				break;
 			    case IPROCSYM:	case OPROCSYM:
 			    case LPAREN:
+				/* lexd.dolparen_eqparen flags up "=(": we presume it's a compound assignment.
+				 * This is a workaround for <https://github.com/ksh93/ksh/issues/269>. */
+				if(!lp->lexd.dolparen_eqparen && fcpeek(-2)=='=')
+					lp->lexd.dolparen_eqparen = count;
 				if(endtok==LPAREN && !lp->lex.incase)
 					count++;
 				break;
 			    case RPAREN:
+				if(lp->lexd.dolparen_eqparen >= count)
+					lp->lexd.dolparen_eqparen = 0;
 				if(lp->lex.incase)
 					lp->lex.incase=0;
 				else if(endtok==LPAREN && --count<=0)
@@ -1644,6 +1683,7 @@ done:
 	lp->comsub = csub;
 	lp->lastline = line;
 	lp->lexd.dolparen--;
+	lp->lexd.dolparen_arithexp = save_arithexp;
 	lp->lex = save;
 	lp->assignok = (endchar(lp)==RBRACT?assignok:0);
 	if(lp->heredoc && !inheredoc)

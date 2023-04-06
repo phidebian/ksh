@@ -44,12 +44,6 @@
 #   include	<vmalloc.h>
 #endif
 
-#if     _lib_vfork
-#   include     <ast_vfork.h>
-#else
-#   define vfork()      fork()
-#endif
-
 #if _lib_getrusage && !defined(RUSAGE_SELF)
 #   include <sys/resource.h>
 #endif
@@ -1063,7 +1057,7 @@ int sh_exec(const Shnode_t *t, int flags)
 						/* avoid exit on error from nv_setlist, e.g. read-only variable */
 						struct checkpt *chkp = (struct checkpt*)stakalloc(sizeof(struct checkpt));
 						sh_pushcontext(chkp,SH_JMPCMD);
-						jmpval = sigsetjmp(chkp->buff,1);
+						jmpval = sigsetjmp(chkp->buff,0);
 						if(!jmpval)
 							nv_setlist(argp,flgs,tp);
 						sh_popcontext(chkp);
@@ -1647,7 +1641,7 @@ int sh_exec(const Shnode_t *t, int flags)
 				if(rewrite)
 				{
 					job_lock();
-					while((parent = vfork()) < 0)
+					while((parent = fork()) < 0)
 						_sh_fork(parent, 0, NULL);
 					if(parent)
 					{
@@ -2404,7 +2398,7 @@ int sh_exec(const Shnode_t *t, int flags)
 				oldnspace = enter_namespace(np);
 				/* make sure to restore oldnspace if a special builtin throws an error */
 				sh_pushcontext(chkp,SH_JMPCMD);
-				jmpval = sigsetjmp(chkp->buff,1);
+				jmpval = sigsetjmp(chkp->buff,0);
 				if(!jmpval)
 					sh_exec(t->for_.fortre,flags|sh_state(SH_ERREXIT));
 				sh_popcontext(chkp);
@@ -3210,24 +3204,27 @@ static void sh_funct(Namval_t *np,int argn, char *argv[],struct argnod *envlist,
 }
 
 /*
- * external interface to execute a function without arguments
+ * external interface to execute a function
  * <np> is the function node
  * If <nq> is not-null, then sh.name and sh.subscript will be set
  */
 int sh_fun(Namval_t *np, Namval_t *nq, char *argv[])
 {
-	int offset = 0;
-	char *base;
-	Namval_t node;
+	struct checkpt	*checkpoint;
+	int		jmpval = 0;
+	int		jmpthresh;
+	int		offset = 0;
+	char		*base;
+	Namval_t	node;
 	struct Namref	nr;
 	long		mode = 0;
 	char		*prefix = sh.prefix;
-	int n=0;
-	char *av[3];
-	Fcin_t save;
+	int		n=0;
+	char		*av[3];
+	Fcin_t		save;
 	fcsave(&save);
-	if((offset=staktell())>0)
-		base=stakfreeze(0);
+	if((offset=stktell(sh.stk))>0)
+		base=stkfreeze(sh.stk,0);
 	sh.prefix = 0;
 	if(!argv)
 	{
@@ -3239,36 +3236,36 @@ int sh_fun(Namval_t *np, Namval_t *nq, char *argv[])
 		n++;
 	if(nq)
 		mode = set_instance(nq,&node, &nr);
-	if(is_abuiltin(np))
+	jmpthresh = is_abuiltin(np) ? SH_JMPCMD : SH_JMPFUN;
+	checkpoint = (struct checkpt*)stkalloc(sh.stk,sizeof(struct checkpt));
+	sh_pushcontext(checkpoint, jmpthresh);
+	jmpval = sigsetjmp(checkpoint->buff,1);
+	if(jmpval == 0)
 	{
-		int jmpval;
-		struct checkpt *buffp = (struct checkpt*)stkalloc(sh.stk,sizeof(struct checkpt));
-		Shbltin_t *bp = &sh.bltindata;
-		sh_pushcontext(buffp,SH_JMPCMD);
-		jmpval = sigsetjmp(buffp->buff,1);
-		if(jmpval == 0)
+		if(is_abuiltin(np))
 		{
+			Shbltin_t *bp = &sh.bltindata;
 			bp->bnode = np;
 			bp->ptr = nv_context(np);
-			errorpush(&buffp->err,0);
+			errorpush(&checkpoint->err,0);
 			error_info.id = argv[0];
 			opt_info.index = opt_info.offset = 0;
 			opt_info.disc = 0;
 			sh.exitval = 0;
 			sh.exitval = (funptr(np))(n,argv,bp);
 		}
-		sh_popcontext(buffp);
-		if(jmpval>SH_JMPCMD)
-			siglongjmp(*sh.jmplist,jmpval);
+		else
+			sh_funct(np,n,argv,NULL,sh_isstate(SH_ERREXIT));
 	}
-	else
-		sh_funct(np,n,argv,NULL,sh_isstate(SH_ERREXIT));
+	sh_popcontext(checkpoint);
 	if(nq)
 		unset_instance(nq, &node, &nr, mode);
 	fcrestore(&save);
 	if(offset>0)
-		stakset(base,offset);
+		stkset(sh.stk,base,offset);
 	sh.prefix = prefix;
+	if(jmpval >= jmpthresh)
+		siglongjmp(*sh.jmplist,jmpval);
 	return sh.exitval;
 }
 

@@ -764,4 +764,12 @@ case ${.sh.version} in
 esac
 
 # ======
+# In ${expression:offset[:length]}, the arithmetic expressions (offset and length) could not
+# contain ( ) & | as these were internally backslash-escaped, causing a spurious syntax error.
+exp=cde
+got=$(x=abcdefg; set +x; eval 'echo ${x:(10-9)+1:((1&&1)|2)}' 2>&1)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit '${expression:offset:length} with arith containing ( ) & |' \
+	"(expected status 0 and $(printf %q "$exp"), got status $e and $(printf %q "$got"))"
+
+# ======
 exit $((Errors<125?Errors:125))

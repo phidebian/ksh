@@ -738,7 +738,7 @@ PATH=$savePATH
 # POSIX: If a command is found but isn't executable, the exit status should be 126.
 # The tests are arranged as follows:
 #   Test *A runs commands with the -c execve(2) optimization.
-#   Test *B runs commands with spawnveg (i.e., with posix_spawn(3) or vfork(2)).
+#   Test *B runs commands with spawnveg (i.e., with posix_spawn(3) where available).
 #   Test *C runs commands with fork(2) in an interactive shell.
 #   Test *D runs commands with 'command -x'.
 #   Test *E runs commands with 'exec'.

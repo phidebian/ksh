@@ -181,7 +181,7 @@ struct arithnod
 #define IOVNM		0x10000	/* iovname field is non-zero */
 #define IOLSEEK		0x20000	/* seek operators <# or >#  */
 #define IOARITH		0x40000	/* arithmetic seek <# ((expr))  */
-#define IOREWRITE	0x80000	/* arithmetic seek <# ((expr))  */
+#define IOREWRITE	0x80000	/* rewrite/truncate upon command success: >;word <>;word */
 #define IOCOPY		IOCLOB	/* copy skipped lines onto standard output */
 #define IOPROCSUB	IOARITH	/* process substitution redirection */
 

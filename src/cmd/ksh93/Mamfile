@@ -141,11 +141,6 @@ make install
 							done features/sigfeatures
 							exec - iffe ${IFFEFLAGS} -v -c "${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS}" ref ${mam_cc_L+-L.} ${mam_cc_L+-L${INSTALLROOT}/lib} -I${PACKAGE_ast_INCLUDE} -I${INSTALLROOT}/include ${mam_libdll} ${mam_libcmd} ${mam_libast} ${mam_libm} ${mam_libnsl} : run features/sigfeatures
 						done FEATURE/sigfeatures dontcare generated
-						make FEATURE/setjmp implicit
-							make features/setjmp
-							done features/setjmp
-							exec - iffe ${IFFEFLAGS} -v -c "${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS}" ref ${mam_cc_L+-L.} ${mam_cc_L+-L${INSTALLROOT}/lib} -I${PACKAGE_ast_INCLUDE} -I${INSTALLROOT}/include ${mam_libdll} ${mam_libcmd} ${mam_libast} ${mam_libm} ${mam_libnsl} : run features/setjmp
-						done FEATURE/setjmp dontcare generated
 						prev ${PACKAGE_ast_INCLUDE}/sfio.h implicit
 						prev ${PACKAGE_ast_INCLUDE}/error.h implicit
 						make ${PACKAGE_ast_INCLUDE}/sig.h implicit
@@ -404,7 +399,6 @@ make install
 								exec - iffe ${IFFEFLAGS} -v -c "${CC} ${mam_cc_FLAGS} ${CCFLAGS} ${LDFLAGS}" ref ${mam_cc_L+-L.} ${mam_cc_L+-L${INSTALLROOT}/lib} -I${PACKAGE_ast_INCLUDE} -I${INSTALLROOT}/include ${mam_libdll} ${mam_libcmd} ${mam_libast} ${mam_libm} ${mam_libnsl} : run features/ttys
 							done FEATURE/ttys dontcare generated
 						done include/terminal.h dontcare
-						prev FEATURE/setjmp implicit
 						prev ${PACKAGE_ast_INCLUDE}/sig.h implicit
 						make FEATURE/locale implicit
 							make features/locale
@@ -1035,8 +1029,6 @@ make install
 				make sh/path.c
 					prev FEATURE/time implicit
 					prev ${PACKAGE_ast_INCLUDE}/endian.h implicit
-					make ${PACKAGE_ast_INCLUDE}/ast_vfork.h implicit
-					done ${PACKAGE_ast_INCLUDE}/ast_vfork.h dontcare
 					make exec_attr.h implicit
 					done exec_attr.h dontcare virtual
 					prev FEATURE/dynamic implicit
@@ -1146,7 +1138,6 @@ make install
 			done waitevent.o generated
 			make xec.o
 				make sh/xec.c
-					prev ${PACKAGE_ast_INCLUDE}/ast_vfork.h implicit
 					prev ${PACKAGE_ast_INCLUDE}/vmalloc.h implicit
 					prev include/streval.h implicit
 					prev FEATURE/locale implicit

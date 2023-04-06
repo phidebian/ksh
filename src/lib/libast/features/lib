@@ -3,7 +3,7 @@ ref	-D_def_map_ast=1
 cmd	universe
 
 hdr	dirent,direntry,filio,fmtmsg,fnmatch,jioctl,libgen,limits
-hdr	locale,ndir,nl_types,process,spawn,syslog,utime,vfork
+hdr	locale,ndir,nl_types,process,spawn,syslog,utime
 hdr	linux/fs,linux/msdos_fs,sys/ioctl
 hdr	wctype
 hdr	wchar note{ <wchar.h> and isw*() really work }end execute{
@@ -52,7 +52,7 @@ mem	DIR.dd_fd sys/types.h - dirent.h - sys/dir.h
 mem	inheritance.pgroup spawn.h
 
 sys	dir,filio,jioctl,localedef,ptem,resource
-sys	socket,stream,systeminfo,universe,vfork
+sys	socket,stream,systeminfo,universe
 
 tst	tst_errno note{ errno can be assigned }end link{
 	#define error		______error
@@ -184,49 +184,6 @@ tst	pipe_rw note{ full duplex pipes }end execute{
 		if (strcmp(test, buf)) return 1;
 		return 0;
 	#endif
-	}
-}end
-
-tst	lib_vfork unistd.h stdlib.h vfork.h note{ vfork exists and it works }end execute{
-	#include <signal.h>
-	#include <sys/wait.h>
-	int
-	main(argc, argv)
-	int	argc;
-	char**	argv;
-	{
-		int	status;
-		char*	cmd[3];
-		if (argv[1])
-			_exit(signal(SIGHUP, SIG_DFL) != SIG_IGN);
-		signal(SIGHUP, SIG_IGN);
-		switch (vfork())
-		{
-		case -1:
-			_exit(1);
-		case 0:
-			cmd[0] = argv[0];
-			cmd[1] = "test";
-			cmd[2] = 0;
-			execv(cmd[0], cmd);
-			_exit(2);
-		}
-		status = 1;
-		_exit(wait(&status) < 0 || status != 0);
- 	}
-}end
- 
-tst	real_vfork note{ vfork child shares data with parent }end execute{
-	extern int	_exit(int);
-	extern int	vfork(void);
-	int		code;
-	int
-	main()
-	{
-		code = 1;
-		if (!vfork())
-			code = 0;
-		_exit(code);
 	}
 }end
 
@@ -636,7 +593,7 @@ tst	- output{
 	int
 	main()
 	{
-	#if _lib_posix_spawn || _lib_spawn_mode || _lib_spawn && _hdr_spawn && _mem_pgroup_inheritance || _lib_vfork && _real_vfork
+	#if _lib_posix_spawn || _lib_spawn_mode || _lib_spawn && _hdr_spawn && _mem_pgroup_inheritance
 		printf("#if !_AST_no_spawnveg\n");
 		printf("#define _use_spawnveg	1\n");
 		printf("#endif\n");

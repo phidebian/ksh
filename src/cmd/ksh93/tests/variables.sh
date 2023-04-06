@@ -1572,4 +1572,30 @@ got=$(set +x; { read foo=bar; } <<<baz 2>&1)
 	"(expected status 1, *$(printf %q "$exp"); got status $e, $(printf %q "$got"))"
 
 # ======
+# Corruption of $_ causing crash when running subshell + discipline functions + shared-state comsub
+# https://github.com/ksh93/ksh/issues/616
+exp=$'OK1\nOK2'
+got=$(set +x; { "$SHELL" -c '
+	foo.get()
+	{
+		.sh.value=foo;
+	}
+	bar.get()
+	{
+		.sh.value=${ echo foo; }
+	}
+	: OK1
+	(
+		: $bar
+		: $foo
+	)
+	echo "$_"
+	: OK2
+	echo "$_"
+';} 2>&1)
+[[ e=$? -eq 0 && $got == "$exp" ]] || err_exit '$_ corruption' \
+	"(expected status 0, $(printf %q "$exp");" \
+	"got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
+
+# ======
 exit $((Errors<125?Errors:125))
