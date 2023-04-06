@@ -33,11 +33,13 @@ static char* sffmtint(const char* str, int* v)
 	return (char*)str;
 }
 
-/* bug-324 : See src/lib/libast/sfio/sfvprintf.c for thorough explanations
- * Here we implement the same kind of modification made in sfvprintf()
+/*
+ * Here we implement the same kind of modification made in sfvprintf():
  * - nargs is the argv[] index of the last seen sequential % format (% or *)
  * - xargs is highest (max) argv[] index see in an indexed format (%x$ *x$)
+ * See sfvprintf.c for thorough explanations.
  */
+
 /* type>0: scanf, type==0: printf, type==-1: internal */
 static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,int type)
 {
@@ -48,17 +50,17 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 	Sffmt_t		savft;
 	Fmtpos_t*	fp;	/* position array of arguments	*/
 	int		argp, argn, maxp, need[FP_INDEX];
-	int		nargs, xargs; /* bug-324 see sfvprintf.c */
-        int		nextarg;
+	int		nargs, xargs;
+	int		nextarg;
 	SFMBDCL(fmbs)
 
 	if(type < 0)
 		fp = NULL;
 	else if(!(fp = sffmtpos(f,form,args,ft,-1)) )
 		return NULL;
-        
+
 	dollar = decimal = thousand = 0; argn = maxp = -1;
-        nargs=xargs=-1; /* bug-324 */
+	nargs = xargs = -1;
 	SFMBCLR(&fmbs);
 	while((n = *form) )
 	{	if(n != '%') /* collect the non-pattern chars */
@@ -89,10 +91,9 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 			if(*sp == '$')
 			{	dollar = 1;
 				form = sp+1;
-                                if(argp>xargs) /* bug-324 */
-                                { xargs=argp;
-                                }
-			}			
+				if(argp > xargs)
+					xargs = argp;
+			}
 		}
 
 		flags = dot = 0;
@@ -125,15 +126,11 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 					{	t_str = sffmtint(t_str+1,&n);
 						if(*t_str == '$')
 						{	dollar = 1;
-                                                   if(n>xargs) /* bug-324 */
-                                                   {	xargs=n;
-                                                   }     
-                                                }
- 
-						if(n<0)
-						{	n=++nargs;
+							if(n > xargs)
+								xargs = n;
 						}
-					     
+						if(n < 0)
+							n = ++nargs;
 						if(fp && fp[n].ft.fmt == 0)
 						{	fp[n].ft.fmt = LEFTP;
 							fp[n].ft.form = (char*)form;
@@ -186,15 +183,11 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 			if(*form == '$' )
 			{	dollar = 1;
 				form += 1;
-				if(n>xargs) /* bug-324 */
-				{	xargs=n;
-				} 
+				if(n > xargs)
+					xargs = n;
 			}
- 
-                        if(n<0)
-                        {	n=++nargs;
-                        }
-                        
+			if(n < 0)
+				n = ++nargs;
 			if(fp && fp[n].ft.fmt == 0)
 			{	fp[n].ft.fmt = '.';
 				fp[n].ft.size = dot;
@@ -229,15 +222,11 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 				if(*form == '$' )
 				{	dollar = 1;
 					form += 1;
-                                        if(n>xargs) /* bug-324 */
-                                        {	xargs=n;
-                                        } 
-				}				
- 
-				if(n<0)
-				{	n=++nargs;
+					if(n > xargs)
+						xargs=n;
 				}
-                                
+				if(n < 0)
+					n = ++nargs;
 				if(fp && fp[n].ft.fmt == 0)
 				{	fp[n].ft.fmt = 'I';
 					fp[n].ft.size = sizeof(int);
@@ -318,12 +307,10 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 
 		if(skip)
 			continue;
- 
-		/* bug-324 */
-		if(argp<0) /* bug-324 */
-		{	argp=++nargs;
-		}
-		
+
+		if(argp < 0)
+			argp = ++nargs;
+
 		if(dollar && fmt == '!')
 			return NULL;
 
@@ -342,9 +329,9 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 		}
 	}
 
-        maxp=nargs>xargs?nargs:xargs; /* bug-324 */
+	maxp = nargs > xargs ? nargs : xargs;
 	if(!fp) /* constructing position array only */
-	{      if(!dollar || !(fp = (Fmtpos_t*)malloc((maxp+1)*sizeof(Fmtpos_t))) )
+	{	if(!dollar || !(fp = (Fmtpos_t*)malloc((maxp+1)*sizeof(Fmtpos_t))) )
 			return NULL;
 		for(n = 0; n <= maxp; ++n)
 			fp[n].ft.fmt = 0;
@@ -353,8 +340,8 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 
 	/* get value for positions */
 	if(ft)
-	{	if(ft->reload) /* bug-324 Get nextarg */
-			nextarg=(*ft->reload)(0, 0, 0, ft);
+	{	if(ft->reload)
+			nextarg = (*ft->reload)(0, 0, NULL, ft);
 		memcpy(&savft, ft, sizeof(*ft));
 	}
 	for(n = 0; n <= maxp; ++n)
@@ -375,7 +362,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 		{	fp[n].ft.version = ft->version;
 			fp[n].ft.extf = ft->extf;
 			fp[n].ft.eventf = ft->eventf;
-                        fp[n].ft.reload = ft->reload; /* bug-324 */
+			fp[n].ft.reload = ft->reload;
 			if((v = fp[n].need[FP_WIDTH]) >= 0 && v < n)
 				fp[n].ft.width = fp[v].argv.i;
 			if((v = fp[n].need[FP_PRECIS]) >= 0 && v < n)
@@ -480,8 +467,8 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 	}
 
 	if(ft)
-	{	if(ft->reload) /* bug-324 restore nextarg */
-			(*ft->reload)(nextarg, 0, 0, ft);
+	{	if(ft->reload)
+			(*ft->reload)(nextarg, 0, NULL, ft);
 		memcpy(ft,&savft,sizeof(Sffmt_t));
 	}
 	return fp;

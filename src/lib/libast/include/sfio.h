@@ -20,7 +20,7 @@
 #ifndef _SFIO_H
 #define _SFIO_H	1
 
-#define SFIO_VERSION	20220212L
+#define SFIO_VERSION	20230406L
 
 /*	Public header file for the sfio library
 **
@@ -56,16 +56,16 @@ struct _sfdisc_s
 #include <sfio_s.h>
 
 /* formatting environment */
-/* bug-324: Add reload() callback (see src/lib/libast/sfio/sfvprintf.c) */
 typedef struct _sffmt_s	Sffmt_t;
 typedef int		(*Sffmtext_f)(Sfio_t*, void*, Sffmt_t*);
 typedef int		(*Sffmtevent_f)(Sfio_t*, int, void*, Sffmt_t*);
-typedef int		(*Sffmtreload_f)(int, char, void*, Sffmt_t*);/*bug324*/
+typedef int		(*Sffmtreload_f)(int, char, void*, Sffmt_t*);
 struct _sffmt_s
 {	long		version;/* version of this structure		*/
 	Sffmtext_f	extf;	/* function to process arguments	*/
 	Sffmtevent_f	eventf;	/* process events			*/
-  	Sffmtreload_f	reload;	/* reload argv with a new type/fmt bug324 */
+	Sffmtreload_f	reload;	/* reload argv with a new type/format	*/
+
 	char*		form;	/* format string to stack		*/
 	va_list		args;	/* corresponding arg list		*/
 

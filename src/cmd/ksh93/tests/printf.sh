@@ -18,7 +18,7 @@
 
 PS1='$ '
 . "${SHTESTS_COMMON:-${0%/*}/_common}"
-	
+
 # ======
 # Test for issue#324
 # 'err_''exit' is the name to use to avoid src/cmd/ksh93/tests/shtests
@@ -26,14 +26,14 @@ PS1='$ '
 
 # We don't want the alias (made by _common) instead we use our T function
 # that will reference 'err_''exit' function located in _common too.
-unalias 'err_''exit' 
+unalias 'err_''exit'
 
 function T
 { typeset l="$1" f="$2" x="$3" g=''
   printf  -v g  "$f" 1 2 3 4 5 6 7 8 9 0
   [ "$g" = "$x" ] || # src/cmd/ksh93/tests/shtest grep -c accounting
   'err_''exit' "$l" "printf '$f'"
-}  
+}
 
 # This part was generated once, and can now be augmented with more test
 
