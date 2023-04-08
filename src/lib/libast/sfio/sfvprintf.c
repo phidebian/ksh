@@ -28,6 +28,93 @@
 **
 **	Written by Kiem-Phong Vo.
 */
+
+/* bug-324; <phi.debian@gmail.com> Tue Mar 28 10:18:57 CEST 2023
+ *
+ * printf format string can handle sequential argv[] access via % and * as
+ * well as indexed argv[] access via %x$ *x$ (* used for width/prec)
+ *
+ * In a given format string it is possible to mix'n'match sequential/indexed
+ * access, and mix'n'match the argv[] types.
+ *
+ * '%*2$s' 1 2  Indexed access for 2$ making argv[1] an int, seq access for 's'
+ *     then accessing arv[0] for s, here we mix seq/ndx access.
+ * '%*2$s %s' 1 2 Same as above, the 1st format makes argv[0] a 'string'
+ *     argv[1] an 'int' then the second format make argv[1] a 'string' this
+ *     is a mixed type access for arv[1].
+ *
+ * The former algo for printf-format handling builtin (say printf) is to save
+ * the builting argv[] in a data structure called struct printf located in
+ * src/cmd/ksh93/bltins/print.c, as you noted here this is located on a .c
+ * file meaning it is private to the builtin of the ksh.
+ *
+ * Yet, all the code to scan a printf format string (not limited to printf,
+ * may be scanf too) is located in lib/libast/sfio/* meaning all sort of
+ * jazz to to setup and use the private struct printf access at sfio level
+ * via function pointers.
+ *
+ * This printf data struct has a member called nextarg[] that is initially
+ * setup to the builtin argv[]. It is called nextarg, because on sequential
+ * access the % or * format access *nextarg++ meaning each sequential access
+ * consume an arg. This is a major design flaw, because it can't support
+ * indexed access %x$ *x$ very will, for this on 1st indexed access, a new
+ * sfio level (not builtin) data structure is build called fp[], it rescan
+ * the format string to find out all the indexed access, enter them in this
+ * kind of cache, it record the type/value of the argv[x]. Now another problem
+ * occurs, the type enter is what we see on 1st index 'x' occurence, so if
+ * we got '%2$d %2$f' then for occurence 2 i.e fp[1] we enter type 'd' and
+ * fetch the value nextarg[1], since nextarg may have been moved forward by
+ * sequential access it provide bogus value, then later access to %$2f will
+ * retrieve the cahced value for fp[1] find an 'int' and ksh is unable to
+ * convert it to 'double' and all sort of crash occurs.
+ *
+ * This is a complete design flaw, may be due to initial design for sequential
+ * access only (like bash) then piled on a kludge to try an indexed access.
+ *
+ * This patch will leave all the sfio infrastruct (functions) untouched,
+ * yet will implement workaround on each flaws, the reasons not to touch the
+ * existing function is that the format scan may be used by scanf() and
+ * I don't fix scanf for now.
+ *
+ * The workaroud is based on adding more members in the struct printf data
+ * structure, basicall add argv0 the inital backup of argv[] received by the
+ * builtin, nextarg is left unchanged, the former infrastructure still maintain
+ * i.e advance, it are sequential accesse tie, yet indexed access is the
+ * argv0[x] access with lazy conversion, i.e type conversion on demand, i.e
+ * late in the printf() process.
+ *
+ * In short this fix works 'as if' the format string is pre-pocessed,
+ * replacing any non indexed access (i.e seq access) by an explicit computed
+ * index access, the index generated beeing simply the seq index i.e something
+ * similar to.
+ *   +----++------+-++-----------+-- Seq
+ *   |    ||      | ||  ndx ---+ |
+ *   v    vv      v vv         v v
+ * '%s   %*s     %*.*s       %*1$s'   expansed to (ignore spaces)
+ * '%1$s %3$*2$s %6$*4$.*5$s %7$*1$s'
+ *   ^    ^  ^    ^  ^   ^    ^  ^
+ *   |    |  |    |  |   |    |  |
+ *   +----+--+----+--+---+----+--+-- Computed Seq index.
+ *   Note the index inversion due to the syntax of the format string
+ *   printf '%*.*s' width prec data; is equivalent to 
+ *   printf '%3$*1$.*2$'  width prec data;
+ *
+ * Here I keep all the infrastructure, yet working around bugs
+ * - exend() function src/cmd/ksh93/bltins/print.c do setup type/value for a
+ *   given argp then bump nextarg, to work around I made a new function
+ *   reload()that do the same but save/restore nextarg.
+ *   This because 'may be' extend is used by other code (scanf?)
+ *
+ * - sffmtpos() duplicate the format string processing done here sfvprintf(),
+ *   so we implement the same argp, argn processing so that each argv[]
+ *   cached is on its right position.
+ *
+ * - sfvprintf() same as above with use nargs/xargs make sure we accees the
+ *   correct argv[] position.
+ *   argv[] vs fp[] type mismatch we do a late argv[] evaluation (uncached).
+ * 
+ */
+
 #define HIGHBITI	(~((~((uint)0)) >> 1))
 #define HIGHBITL	(~((~((Sfulong_t)0)) >> 1))
 
@@ -95,6 +182,7 @@ int sfvprintf(Sfio_t*		f,		/* file to print to	*/
 	va_list		oargs;		/* original arg list		*/
 	Fmtpos_t*	fp;		/* arg position list		*/
 	int		argp, argn;	/* arg position and number	*/
+	int		nargs, xargs;	/* bug-324			*/
 
 #define SLACK		1024
 	char		buf[SF_MAXDIGITS+SLACK], tmp[SF_MAXDIGITS+1], data[SF_GRAIN];
@@ -170,6 +258,8 @@ int sfvprintf(Sfio_t*		f,		/* file to print to	*/
 	argn = -1;
 	fp = NULL;
 
+	nargs=xargs=-1; /* bug-324 */
+
 loop_fmt :
 	SFMBCLR(&fmbs); /* clear multibyte states to parse the format string */
 	while((n = *form) )
@@ -229,11 +319,16 @@ loop_fmt :
 					{	t_str = (*_Sffmtintf)(t_str+1,&n);
 						if(*t_str == '$')
 						{	if(!fp &&
-							   !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
+								!(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
 								goto pop_fmt;
-							n = FP_SET(n,argn);
+
+							if(n>xargs) /* bug-324 */
+							{	xargs=n;
+							}
 						}
-						else	n = FP_SET(-1,argn);
+						else /* bug-324 */
+						{	n=++nargs;
+						}
 
 						if(fp)
 						{	t_str = fp[n].argv.s;
@@ -341,9 +436,14 @@ loop_fmt :
 			{	form += 1;
 				if(!fp && !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
 					goto pop_fmt;
-				n = FP_SET(n,argn);
+
+				if(n>xargs) /* bug-324 */
+				{	xargs=n;
+				}
 			}
-			else	n = FP_SET(-1,argn);
+			else
+			{	n=++nargs;
+			}
 
 			if(fp)
 				v = fp[n].argv.i;
@@ -371,6 +471,8 @@ loop_fmt :
 				if(!fp && !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
 					goto pop_fmt;
 				argp = v-1;
+				if(argp>xargs) /* bug-324 */
+					xargs=argp;
 				goto loop_flags;
 			}
 		dot_set :
@@ -398,9 +500,14 @@ loop_fmt :
 					if(!fp &&
 					   !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)))
 						goto pop_fmt;
-					n = FP_SET(n,argn);
+
+					if(n>xargs) /* bug-324 */
+					{	xargs=n;
+					}
 				}
-				else	n = FP_SET(-1,argn);
+				else /* bug-324 */
+				{	n=++nargs;
+				}
 
 				if(fp)	/* use position list */
 					size = fp[n].argv.i;
@@ -499,12 +606,24 @@ loop_fmt :
 			}
 		}
 
-		argp = FP_SET(argp,argn);
+		if(argp<0) /* bug-324 */
+		{	argp=++nargs;
+		}
 		if(fp)
-		{	if(ft && ft->extf && fp[argp].ft.fmt != fp[argp].fmt)
-				fmt = fp[argp].ft.fmt;
-			argv = fp[argp].argv;
-			size = fp[argp].ft.size;
+		{	if(ft && ft->extf) /* bug-324 */
+			{	if(fmt==fp[argp].ft.fmt&&fp[argp].ft.fmt == fp[argp].fmt)
+				{
+					argv = fp[argp].argv;
+					size = fp[argp].ft.size;
+				}
+				else /* bug-324 reload ft on type mismatch */
+				{	FMTSET(ft, form,args, fmt, size,flags,
+					width,precis,base, t_str,n_str);
+					ft->reload(argp,fmt,(void*)(&argv), ft);
+					FMTGET(ft, form,args, fmt, size,flags, width,precis,base);
+					ft=ft;
+				}
+			}
 		}
 		else if(ft && ft->extf )	/* extended processing */
 		{	FMTSET(ft, form,args, fmt, size,flags, width,precis,base,
@@ -624,6 +743,7 @@ loop_fmt :
 					fm->fp = fp;
 
 					form = ft->form; SFMBCLR(ft->mbs);
+					nargs=xargs=-1; /* bug-324 */
 					va_copy(args,ft->args);
 					argn = -1;
 					fp = NULL;
@@ -786,6 +906,7 @@ loop_fmt :
 					break;
 				else if(base > 0)
 					{ SFputc(f,base); }
+				nargs++; /* bug-324 */
 			}
 			continue;
 
@@ -1345,6 +1466,12 @@ loop_fmt :
 	}
 
 pop_fmt:
+	if(ft && ft->reload) /* bugs-324 fix nargs %.., %5$s i.e skip argv[] */
+	{	if(xargs>nargs)
+			nargs=xargs;
+		(*ft->reload)(nargs+1, 0, 0, ft);
+
+	}
 	if(fp)
 	{	free(fp);
 		fp = NULL;
