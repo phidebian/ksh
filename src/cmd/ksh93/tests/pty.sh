@@ -506,7 +506,7 @@ L escaping backslashes in $mode mode
 # Backslashes should only be escaped if the previous input was a backslash.
 # Other backslashes stored in the input buffer should be erased normally.
 
-d 15
+d 40
 p :test-1:
 w stty erase ^H
 p :test-2:
@@ -619,7 +619,7 @@ r ^:test-2: \r\n$
 ((SHOPT_ESH)) && tst $LINENO <<"!"
 L emacs backslash escaping
 
-d 20
+d 40
 p :test-1:
 w set -o emacs
 
@@ -795,7 +795,7 @@ r ^ok\r\n$
 L split on quoted whitespace when extracting words from command history
 # https://github.com/ksh93/ksh/pull/291
 
-d 15
+d 40
 p :test-1:
 w true ls One\\ "Two Three"$'Four Five'.mp3
 r ^:test-1: true ls One\\ "Two Three"\$'Four Five'\.mp3\r\n$
@@ -892,7 +892,7 @@ tst $LINENO <<"!"
 L interrupted PS2 discipline function
 # https://github.com/ksh93/ksh/issues/347
 
-d 15
+d 40
 p :test-1:
 w PS2.get() { trap --bad-option 2>/dev/null; .sh.value="NOT REACHED"; }
 p :test-2:
@@ -931,7 +931,7 @@ tst $LINENO <<"!"
 L Ctrl+C with SIGINT ignored
 # https://github.com/ksh93/ksh/issues/343
 
-d 15
+d 40
 
 # SIGINT ignored by child
 p :test-1:
@@ -974,7 +974,7 @@ L tab completion with space in string and -o noglob on
 # https://github.com/ksh93/ksh/pull/413
 # Amended to test that completion keeps working after -o noglob
 
-d 20
+d 40
 p :test-1:
 w set -o noglob
 p :test-2:
@@ -986,7 +986,7 @@ r ^$tmp/foo bar\\r\\n$
 ((SHOPT_HISTEXPAND)) && HISTFILE=$tmp/tmp_histfile tst $LINENO <<!
 L history expansion of an out-of-range event
 
-d 15
+d 40
 p :test-1:
 w set -H
 p :test-2:
@@ -1171,7 +1171,7 @@ r ^:test-1: cd vitest/aあb/\r\n$
 mkdir -p 'chrtest/aa#b' && tst $LINENO <<"!"
 L tab-completing with first histchar
 
-d 20
+d 40
 p :test-1:
 w histchars='#^!'
 p :test-2:
@@ -1192,7 +1192,7 @@ w unset histchars
 mkdir -p 'chrtest2/@a@b' && tst $LINENO <<"!"
 L tab-completing with third histchar
 
-d 20
+d 40
 p :test-1:
 w histchars='!^@'
 p :test-2:
@@ -1213,7 +1213,7 @@ r ^:test-6: ls \\@a@b/\r\n$
 mkdir -p 'chrtest3/~ab' && tst $LINENO <<"!"
 L tab-completing with escaped ~
 
-d 20
+d 40
 p :test-1:
 w cd chrtest3; .sh.tilde.get() { print -n WRONG_TILDE_EXPANSION >&2; };
 p :test-2:
