@@ -36,7 +36,6 @@
 #include	"shopt.h"
 #include	"defs.h"
 #include	<error.h>
-#include	<stak.h>
 #include	"builtins.h"
 #include	"FEATURE/time"
 

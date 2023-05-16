@@ -14,6 +14,7 @@
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
 *                 Harald van Dijk <harald@gigawatt.nl>                 *
+*               K. Eugene Carlson <kvngncrlsn@gmail.com>               *
 *                                                                      *
 ***********************************************************************/
 
@@ -290,7 +291,9 @@ const char sh_set[] =
 		"[+monitor?Equivalent to \b-m\b.]"
 #if SHOPT_ESH || SHOPT_VSH
 		"[+multiline?Use multiple lines when editing lines that are "
-			"longer than the window width.]"
+			"longer than the window width. Has no effect on systems "
+			"with neither \bterminfo\b nor \btermcap\b support for "
+			"the running terminal.]"
 #endif
 		"[+log?Obsolete; no effect.]"
 		"[+notify?Equivalent to \b-b\b.]"
@@ -548,7 +551,7 @@ const char sh_optcommand[] =
 "[-1c?\n@(#)$Id: command (ksh 93u+m) 2023-03-20 $\n]"
 "[--catalog?" SH_DICT "]"
 "[+NAME?command - execute a simple command disabling special properties]"
-"[+DESCRIPTION?Without \b-v\b or \b-V\b,  \bcommand\b executes \acmd\a "
+"[+DESCRIPTION?Without \b-v\b or \b-V\b, \bcommand\b executes \acmd\a "
 	"with arguments given by \aarg\a, suppressing the shell function lookup "
 	"that normally occurs. If \acmd\a is a special built-in command, "
 	"then the special properties are removed so that failures will not "
@@ -565,8 +568,8 @@ const char sh_optcommand[] =
 "[V?Equivalent to \bwhence \b-v\b \acmd\a [\aarg\a ...]].]"
 "[x?Search \acmd\a as an external command, bypassing built-ins. "
 	"If the \aarg\as include a word "
-	"such as \b\"$@\"\b or \b\"*.txt\"\b "
 	"that expands to multiple arguments, "
+	"for example \b*.txt\b or \b\"$@\"\b, "
 	"and the size of the expanded \aarg\a list "
 	"exceeds \bgetconf ARG_MAX\b bytes, "
 	"then \acmd\a will be run multiple times, "
@@ -574,14 +577,15 @@ const char sh_optcommand[] =
 	"Any \aarg\as that come before the first "
 	"word that expands to multiple arguments, "
 	"as well as any that follow the last such word, "
-	"are considered static and will be repeated for each invocation "
-	"so as to allow all invocations to use the same command options. "
-	"The exit status will be the highest returned by the invocations.]"
+	"will be repeated for each invocation "
+	"so as to allow all invocations to use the same command options.]"
 "\n"
 "\n[cmd [arg ...]]\n"
 "\n"
 "[+EXIT STATUS?If \acmd\a is invoked, the exit status of \bcommand\b "
-	"will be that of \acmd\a. Otherwise, it will be one of "
+	"will be that of \acmd\a or, if \b-x\b is used, "
+	"the highest exit status of all the \acmd\a invocations. "
+	"Otherwise, it will be one of "
 	"the following:]{"
 	"[+0?\bcommand\b completed successfully.]"
 	"[+>0?\b-v\b or \b-V\b has been specified and an error occurred.]"
@@ -1838,7 +1842,7 @@ const char sh_opttrap[] =
 ;
 
 const char sh_opttypeset[] =
-"+[-1c?\n@(#)$Id: typeset (ksh 93u+m) 2022-06-01 $\n]"
+"+[-1c?\n@(#)$Id: typeset (ksh 93u+m) 2023-05-01 $\n]"
 "[--catalog?" SH_DICT "]"
 "[+NAME?typeset - declare or display variables with attributes]"
 "[+DESCRIPTION?Without the \b-f\b option, \btypeset\b sets, unsets, "
@@ -1880,7 +1884,8 @@ const char sh_opttypeset[] =
 "[a]:?[[type]]?Indexed array. This is the default. Subscripts start at 0. "
 #if SHOPT_FIXEDARRAY
 	"Each simple \aname\a creates a dynamic-size array with arbitrary "
-	"dimensions. A \aname\a in the format \aname\a\b[\b\an\a\b]]\b creates "
+	"dimensions. A \aname\a in the format \aname\a\b[\b\an\a\b]]\b (the "
+	"square brackets should be quoted to avoid pathname expansion) creates "
 	"a fixed-size array and any attempt to access a subscript \an\a or "
 	"higher is an error. Multidimensional fixed-size arrays "
 	"\aname\a\b[\b\an1\a\b]][\b\an2\a\b]]\b... are also supported. "
@@ -1888,7 +1893,8 @@ const char sh_opttypeset[] =
 	"Each \aname\a creates a dynamic-size array with arbitrary dimensions. "
 #endif
 	"An option value in the format \b[\b\atype\a\b]]\b (including the "
-	"square brackets), where \atype\a must be the name of an enumeration "
+	"square brackets, which should be quoted to avoid pathname expansion), "
+	"where \atype\a must be the name of an enumeration "
 	"type created with \benum\b(1), allows enumeration constants to be "
 	"used as subscripts.]"
 "[b?Each \aname\a may contain binary data. Its value is the MIME base64 "

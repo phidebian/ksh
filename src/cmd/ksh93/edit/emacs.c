@@ -67,7 +67,6 @@ NoN(emacs)
 #else
 
 #include	<releaseflags.h>
-#include	"FEATURE/cmds"
 #include	"defs.h"
 #include	"io.h"
 #include	"history.h"
@@ -84,7 +83,6 @@ NoN(emacs)
 #undef putchar
 #define putchar(ed,c)	ed_putchar(ed,c)
 #define beep()		ed_ringbell()
-
 
 #if SHOPT_MULTIBYTE
 #   define gencpy(a,b)	ed_gencpy(a,b)
@@ -711,7 +709,7 @@ process:
 	tty_cooked(ERRIO);
 	if(ed->e_nlist)
 		ed->e_nlist = 0;
-	stakset(ed->e_stkptr,ed->e_stkoff);
+	stkset(sh.stk,ed->e_stkptr,ed->e_stkoff);
 	if(c == '\n')
 	{
 		out[eol++] = '\n';
@@ -1039,12 +1037,19 @@ static int escape(Emacs_t* ep,genchar *out,int count)
 			cur = i;
 			draw(ep,UPDATE);
 			return -1;
-#ifdef _pth_tput
 		case cntl('L'): /* clear screen */
-			system(_pth_tput " clear");
+		{
+			Shopt_t	o = sh.options;
+			sigblock(SIGINT);
+			sh_offoption(SH_RESTRICTED);
+			sh_offoption(SH_VERBOSE);
+			sh_offoption(SH_XTRACE);
+			sh_trap("\\command -p tput clear 2>/dev/null",0);
+			sh.options = o;
+			sigrelease(SIGINT);
 			draw(ep,REFRESH);
 			return -1;
-#endif
+		}
 		case '[':	/* feature not in book */
 		case 'O':	/* after running top <ESC>O instead of <ESC>[ */
 			switch(i=ed_getchar(ep->ed,1))

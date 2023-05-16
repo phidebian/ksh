@@ -425,7 +425,7 @@ static char*	lookup(Namval_t *np, int type, Sfdouble_t *dp,Namfun_t *handle)
 			*dp = nv_getnum(SH_VALNOD);
 		}
 		else if(cp = nv_getval(SH_VALNOD))
-			cp = stkcopy(stkstd,cp);
+			cp = stkcopy(sh.stk,cp);
 		_nv_unset(SH_VALNOD,NV_RDONLY);
 		if(!nv_isnull(&node))
 		{
@@ -1029,7 +1029,7 @@ Namval_t *nv_search(const char *name, Dt_t *root, int mode)
  */ 
 Namval_t *nv_bfsearch(const char *name, Dt_t *root, Namval_t **var, char **last)
 {
-	int		c,offset = staktell();
+	int		c,offset = stktell(sh.stk);
 	char		*sp, *cp=0;
 	Namval_t	*np, *nq;
 	char		*dname=0;
@@ -1059,15 +1059,14 @@ Namval_t *nv_bfsearch(const char *name, Dt_t *root, Namval_t **var, char **last)
 	}
 	if(!cp)
 		return var ? nv_search(name,root,0) : 0;
-	stakputs(name);
-	stakputc(0);
+	sfputr(sh.stk,name,0);
 	dname = cp+1;
-	cp = stakptr(offset) + (cp-name); 
+	cp = stkptr(sh.stk,offset) + (cp-name); 
 	if(last)
 		*last = cp;
 	c = *cp;
 	*cp = 0;
-	nq=nv_open(stakptr(offset),0,NV_VARNAME|NV_NOADD|NV_NOFAIL);
+	nq=nv_open(stkptr(sh.stk,offset),0,NV_VARNAME|NV_NOADD|NV_NOFAIL);
 	*cp = c;
 	if(!nq)
 	{
@@ -1082,7 +1081,7 @@ Namval_t *nv_bfsearch(const char *name, Dt_t *root, Namval_t **var, char **last)
 	*var = nq;
 	if(c=='[')
 		nv_endsubscript(nq, cp,NV_NOADD);
-	stakseek(offset);
+	stkseek(sh.stk,offset);
 #if SHOPT_NAMESPACE
 	if(nv_istable(nq))
 	{
@@ -1090,12 +1089,11 @@ Namval_t *nv_bfsearch(const char *name, Dt_t *root, Namval_t **var, char **last)
 		if(last==0)
 			return nv_search(name,root,0);
 		sh.namespace = 0;
-		stakputs(nv_name(nq));
+		sfputr(sh.stk,nv_name(nq),-1);
 		sh.namespace = nsp;
-		stakputs(dname-1);
-		stakputc(0);
-		np = nv_search(stakptr(offset),root,0);
-		stakseek(offset);
+		sfputr(sh.stk,dname-1,0);
+		np = nv_search(stkptr(sh.stk,offset),root,0);
+		stkseek(sh.stk,offset);
 		return np;
 	}
 #endif /* SHOPT_NAMESPACE */
@@ -1103,7 +1101,7 @@ Namval_t *nv_bfsearch(const char *name, Dt_t *root, Namval_t **var, char **last)
 		nq = (Namval_t*)nq->nvenv;
 	return (Namval_t*)nv_setdisc(nq,dname,nq,(Namfun_t*)nq);
 done:
-	stakseek(offset);
+	stkseek(sh.stk,offset);
 	return np;
 }
 
@@ -1121,22 +1119,21 @@ Namval_t *sh_addbuiltin(const char *path, Shbltin_f bltin, void *extra)
 	const char	*name;
 	char		*cp;
 	Namval_t	*np, *nq=0;
-	int		offset=staktell();
+	int		offset=stktell(sh.stk);
 	if(extra==(void*)1)
 		name = path;
 	else if((name = path_basename(path))==path && bltin!=b_typeset && (nq=nv_bfsearch(name,sh.bltin_tree,NULL,&cp)))
-		path = name = stakptr(offset);
+		path = name = stkptr(sh.stk,offset);
 	else if(sh.bltin_dir && extra!=(void*)1)
 	{
-		stakputs(sh.bltin_dir);
-		stakputc('/');
-		stakputs(name);
-		path = stakptr(offset);
+		sfputr(sh.stk,sh.bltin_dir,'/');
+		sfputr(sh.stk,name,0);
+		path = stkptr(sh.stk,offset);
 	}
 	if(np = nv_search(name,sh.bltin_tree,0))
 	{
 		/* exists without a path */
-		stakseek(offset);
+		stkseek(sh.stk,offset);
 		if(extra == (void*)1)
 		{
 			if(nv_isattr(np,BLT_SPC))
@@ -1174,7 +1171,7 @@ Namval_t *sh_addbuiltin(const char *path, Shbltin_f bltin, void *extra)
 	}
 	if(!np && !(np = nv_search(path,sh.bltin_tree,bltin?NV_ADD:0)))
 		return NULL;
-	stakseek(offset);
+	stkseek(sh.stk,offset);
 	if(nv_isattr(np,BLT_SPC))
 	{
 		if(extra)

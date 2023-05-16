@@ -2,6 +2,48 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-05-15:
+
+- Fixed a crash on executing a nested compound assignment in a command
+  substitution.
+
+2023-05-14:
+
+- If history expansion is active, then command and file name completion now
+  quotes the history expansion characters with a backslash as needed to
+  avoid triggering history expansion failures if one of those characters
+  occurs in a command or file name.
+
+- Fixed completion of file names starting with an escaped literal tilde.
+
+- Undocumented and non-functional goto label functionality has been removed.
+  Command names can now end in ':' like on other shells, as POSIX requires.
+
+2023-05-11:
+
+- The ability to use multi-line editing is now detected at runtime instead of
+  compile time, making detection more reliable across terminals and platforms.
+
+2023-05-01:
+
+- Fixes for indexed arrays declared to use enum constants for subscripts:
+  - Syntax validation: add missing check for ] in 'typeset -a \[type] array'.
+  - Fixed error message when type in 'typeset -a \[type] array' is unknown.
+  - Fixed 'typeset -p' output of such arrays to quote the square brackets.
+
+2023-04-09:
+
+- Fixed command line redrawing on resizing the window with --multiline off.
+
+- Multiline editing is now automatically disabled if and when the TERM
+  environment variable is unset, not exported, or set to a terminal type
+  that does not support the necessary operations. It is automatically
+  reenabled when the TERM variable is corrected and --multiline is on.
+
+2023-04-08:
+
+- Fixed a termcap(5) detection bug that broke multiline editing on FreeBSD.
+
 2023-04-05:
 
 - Fixed a spurious syntax error in compound assignments upon encountering a

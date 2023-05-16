@@ -214,13 +214,12 @@ int  sh_histinit(void)
 		return 1;
 	if(!(histname = nv_getval(HISTFILE)))
 	{
-		int offset = staktell();
+		int offset = stktell(sh.stk);
 		if(cp=nv_getval(HOME))
-			stakputs(cp);
-		stakputs(hist_fname);
-		stakputc(0);
-		stakseek(offset);
-		histname = stakptr(offset);
+			sfputr(sh.stk,cp,-1);
+		sfputr(sh.stk,hist_fname,0);
+		stkseek(sh.stk,offset);
+		histname = stkptr(sh.stk,offset);
 	}
 retry:
 	cp = path_relative(histname);
@@ -783,13 +782,13 @@ static ssize_t hist_write(Sfio_t *iop,const void *buff,size_t insize,Sfdisc_t* h
 	if(acctfd)
 	{
 		int timechars, offset;
-		offset = staktell();
-		stakputs(buff);
-		stakseek(staktell() - 1);
-		timechars = sfprintf(staksp, "\t%s\t%x\n",logname,time(NULL));
+		offset = stktell(sh.stk);
+		sfputr(sh.stk,buff,-1);
+		stkseek(sh.stk,stktell(sh.stk) - 1);
+		timechars = sfprintf(sh.stk, "\t%s\t%x\n",logname,time(NULL));
 		lseek(acctfd, 0, SEEK_END);
-		write(acctfd, stakptr(offset), size - 2 + timechars);
-		stakseek(offset);
+		write(acctfd, stkptr(sh.stk,offset), size - 2 + timechars);
+		stkseek(sh.stk,offset);
 
 	}
 #endif /* SHOPT_ACCTFILE */

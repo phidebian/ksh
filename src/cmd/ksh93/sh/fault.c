@@ -496,8 +496,8 @@ int sh_trap(const char *trap, int mode)
 	int	was_verbose = sh_isstate(SH_VERBOSE);
 	char	was_no_trapdontexec = !sh.st.trapdontexec;
 	char	save_chldexitsig = sh.chldexitsig;
-	int	staktop = staktell();
-	char	*savptr = stakfreeze(0);
+	int	staktop = stktell(sh.stk);
+	char	*savptr = stkfreeze(sh.stk,0);
 	struct	checkpt buff;
 	Fcin_t	savefc;
 	fcsave(&savefc);
@@ -543,7 +543,7 @@ int sh_trap(const char *trap, int mode)
 	savxit_return = sh.exitval;
 	if(jmpval!=SH_JMPEXIT && jmpval!=SH_JMPFUN)
 		sh.exitval=savxit;
-	stakset(savptr,staktop);
+	stkset(sh.stk,savptr,staktop);
 	fcrestore(&savefc);
 	if(was_history)
 		sh_onstate(SH_HISTORY);

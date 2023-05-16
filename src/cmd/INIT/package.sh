@@ -116,7 +116,7 @@ case $(getopts '[-][123:xyz]' opt --xyz 2>/dev/null; echo 0$opt) in
 [-author?Glenn Fowler <gsf@research.att.com>]
 [-author?Contributors to https://github.com/ksh93/ksh]
 [-copyright?(c) 1994-2012 AT&T Intellectual Property]
-[-copyright?(c) 2020-2022 Contributors to https://github.com/ksh93/ksh]
+[-copyright?(c) 2020-2023 Contributors to ksh 93u+m]
 [-license?https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html]
 [+NAME?'$command$' - build, test and install ksh 93u+m]
 [+DESCRIPTION?The \b'$command$'\b command is the main control script
@@ -542,7 +542,7 @@ IMPLEMENTATION
   author          Glenn Fowler <gsf@research.att.com>
   author          Contributors to https://github.com/ksh93/ksh
   copyright       (c) 1994-2012 AT&T Intellectual Property
-  copyright       (c) 2020-2022 Contributors to https://github.com/ksh93/ksh
+  copyright       (c) 2020-2023 Contributors to ksh 93u+m
   license         https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html'
 		case $1 in
 		html)	echo "</pre></body></html>" ;;

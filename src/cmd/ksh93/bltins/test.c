@@ -404,15 +404,10 @@ int test_unop(int op,const char *arg)
 	    case 'H':
 #ifdef S_ISCDF
 	    {
-		int offset = staktell();
 		if(test_stat(arg,&statb)>=0 && S_ISCDF(statb.st_mode))
 			return 1;
-		stakputs(arg);
-		stakputc('+');
-		stakputc(0);
-		arg = (const char*)stakptr(offset);
-		stakseek(offset);
-		return test_stat(arg,&statb)>=0 && S_ISCDF(statb.st_mode);
+		sfputr(sh.strbuf,arg,'+');
+		return test_stat(sfstruse(sh.strbuf),&statb)>=0 && S_ISCDF(statb.st_mode);
 	    }
 #else
 		return 0;
@@ -671,7 +666,7 @@ skip:
 					maxgroups = (int)astconf_long(CONF_NGROUPS_MAX);
 				}
 			}
-			groups = (gid_t*)stakalloc((maxgroups+1)*sizeof(gid_t));
+			groups = (gid_t*)stkalloc(sh.stk,(maxgroups+1)*sizeof(gid_t));
 			n = getgroups(maxgroups,groups);
 			while(--n >= 0)
 			{

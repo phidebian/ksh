@@ -233,7 +233,7 @@ int    b_typeset(int argc,char *argv[],Shbltin_t *context)
 	}
 	else if(argv[0][0] != 't')		/* not <t>ypeset */
 	{
-		char **new_argv = (char **)stakalloc((argc + 2) * sizeof(char*));
+		char **new_argv = (char **)stkalloc(sh.stk, (argc + 2) * sizeof(char*));
 		error_info.id = new_argv[0] = SYSTYPESET->nvname;
 		if(argv[0][0] == 'a')		/* <a>utoload == typeset -fu */
 			new_argv[1] = "-fu";
@@ -265,7 +265,7 @@ int    b_typeset(int argc,char *argv[],Shbltin_t *context)
 		{
 			case 'a':
 				flag |= NV_IARRAY;
-				if(opt_info.arg && *opt_info.arg!='[')
+				if(opt_info.arg && !(opt_info.arg[0]=='[' && opt_info.arg[strlen(opt_info.arg)-1]==']'))
 				{
 					opt_info.index--;
 					goto endargs;
@@ -712,7 +712,7 @@ static int     setall(char **argv,int flag,Dt_t *troot,struct tdata *tp)
 				{
 					if(sh.prefix)
 					{
-						sfprintf(sh.strbuf,"%s.%s%c",sh.prefix,name,0);
+						sfprintf(sh.strbuf,"%s.%s",sh.prefix,name);
 						name = sfstruse(sh.strbuf);
 					}
 #if SHOPT_NAMESPACE

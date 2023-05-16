@@ -350,35 +350,35 @@ static int sig_number(const char *string)
 	else
 	{
 		int c;
-		o = staktell();
+		o = stktell(sh.stk);
 		do
 		{
 			c = *string++;
 			if(islower(c))
 				c = toupper(c);
-			stakputc(c);
+			sfputc(sh.stk,c);
 		}
 		while(c);
-		stakseek(o);
-		if(strncmp(stakptr(o),"SIG",3)==0)
+		stkseek(sh.stk,o);
+		if(strncmp(stkptr(sh.stk,o),"SIG",3)==0)
 		{
 			sig = 1;
 			o += 3;
-			if(isdigit(*stakptr(o)))
+			if(isdigit(*stkptr(sh.stk,o)))
 			{
-				n = strtol(stakptr(o),&last,10);
+				n = strtol(stkptr(sh.stk,o),&last,10);
 				if(!*last)
 					return n;
 			}
 		}
-		tp = sh_locate(stakptr(o),(const Shtable_t*)shtab_signals,sizeof(*shtab_signals));
+		tp = sh_locate(stkptr(sh.stk,o),(const Shtable_t*)shtab_signals,sizeof(*shtab_signals));
 		n = tp->sh_number;
 		if(sig==1 && (n>=(SH_TRAP-1) && n < (1<<SH_SIGBITS)))
 		{
 			/* sig prefix cannot match internal traps */
 			n = 0;
 			tp = (Shtable_t*)((char*)tp + sizeof(*shtab_signals));
-			if(strcmp(stakptr(o),tp->sh_name)==0)
+			if(strcmp(stkptr(sh.stk,o),tp->sh_name)==0)
 				n = tp->sh_number;
 		}
 		if((n>>SH_SIGBITS)&SH_SIGRUNTIME)
@@ -389,7 +389,7 @@ static int sig_number(const char *string)
 			if(n < SH_TRAP)
 				n--;
 		}
-		if(n<0 && sh.sigruntime[1] && (name=stakptr(o)) && *name++=='R' && *name++=='T')
+		if(n<0 && sh.sigruntime[1] && (name=stkptr(sh.stk,o)) && *name++=='R' && *name++=='T')
 		{
 			/* Real-time signals */
 			if(name[0]=='M' && name[1]=='I' && name[2]=='N' && name[3]=='+')	/* MIN+ */
@@ -522,7 +522,7 @@ static void sig_list(int flag)
 			{
 				sname = sig_name(sig,name,1);
 				if(flag)
-					sname = stakcopy(sname);
+					sname = stkcopy(sh.stk,sname);
 			}
 			if(flag)
 				names[sig] = sname;

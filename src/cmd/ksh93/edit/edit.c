@@ -32,7 +32,6 @@
 #include	<ccode.h>
 #include	<fault.h>
 #include	"FEATURE/time"
-#include	"FEATURE/cmds"
 #ifdef _hdr_utime
 #   include	<utime.h>
 #   include	<ls.h>
@@ -46,17 +45,8 @@
 #include	"edit.h"
 #include	"shlex.h"
 
-static char *CURSOR_UP = Empty;  /* move cursor up one line */
-static char *ERASE_EOS = Empty;  /* erase to end of screen */
-#if _tput_terminfo
-#define TPUT_CURSOR_UP	"cuu1"
-#define TPUT_ERASE_EOS	"ed"
-#elif _tput_termcap
-#define TPUT_CURSOR_UP	"up"
-#define TPUT_ERASE_EOS	"cd"
-#else
-#undef _pth_tput
-#endif /* _tput_terminfo */
+static char *cursor_up;  /* move cursor up one line */
+static char *erase_eos;  /* erase to end of screen */
 
 #if SHOPT_MULTIBYTE
 #   define is_cntrl(c)	((c<=STRIP) && iscntrl(c))
@@ -412,7 +402,6 @@ void ed_ringbell(void)
 
 #if SHOPT_ESH || SHOPT_VSH
 
-#ifdef _pth_tput
 /*
  * Get or update a tput (terminfo or termcap) capability string.
  */
@@ -424,19 +413,24 @@ static void get_tput(char *tp, char **cpp)
 	sh_offoption(SH_RESTRICTED);
 	sh_offoption(SH_VERBOSE);
 	sh_offoption(SH_XTRACE);
-	sfprintf(sh.strbuf,".sh.value=$(" _pth_tput " %s 2>/dev/null)",tp);
+	sfprintf(sh.strbuf,".sh.value=${ \\command -p tput %s 2>/dev/null;}",tp);
 	sh_trap(sfstruse(sh.strbuf),0);
 	if((cp = nv_getval(SH_VALNOD)) && (!*cpp || strcmp(cp,*cpp)!=0))
 	{
-		if(*cpp && *cpp!=Empty)
+		if(*cpp)
 			free(*cpp);
-		*cpp = *cp ? sh_strdup(cp) : Empty;
+		*cpp = *cp ? sh_strdup(cp) : NULL;
+	}
+	else
+	{
+		if(*cpp)
+			free(*cpp);
+		*cpp = NULL;
 	}
 	nv_unset(SH_VALNOD);
 	sh.options = o;
 	sigrelease(SIGINT);
 }
-#endif /* _pth_tput */
 
 /*	ED_SETUP( max_prompt_size )
  *
@@ -462,8 +456,8 @@ void	ed_setup(Edit_t *ep, int fd, int reedit)
 	ep->e_fd = fd;
 	ep->e_multiline = sh_editor_active() && sh_isoption(SH_MULTILINE);
 	sh.winch = 0;
-	ep->e_stkoff = staktell();
-	ep->e_stkptr = stakfreeze(0);
+	ep->e_stkoff = stktell(sh.stk);
+	ep->e_stkptr = stkfreeze(sh.stk,0);
 #if SHOPT_MULTIBYTE
 	ep->e_savedwidth = 0;
 #endif /* SHOPT_MULTIBYTE */
@@ -610,6 +604,32 @@ void	ed_setup(Edit_t *ep, int fd, int reedit)
 	if(pp-ep->e_prompt > qlen)
 		ep->e_plen = pp - ep->e_prompt - qlen;
 	*pp = 0;
+	if(ep->e_multiline)
+	{
+		static char *oldterm;
+		Namval_t *np = nv_search("TERM",sh.var_tree,0);
+		char *term = NULL;
+		if(nv_isattr(np,NV_EXPORT))
+			term = nv_getval(np);
+		if(!term)
+			term = "";
+		if(!oldterm || strcmp(term,oldterm))
+		{
+			get_tput(TINF_CURSOR_UP,&cursor_up);
+			get_tput(TINF_ERASE_EOS,&erase_eos);
+			if(!cursor_up)
+				get_tput(TCAP_CURSOR_UP,&cursor_up);
+			if(!erase_eos)
+				get_tput(TCAP_ERASE_EOS,&erase_eos);
+			if(oldterm)
+				free(oldterm);
+			oldterm = sh_strdup(term);
+		}
+		if(cursor_up && erase_eos)
+			ep->e_wsize = MAXLINE - (ep->e_plen + 1);
+		else
+			ep->e_multiline = 0;
+	}
 	if(!ep->e_multiline && (ep->e_wsize -= ep->e_plen) < 7)
 	{
 		int shift = 7-ep->e_wsize;
@@ -638,21 +658,6 @@ void	ed_setup(Edit_t *ep, int fd, int reedit)
 		sfset(sfstderr,SF_READ,1);
 	sfwrite(sfstderr,ep->e_outptr,0);
 	ep->e_eol = reedit;
-	if(ep->e_multiline)
-	{
-#ifdef _pth_tput
-		char *term;
-		if(!ep->e_term)
-			ep->e_term = nv_search("TERM",sh.var_tree,0);
-		if(ep->e_term && (term=nv_getval(ep->e_term)) && strlen(term)<sizeof(ep->e_termname) && strcmp(term,ep->e_termname))
-		{
-			get_tput(TPUT_CURSOR_UP,&CURSOR_UP);
-			get_tput(TPUT_ERASE_EOS,&ERASE_EOS);
-			strcopy(ep->e_termname,term);
-		}
-#endif /* _pth_tput */
-		ep->e_wsize = MAXLINE - (ep->e_plen+1);
-	}
 	if(ep->e_default && (pp = nv_getval(ep->e_default)))
 	{
 		n = strlen(pp);
@@ -720,6 +725,7 @@ int ed_read(void *context, int fd, char *buff, int size, int reedit)
 			int	n, newsize;
 			char	*cp;
 			sh_winsize(NULL,&newsize);
+			ed_putchar(ep,'\r');
 			/*
 			 * Try to move cursor to start of first line and pray it works... it's very
 			 * failure-prone if the window size changed, especially on modern terminals
@@ -727,13 +733,17 @@ int ed_read(void *context, int fd, char *buff, int size, int reedit)
 			 */
 			if(ep->e_multiline)
 			{
-				n = (ep->e_plen + ep->e_cur) / newsize;
-				while(n--)
-					ed_putstring(ep,CURSOR_UP);
+				n = (ep->e_plen + ep->e_peol) / ep->e_winsz;
+				while(n-- > 0)
+					ed_putstring(ep,cursor_up);
+				/* clear the current command line */
+				ed_putstring(ep,erase_eos);
 			}
-			ed_putchar(ep,'\r');
-			/* clear the current command line */
-			ed_putstring(ep,ERASE_EOS);
+			else
+			{
+				ed_nputchar(ep,newsize-1,' ');
+				ed_putchar(ep,'\r');
+			}
 			ed_flush(ep);
 			/* show any buffered 'set -b' job notification(s) */
 			if(sh.notifybuf && (cp = sfstruse(sh.notifybuf)) && *cp)
@@ -742,8 +752,13 @@ int ed_read(void *context, int fd, char *buff, int size, int reedit)
 			ep->e_winsz = newsize-1;
 			if(ep->e_winsz < MINWINDOW)
 				ep->e_winsz = MINWINDOW;
-			if(!ep->e_multiline && ep->e_wsize < MAXLINE)
-				ep->e_wsize = ep->e_winsz-2;
+			if(!ep->e_multiline)
+			{
+				if(ep->e_wsize < MAXLINE)
+					ep->e_wsize = ep->e_winsz-2;
+				if(ep->e_wsize > ep->e_plen)
+					ep->e_wsize -= ep->e_plen;
+			}
 			/* redraw command line */
 #if SHOPT_ESH && SHOPT_VSH
 			if(sh_isoption(SH_VI))
@@ -1017,16 +1032,8 @@ void	ed_putchar(Edit_t *ep,int c)
 		c = buf[i];
 	}
 	else
-	{
 		buf[0] = c;
-		size = 1;
-	}
 #endif	/* SHOPT_MULTIBYTE */
-	if (buf[0] == '_' && size==1)
-	{
-		*dp++ = ' ';
-		*dp++ = '\b';
-	}
 	*dp++ = c;
 	*dp = '\0';
 	if(dp >= ep->e_outlast)
@@ -1120,7 +1127,7 @@ int ed_setcursor(Edit_t *ep,genchar *physical,int old,int new,int first)
 		{
 			int n,pline,plen=ep->e_plen;
 			for(;ep->e_curpos.line > newpos.line; ep->e_curpos.line--)
-				ed_putstring(ep,CURSOR_UP);
+				ed_putstring(ep,cursor_up);
 			pline = plen/(ep->e_winsz+1);
 			if(newpos.line <= pline)
 				plen -= pline*(ep->e_winsz+1);
@@ -1143,7 +1150,7 @@ int ed_setcursor(Edit_t *ep,genchar *physical,int old,int new,int first)
 							ed_putchar(ep,physical[m++]);
 					}
 					ed_nputchar(ep,n,' ');
-					ed_putstring(ep,CURSOR_UP);
+					ed_putstring(ep,cursor_up);
 				}
 			}
 		}

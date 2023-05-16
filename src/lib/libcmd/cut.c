@@ -134,7 +134,7 @@ cutinit(int mode, char* str, Delim_t* wdelim, Delim_t* ldelim, size_t reclen)
 	char*	cp = str;
 	Cut_t*	cut;
 
-	if (!(cut = (Cut_t*)stakalloc(sizeof(Cut_t) + strlen(cp) * sizeof(int))))
+	if (!(cut = (Cut_t*)stkalloc(stkstd, sizeof(Cut_t) + strlen(cp) * sizeof(int))))
 	{
 		error(ERROR_SYSTEM|ERROR_PANIC, "out of memory");
 		UNREACHABLE();

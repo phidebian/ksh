@@ -77,9 +77,9 @@ static Namval_t *scope(Namval_t *np,struct lval *lvalue,int assign)
 		int c = cp[flag];
 		cp[flag] = 0;
 		if((!(np = nv_open(cp,sh.var_tree,assign|NV_VARNAME|NV_NOADD|NV_NOFAIL)) || nv_isnull(np))
-		&& sh_macfun(cp, offset = staktell()))
+		&& sh_macfun(cp, offset = stktell(sh.stk)))
 		{
-			Fun = sh_arith(sub=stakptr(offset));
+			Fun = sh_arith(sub=stkptr(sh.stk,offset));
 			FunNode.nvalue.ldp = &Fun;
 			nv_onattr(&FunNode,NV_NOFREE|NV_LDOUBLE|NV_RDONLY);
 			cp[flag] = c;
@@ -155,7 +155,8 @@ static Namval_t *scope(Namval_t *np,struct lval *lvalue,int assign)
 			*cp = 0;
 			if(c || hasdot)
 			{
-				sfprintf(sh.strbuf,"%s%s%c",nv_name(np),sub,0);
+				sfputr(sh.strbuf,nv_name(np),-1);
+				sfputr(sh.strbuf,sub,-1);
 				sub = sfstruse(sh.strbuf);
 			}
 			*cp = flag;
@@ -322,8 +323,8 @@ static Sfdouble_t arith(const char **ptr, struct lval *lvalue, int type, Sfdoubl
 				np = L_ARGNOD;
 			else
 			{
-				int offset = staktell();
-				char *saveptr = stakfreeze(0);
+				int offset = stktell(sh.stk);
+				char *saveptr = stkfreeze(sh.stk,0);
 				Dt_t  *root = (lvalue->emode&ARITH_COMP)?sh.var_base:sh.var_tree;
 				*str = c;
 				cp = str;
@@ -368,10 +369,10 @@ static Sfdouble_t arith(const char **ptr, struct lval *lvalue, int type, Sfdoubl
 					lvalue->value = (char*)*ptr;
 					lvalue->flag =  str-lvalue->value;
 				}
-				if(saveptr != stakptr(0))
-					stakset(saveptr,offset);
+				if(saveptr != stkptr(sh.stk,0))
+					stkset(sh.stk,saveptr,offset);
 				else
-					stakseek(offset);
+					stkseek(sh.stk,offset);
 			}
 			*str = c;
 			if(!np && lvalue->value)

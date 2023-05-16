@@ -128,14 +128,14 @@ static Shnode_t *r_tree(void)
 			break;
 		case TFUN:
 		{
-			Stak_t *savstak;
+			Stk_t *savstak;
 			struct slnod *slp;
 			struct functnod *fp;
 			t = getnode(functnod);
 			t->funct.functline = sfgetu(infile);
 			t->funct.functnam = r_string();
-			savstak = stakcreate(STAK_SMALL);
-			savstak = stakinstall(savstak, 0);
+			savstak = stkopen(STK_SMALL);
+			savstak = stkinstall(savstak, 0);
 			slp = (struct slnod*)stkalloc(sh.stk,sizeof(struct slnod)+sizeof(struct functnod));
 			slp->slchild = 0;
 			slp->slnext = sh.st.staklist;
@@ -148,7 +148,7 @@ static Shnode_t *r_tree(void)
 			t->funct.functtre = r_tree();
 			t->funct.functstak = slp;
 			t->funct.functargs = (struct comnod*)r_tree();
-			slp->slptr =  stakinstall(savstak,0);
+			slp->slptr = stkinstall(savstak,0);
 			slp->slchild = sh.st.staklist;
 			break;
 		}

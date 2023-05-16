@@ -28,7 +28,6 @@
 
 #include	"shopt.h"
 #include	"defs.h"
-#include	<stak.h>
 #include	<error.h>
 #include	"variables.h"
 #include	"path.h"
@@ -164,38 +163,37 @@ int	b_cd(int argc, char *argv[],Shbltin_t *context)
 		dp = cdpath?cdpath->name:"";
 		cdpath = path_nextcomp(cdpath,dir,0);
 #if _WINIX
-		if(*stakptr(PATH_OFFSET+1)==':' && isalpha(*stakptr(PATH_OFFSET)))
+		if(*stkptr(sh.stk,PATH_OFFSET+1)==':' && isalpha(*stkptr(sh.stk,PATH_OFFSET)))
 		{
-			*stakptr(PATH_OFFSET+1) = *stakptr(PATH_OFFSET);
-			*stakptr(PATH_OFFSET)='/';
+			*stkptr(sh.stk,PATH_OFFSET+1) = *stkptr(sh.stk,PATH_OFFSET);
+			*stkptr(sh.stk,PATH_OFFSET)='/';
 		}
 #endif /* _WINIX */
-		if(*stakptr(PATH_OFFSET)!='/')
+		if(*stkptr(sh.stk,PATH_OFFSET)!='/')
 		{
-			char *last=(char*)stakfreeze(1);
-			stakseek(PATH_OFFSET);
-			stakputs(oldpwd);
+			char *last=(char*)stkfreeze(sh.stk,1);
+			stkseek(sh.stk,PATH_OFFSET);
+			sfputr(sh.stk,oldpwd,-1);
 			/* don't add '/' if oldpwd is / itself */
 			if(*oldpwd!='/' || oldpwd[1])
-				stakputc('/');
-			stakputs(last+PATH_OFFSET);
-			stakputc(0);
+				sfputc(sh.stk,'/');
+			sfputr(sh.stk,last+PATH_OFFSET,0);
 		}
 		if(!pflag)
 		{
 			char *cp;
-			stakseek(PATH_MAX+PATH_OFFSET);
-			if(*(cp=stakptr(PATH_OFFSET))=='/')
+			stkseek(sh.stk,PATH_MAX+PATH_OFFSET);
+			if(*(cp=stkptr(sh.stk,PATH_OFFSET))=='/')
 				if(!pathcanon(cp,PATH_DOTDOT))
 					continue;
 		}
-		if((rval=chdir(path_relative(stakptr(PATH_OFFSET)))) >= 0)
+		if((rval=chdir(path_relative(stkptr(sh.stk,PATH_OFFSET)))) >= 0)
 			goto success;
 		if(errno!=ENOENT && saverrno==0)
 			saverrno=errno;
 	}
 	while(cdpath);
-	if(rval<0 && *dir=='/' && *(path_relative(stakptr(PATH_OFFSET)))!='/')
+	if(rval<0 && *dir=='/' && *(path_relative(stkptr(sh.stk,PATH_OFFSET)))!='/')
 		rval = chdir(dir);
 	/* use absolute chdir() if relative chdir() fails */
 	if(rval<0)
@@ -210,16 +208,16 @@ success:
 		dp = dir;	/* print out directory for cd - */
 	if(pflag)
 	{
-		dir = stakptr(PATH_OFFSET);
+		dir = stkptr(sh.stk,PATH_OFFSET);
 		if (!(dir=pathcanon(dir,PATH_PHYSICAL)))
 		{
-			dir = stakptr(PATH_OFFSET);
+			dir = stkptr(sh.stk,PATH_OFFSET);
 			errormsg(SH_DICT,ERROR_system(ret),"%s:",dir);
 			UNREACHABLE();
 		}
-		stakseek(dir-stakptr(0));
+		stkseek(sh.stk,dir-stkptr(sh.stk,0));
 	}
-	dir = (char*)stakfreeze(1)+PATH_OFFSET;
+	dir = stkfreeze(sh.stk,1)+PATH_OFFSET;
 	if(*dp && (*dp!='.'||dp[1]) && strchr(dir,'/'))
 		sfputr(sfstdout,dir,'\n');
 	nv_putval(opwdnod,oldpwd,NV_RDONLY);
@@ -290,7 +288,7 @@ int	b_pwd(int argc, char *argv[],Shbltin_t *context)
 	}
 	if(flag)
 	{
-		cp = strcpy(stakseek(strlen(cp)+PATH_MAX),cp);
+		cp = strcpy(stkseek(sh.stk,strlen(cp)+PATH_MAX),cp);
 		pathcanon(cp,PATH_PHYSICAL);
 	}
 	sfputr(sfstdout,cp,'\n');

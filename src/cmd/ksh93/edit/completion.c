@@ -39,28 +39,40 @@ static char *fmtx(const char *string)
 {
 	const char	*cp = string;
 	int	 	n,c;
-	unsigned char 	*state = (unsigned char*)sh_lexstates[2]; 
-	int offset = staktell();
-	if(*cp=='#' || *cp=='~')
-		stakputc('\\');
+	int		pos = 0;
+	unsigned char 	*state = (unsigned char*)sh_lexstates[2];
+	int		offset = stktell(sh.stk);
+	char		hc[3];
+#if SHOPT_HISTEXPAND
+	const char	hexp = sh_isoption(SH_HISTEXPAND)!=0;
+	if(hexp)
+		hist_setchars(hc);
+#else
+	const char	hexp = 0;
+#endif /* SHOPT_HISTEXPAND */
+	if((!hexp || (*cp!=hc[0] && *cp!=hc[2])) && (*cp=='#' || *cp=='~'))
+		sfputc(sh.stk,'\\');
 	mbinit();
-	while((c=mbchar(cp)),(c>UCHAR_MAX)||(n=state[c])==0 || n==S_EPAT);
+	while((c=mbchar(cp)),((c>UCHAR_MAX)||(n=state[c])==0 || n==S_EPAT)
+	&& (!hexp || ((c!=hc[0]) && (c!=hc[2] || string[0]!=hc[2]))) && c!='~')
+		;
 	if(n==S_EOF && *string!='#')
 		return (char*)string;
-	stakwrite(string,--cp-string);
+	sfwrite(sh.stk,string,--cp-string);
 	for(string=cp;c=mbchar(cp);string=cp)
 	{
 		if((n=cp-string)==1)
 		{
-			if((n=state[c]) && n!=S_EPAT)
-				stakputc('\\');
-			stakputc(c);
+			if(((n=state[c]) && n!=S_EPAT) || (hexp && ((c==hc[0]) || (c==hc[2] && !pos))))
+				sfputc(sh.stk,'\\');
+			sfputc(sh.stk,c);
 		}
 		else
-			stakwrite(string,n);
+			sfwrite(sh.stk,string,n);
+		pos++;
 	}
-	stakputc(0);
-	return stakptr(offset);
+	sfputc(sh.stk,0);
+	return stkptr(sh.stk,offset);
 }
 
 #if !SHOPT_GLOBCASEDET
@@ -263,12 +275,12 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 		}
 		else
 		{
-			stakset(ep->e_stkptr,ep->e_stkoff);
+			stkset(sh.stk,ep->e_stkptr,ep->e_stkoff);
 			ep->e_nlist = 0;
 		}
 	}
-	comptr = (struct comnod*)stakalloc(sizeof(struct comnod));
-	ap = (struct argnod*)stakseek(ARGVAL);
+	comptr = (struct comnod*)stkalloc(sh.stk,sizeof(struct comnod));
+	ap = (struct argnod*)stkseek(sh.stk,ARGVAL);
 #if SHOPT_MULTIBYTE
 	{
 		int c = *cur;
@@ -277,7 +289,7 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 		cp = (genchar *)outbuff + *cur;
 		c = *cp;
 		*cp = 0;
-		*cur = ed_external((genchar*)outbuff,(char*)stakptr(0));
+		*cur = ed_external((genchar*)outbuff,(char*)stkptr(sh.stk,0));
 		*cp = c;
 		*eol = ed_external((genchar*)outbuff,outbuff);
 	}
@@ -320,9 +332,9 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 		else if(var=='$')
 		{
 			/* expand ${!varname@} to complete variable name(s) */
-			stakputs("${!");
-			stakwrite(out,last-out);
-			stakputs("@}");
+			sfputr(sh.stk,"${!",-1);
+			sfwrite(sh.stk,out,last-out);
+			sfputr(sh.stk,"@}",-1);
 			out = last;
 		}
 		else
@@ -340,7 +352,7 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 						strip = 0;
 					dir = out+1;
 				}
-				stakputc(c);
+				sfputc(sh.stk,c);
 				out++;
 			}
 		}
@@ -348,10 +360,17 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 			mode = '*';
 		if(var!='$' && mode=='\\' && out[-1]!='*')
 			addstar = '*';
-		if(*begin=='~' && !strchr(begin,'/'))
-			addstar = 0;
-		stakputc(addstar);
-		ap = (struct argnod*)stakfreeze(1);
+		if(*begin=='~')
+		{
+			/* do not perform tilde expansion while completing a quoted string */
+			if(begin>outbuff && (begin[-1]=='"' || begin[-1]=='\''))
+				sh_onstate(SH_NOTILDEXP);
+			else if(!strchr(begin,'/'))
+				addstar = 0;
+		}
+		if(addstar)
+			sfputc(sh.stk,addstar);
+		ap = (struct argnod*)stkfreeze(sh.stk,1);
 	}
 	if(mode!='*')
 		sh_onoption(SH_MARKDIRS);
@@ -456,7 +475,7 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 		}
 		/* save remainder of the buffer */
 		if(*out)
-			left=stakcopy(out);
+			left=stkcopy(sh.stk,out);
 		if(cmd_completion && mode=='\\')
 			out = strcopy(begin,path_basename(cp= *com++));
 		else if(mode=='*')
@@ -548,8 +567,9 @@ int ed_expand(Edit_t *ep, char outbuff[],int *cur,int *eol,int mode, int count)
 	}
  done:
 	sh_offstate(SH_FCOMPLETE);
+	sh_offstate(SH_NOTILDEXP);
 	if(!ep->e_nlist)
-		stakset(ep->e_stkptr,ep->e_stkoff);
+		stkset(sh.stk,ep->e_stkptr,ep->e_stkoff);
 	if(nomarkdirs)
 		sh_offoption(SH_MARKDIRS);
 #if SHOPT_MULTIBYTE

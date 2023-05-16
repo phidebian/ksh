@@ -24,7 +24,6 @@
 #include	<ast.h>
 #include	<ast_wchar.h>
 #include	"defs.h"
-#include	<stak.h>
 #include	<ccode.h>
 #include	"shtable.h"
 #include	"lexstates.h"
@@ -184,7 +183,7 @@ char *sh_substitute(const char *string,const char *oldsp,char *newsp)
 	const char *sp = string;
 	const char *cp;
 	const char *savesp = 0;
-	stakseek(0);
+	stkseek(sh.stk,0);
 	if(*sp==0)
 		return NULL;
 	if(*(cp=oldsp) == 0)
@@ -202,7 +201,7 @@ char *sh_substitute(const char *string,const char *oldsp,char *newsp)
 				sp++;
 			while(c-- > 0)
 #endif /* SHOPT_MULTIBYTE */
-			stakputc(*sp++);
+			sfputc(sh.stk,*sp++);
 		}
 		if(*sp == 0)
 			return NULL;
@@ -223,10 +222,10 @@ char *sh_substitute(const char *string,const char *oldsp,char *newsp)
 
 found:
 	/* copy new */
-	stakputs(newsp);
+	sfputr(sh.stk,newsp,-1);
 	/* copy rest of string */
-	stakputs(sp);
-	return stakfreeze(1);
+	sfputr(sh.stk,sp,-1);
+	return stkfreeze(sh.stk,1);
 }
 
 /*
@@ -274,29 +273,29 @@ static char	*sh_fmtcsv(const char *string)
 	int offset;
 	if(!cp)
 		return NULL;
-	offset = staktell();
+	offset = stktell(sh.stk);
 	while((c=mbchar(cp)),isaname(c));
 	if(c==0)
 		return (char*)string;
-	stakputc('"');
-	stakwrite(string,cp-string);
+	sfputc(sh.stk,'"');
+	sfwrite(sh.stk,string,cp-string);
 	if(c=='"')
-		stakputc('"');
+		sfputc(sh.stk,'"');
 	string = cp;
 	while(c=mbchar(cp))
 	{
 		if(c=='"')
 		{
-			stakwrite(string,cp-string);
+			sfwrite(sh.stk,string,cp-string);
 			string = cp;
-			stakputc('"');
+			sfputc(sh.stk,'"');
 		}
 	}
 	if(--cp>string)
-		stakwrite(string,cp-string);
-	stakputc('"');
-	stakputc(0);
-	return stakptr(offset);
+		sfwrite(sh.stk,string,cp-string);
+	sfputc(sh.stk,'"');
+	sfputc(sh.stk,0);
+	return stkptr(sh.stk,offset);
 }
 
 /*
@@ -339,7 +338,7 @@ char	*sh_fmtq(const char *string)
 	if(!cp)
 		return NULL;
 	mbinit();
-	offset = staktell();
+	offset = stktell(sh.stk);
 	state = ((c= mbchar(cp))==0);
 	if(isaletter(c) || c=='.')
 	{
@@ -354,7 +353,7 @@ char	*sh_fmtq(const char *string)
 			if(*cp=='=')
 				cp++;
 			c = cp - string;
-			stakwrite(string,c);
+			sfwrite(sh.stk,string,c);
 			string = cp;
 			c = mbchar(cp);
 		}
@@ -371,15 +370,15 @@ char	*sh_fmtq(const char *string)
 	if(state<2)
 	{
 		if(state==1)
-			stakputc('\'');
+			sfputc(sh.stk,'\'');
 		if(c = --cp - string)
-			stakwrite(string,c);
+			sfwrite(sh.stk,string,c);
 		if(state==1)
-			stakputc('\'');
+			sfputc(sh.stk,'\'');
 	}
 	else
 	{
-		stakwrite("$'",2);
+		sfwrite(sh.stk,"$'",2);
 		cp = string;
 		while(op = cp, c= mbchar(cp))
 		{
@@ -423,14 +422,14 @@ char	*sh_fmtq(const char *string)
 					if(!sh_isprint(c))
 					{
 						/* Unicode hex code */
-						sfprintf(staksp,"\\u[%x]",c);
+						sfprintf(sh.stk,"\\u[%x]",c);
 						continue;
 					}
 				}
 				else if(!isprint(c))
 				{
 				quote_one_byte:
-					sfprintf(staksp, isxdigit(*cp) ? "\\x[%.2x]" : "\\x%.2x", c);
+					sfprintf(sh.stk, isxdigit(*cp) ? "\\x[%.2x]" : "\\x%.2x", c);
 					continue;
 				}
 				state=0;
@@ -438,16 +437,16 @@ char	*sh_fmtq(const char *string)
 			}
 			if(state)
 			{
-				stakputc('\\');
-				stakputc(c);
+				sfputc(sh.stk,'\\');
+				sfputc(sh.stk,c);
 			}
 			else
-				stakwrite(op, cp-op);
+				sfwrite(sh.stk,op, cp-op);
 		}
-		stakputc('\'');
+		sfputc(sh.stk,'\'');
 	}
-	stakputc(0);
-	return stakptr(offset);
+	sfputc(sh.stk,0);
+	return stkptr(sh.stk,offset);
 }
 
 /*
@@ -474,7 +473,7 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 		return sh_fmtcsv(cp);
 	if (!cp || !*cp || !fold || fold && strlen(string) < fold)
 		return sh_fmtq(cp);
-	offset = staktell();
+	offset = stktell(sh.stk);
 	single = single ? 1 : 3;
 	c = mbchar(string);
 	a = isaletter(c) ? '=' : 0;
@@ -503,7 +502,7 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 				q = 1;
 			else if (c == a)
 			{
-				stakwrite(bp, cp - bp);
+				sfwrite(sh.stk,bp, cp - bp);
 				bp = cp;
 				vp = cp + 1;
 				a = 0;
@@ -513,8 +512,8 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 		}
 		if (q & 2)
 		{
-			stakputc('$');
-			stakputc('\'');
+			sfputc(sh.stk,'$');
+			sfputc(sh.stk,'\'');
 			cp = bp;
 			n = fold - 3;
 			q = 1;
@@ -563,10 +562,10 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 					{
 						if ((n -= 4) <= 0)
 						{
-							stakwrite("'\\\n$'", 5);
+							sfwrite(sh.stk,"'\\\n$'", 5);
 							n = fold - 7;
 						}
-						sfprintf(staksp, "\\%03o", c);
+						sfprintf(sh.stk, "\\%03o", c);
 						continue;
 					}
 					q = 0;
@@ -576,26 +575,26 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 				{
 					if (!q)
 					{
-						stakputc('\'');
+						sfputc(sh.stk,'\'');
 						cp = bp;
 						break;
 					}
-					stakwrite("'\\\n$'", 5);
+					sfwrite(sh.stk,"'\\\n$'", 5);
 					n = fold - 5;
 				}
 				if (q)
-					stakputc('\\');
+					sfputc(sh.stk,'\\');
 				else
 					q = 1;
-				stakputc(c);
+				sfputc(sh.stk,c);
 				bp = cp;
 			}
 			if (!c)
-				stakputc('\'');
+				sfputc(sh.stk,'\'');
 		}
 		else if (q & 1)
 		{
-			stakputc('\'');
+			sfputc(sh.stk,'\'');
 			cp = bp;
 			n = fold ? (fold - 2) : 0;
 			while (c = mbchar(cp))
@@ -605,32 +604,32 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 				else if (n && --n <= 0)
 				{
 					n = fold - 2;
-					stakwrite(bp, --cp - bp);
+					sfwrite(sh.stk,bp, --cp - bp);
 					bp = cp;
-					stakwrite("'\\\n'", 4);
+					sfwrite(sh.stk,"'\\\n'", 4);
 				}
 				else if (n == 1 && *cp == '\'')
 				{
 					n = fold - 5;
-					stakwrite(bp, --cp - bp);
+					sfwrite(sh.stk,bp, --cp - bp);
 					bp = cp;
-					stakwrite("'\\\n\\''", 6);
+					sfwrite(sh.stk,"'\\\n\\''", 6);
 				}
 				else if (c == '\'')
 				{
-					stakwrite(bp, cp - bp - 1);
+					sfwrite(sh.stk,bp, cp - bp - 1);
 					bp = cp;
 					if (n && (n -= 4) <= 0)
 					{
 						n = fold - 5;
-						stakwrite("'\\\n\\''", 6);
+						sfwrite(sh.stk,"'\\\n\\''", 6);
 					}
 					else
-						stakwrite("'\\''", 4);
+						sfwrite(sh.stk,"'\\''", 4);
 				}
 			}
-			stakwrite(bp, cp - bp - 1);
-			stakputc('\'');
+			sfwrite(sh.stk,bp, cp - bp - 1);
+			sfputc(sh.stk,'\'');
 		}
 		else if (n = fold)
 		{
@@ -640,23 +639,23 @@ char	*sh_fmtqf(const char *string, int single, int fold)
 				if (--n <= 0)
 				{
 					n = fold;
-					stakwrite(bp, --cp - bp);
+					sfwrite(sh.stk,bp, --cp - bp);
 					bp = cp;
-					stakwrite("\\\n", 2);
+					sfwrite(sh.stk,"\\\n", 2);
 				}
 			}
-			stakwrite(bp, cp - bp - 1);
+			sfwrite(sh.stk,bp, cp - bp - 1);
 		}
 		else
-			stakwrite(bp, cp - bp);
+			sfwrite(sh.stk,bp, cp - bp);
 		if (c)
 		{
-			stakputc('\\');
-			stakputc('\n');
+			sfputc(sh.stk,'\\');
+			sfputc(sh.stk,'\n');
 		}
 	} while (c);
-	stakputc(0);
-	return stakptr(offset);
+	sfputc(sh.stk,0);
+	return stkptr(sh.stk,offset);
 }
 
 /*

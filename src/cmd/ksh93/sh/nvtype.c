@@ -24,6 +24,7 @@
 #include        "defs.h"
 #include        "io.h"
 #include        "variables.h"
+#include	"builtins.h"
 
 static const char sh_opttype[] =
 "[-1c?\n@(#)$Id: type (ksh 93u+m) 2021-12-17 $\n]"
@@ -345,7 +346,7 @@ static Namfun_t *clone_type(Namval_t* np, Namval_t *mp, int flags, Namfun_t *fp)
 	int			i;
 	Namval_t		*nq, *nr;
 	size_t			size = fp->dsize;
-	int			save, offset=staktell();
+	int			save, offset=stktell(sh.stk);
 	char			*cp;
 	Dt_t			*root = sh.last_root;
 	Namval_t		*last_table = sh.last_table;
@@ -394,16 +395,14 @@ static Namfun_t *clone_type(Namval_t* np, Namval_t *mp, int flags, Namfun_t *fp)
 				cp = nv_name(np);
 			else
 				cp = nv_name(mp);
-			stakputs(cp);
-			stakputc('.');
-			stakputs(nq->nvname);
-			stakputc(0);
+			sfputr(sh.stk,cp,'.');
+			sfputr(sh.stk,nq->nvname,0);
 			root = nv_dict(mp);
 			save = fp->nofree;
 			fp->nofree = 1;
-			nr = nv_create(stakptr(offset),root,NV_VARNAME|NV_NOADD,fp);
+			nr = nv_create(stkptr(sh.stk,offset),root,NV_VARNAME|NV_NOADD,fp);
 			fp->nofree = save;
-			stakseek(offset);
+			stkseek(sh.stk,offset);
 			if(nr)
 			{
 				if(nv_isattr(nq,NV_RDONLY) && (nq->nvalue.cp || nv_isattr(nq,NV_INTEGER)))
@@ -593,15 +592,13 @@ static int typeinfo(Opt_t* op, Sfio_t *out, const char *str, Optdisc_t *fp)
 	char		*cp,**help,buffer[256];
 	Namtype_t	*dp;
 	Namval_t	*np,*nq,*tp;
-	int		n, i, offset=staktell();
+	int		n, i, offset=stktell(sh.stk);
 	Sfio_t		*sp;
 	np = *(Namval_t**)(fp+1);
-	stakputs(NV_CLASS);
-	stakputc('.');
-	stakputs(np->nvname);
-	stakputc(0);
-	np = nv_open(cp=stakptr(offset), sh.var_tree, NV_NOADD|NV_VARNAME);
-	stakseek(offset);
+	sfputr(sh.stk,NV_CLASS,'.');
+	sfputr(sh.stk,np->nvname,0);
+	np = nv_open(cp=stkptr(sh.stk,offset), sh.var_tree, NV_NOADD|NV_VARNAME);
+	stkseek(sh.stk,offset);
 	if(!np)
 		return -1;
 	if(!(dp=(Namtype_t*)nv_hasdisc(np,&type_disc)))
@@ -679,19 +676,16 @@ static int typeinfo(Opt_t* op, Sfio_t *out, const char *str, Optdisc_t *fp)
 	sfprintf(out,"}\n");
 	if(dp->ndisc>0)
 	{
-		stakseek(offset);
-		stakputs(NV_CLASS);
-		stakputc('.');
-		stakputs(np->nvname);
-		stakputc('.');
-		n = staktell();
+		stkseek(sh.stk,offset);
+		sfputr(sh.stk,NV_CLASS,'.');
+		sfputr(sh.stk,np->nvname,'.');
+		n = stktell(sh.stk);
 		sfprintf(out,"[+?\b%s\b defines the following discipline functions:]{\n",np->nvname);
 		for(i=0; i < dp->ndisc; i++)
 		{
-			stakputs(dp->names[i]);
-			stakputc(0);
+			sfputr(sh.stk,dp->names[i],0);
 			cp = 0;
-			if((nq = nv_search(stakptr(offset),sh.fun_tree,0)) && nq->nvalue.cp)
+			if((nq = nv_search(stkptr(sh.stk,offset),sh.fun_tree,0)) && nq->nvalue.cp)
 				cp = nq->nvalue.rp->help;
 			if(nq && nv_isattr(nq,NV_STATICF))
 				sfprintf(out,"\t[+%s?:static:%s]\n",dp->names[i],cp?cp:Empty);
@@ -699,11 +693,11 @@ static int typeinfo(Opt_t* op, Sfio_t *out, const char *str, Optdisc_t *fp)
 				sfprintf(out,"\t[+%s?%s]\n",dp->names[i],cp?cp:Empty);
 			if(cp)
 				sfputc(out,'.');
-			stakseek(n);
+			stkseek(sh.stk,n);
 		}
 		sfprintf(out,"}\n");
 	}
-	stakseek(offset);
+	stkseek(sh.stk,offset);
 	sfclose(sp);
 	return 0;
 }
@@ -765,7 +759,7 @@ void nv_addtype(Namval_t *np, const char *optstr, Optdisc_t *op, size_t optsz)
 {
 	Namdecl_t	*cp = sh_newof(NULL,Namdecl_t,1,optsz);
 	Optdisc_t	*dp = (Optdisc_t*)(cp+1);
-	Namval_t	*mp,*bp;
+	Namval_t	*bp;
 	char		*name;
 	if(optstr)
 		cp->optstring = optstr;
@@ -774,7 +768,6 @@ void nv_addtype(Namval_t *np, const char *optstr, Optdisc_t *op, size_t optsz)
 	memcpy(dp,op, optsz);
 	cp->optinfof = dp;
 	cp->tp = np;
-	mp = nv_search("typeset",sh.bltin_tree,0);
 	if(name=strrchr(np->nvname,'.'))
 		name++;
 	else
@@ -787,14 +780,14 @@ void nv_addtype(Namval_t *np, const char *optstr, Optdisc_t *op, size_t optsz)
 			tp->nsp = bp;
 		if(!sh.strbuf2)
 			sh.strbuf2 = sfstropen();
-		sfprintf(sh.strbuf2,".%s.%s%c\n",nv_name(bp)+1,name,0);
+		sfprintf(sh.strbuf2,".%s.%s",nv_name(bp)+1,name);
 		name = sfstruse(sh.strbuf2);
 	}
 #endif /* SHOPT_NAMESPACE */
 	if((bp=nv_search(name,sh.fun_tree,NV_NOSCOPE)) && !bp->nvalue.ip)
 		nv_delete(bp,sh.fun_tree,0);
-	bp = sh_addbuiltin(name, funptr(mp), cp);
-	nv_onattr(bp,nv_isattr(mp,NV_PUBLIC));
+	bp = sh_addbuiltin(name, funptr(SYSTYPESET), cp);
+	nv_onattr(bp,nv_isattr(SYSTYPESET,NV_PUBLIC));
 	nv_onattr(np, NV_RDONLY);
 }
 
@@ -1186,13 +1179,11 @@ Namval_t *nv_mkinttype(char *name, size_t size, int sign, const char *help, Namd
 	Namval_t	*mp;
 	Namfun_t	*fp;
 	Namdisc_t	*dp;
-	int		offset=staktell();
-	stakputs(NV_CLASS);
-	stakputc('.');
-	stakputs(name);
-	stakputc(0);
-        mp = nv_open(stakptr(offset), sh.var_tree, NV_VARNAME);
-	stakseek(offset);
+	int		offset=stktell(sh.stk);
+	sfputr(sh.stk,NV_CLASS,'.');
+	sfputr(sh.stk,name,0);
+        mp = nv_open(stkptr(sh.stk,offset), sh.var_tree, NV_VARNAME);
+	stkseek(sh.stk,offset);
 	offset = size + sizeof(Namdisc_t);
 	fp = sh_newof(NULL, Namfun_t, 1, offset);
 	fp->type = mp;

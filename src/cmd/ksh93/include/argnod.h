@@ -22,8 +22,6 @@
  *
  */
 
-#include	<stak.h>
-
 struct ionod
 {
 	unsigned	iofile;
@@ -57,7 +55,7 @@ struct slnod 	/* struct for linked list of stacks */
 {
 	struct slnod	*slnext;
 	struct slnod	*slchild;
-	Stak_t		*slptr;
+	Sfio_t		*slptr;
 	/* slpad aligns struct functnod = struct slnod + 1 on some architectures */
 	struct slnod	*slpad;	
 };

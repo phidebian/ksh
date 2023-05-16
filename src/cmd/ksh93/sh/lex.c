@@ -28,7 +28,6 @@
 #include	"shopt.h"
 #include	<ast.h>
 #include	<releaseflags.h>
-#include	<stak.h>
 #include	<fcin.h>
 #include	<nval.h>
 #include	"defs.h"
@@ -99,7 +98,7 @@ static void refvar(Lex_t *lp, int type)
 		off = offset + (fcseek(0)-(type+1)) - fcfirst();
 		if(lp->lexd.kiaoff < offset)
 		{
-			/* variable starts on stak, copy remainder */
+			/* variable starts on stack, copy remainder */
 			if(off>offset)
 				sfwrite(sh.stk,fcfirst()+type,off-offset);
 			n = stktell(sh.stk)-lp->lexd.kiaoff;
@@ -237,7 +236,7 @@ int sh_lex(Lex_t *lp)
 #endif
 
 /*
- * Get the next word and put it on the top of the stak
+ * Get the next word and put it on the top of the stack
  * A pointer to the current word is stored in lp->arg
  * Returns the token type
  */
@@ -1114,18 +1113,6 @@ int sh_lex(Lex_t* lp)
 						fcseek(-LEN);
 				}
 				break;
-			case S_LABEL:
-				if(lp->lex.reservok && !lp->lex.incase)
-				{
-					c = fcget();
-					fcseek(-LEN);
-					if(state[c]==S_BREAK)
-					{
-						assignment = -1;
-						goto breakloop;
-					}
-				}
-				break;
 			case S_BRACT:
 				/* check for possible subscript */
 				if((n=endchar(lp))==RBRACT || n==RPAREN || 
@@ -1293,13 +1280,6 @@ breakloop:
 	}
 	else
 		c = wordflags;
-	if(assignment<0)
-	{
-		stkseek(sh.stk,stktell(sh.stk)-1);
-		lp->arg = (struct argnod*)stkfreeze(sh.stk,1);
-		lp->lex.reservok = 1;
-		return lp->token=LABLSYM;
-	}
 	if(assignment || (lp->lex.intest&&!lp->lex.incase) || mode==ST_NONE)
 		c &= ~ARG_EXP;
 	if((c&ARG_EXP) && (c&ARG_QUOTED))
@@ -1697,7 +1677,7 @@ done:
 
 /*
  * here-doc nested in $(...)
- * allocate ionode with delimiter filled in without disturbing stak
+ * allocate ionode with delimiter filled in without disturbing the stack
  */
 static void nested_here(Lex_t *lp)
 {
@@ -2059,10 +2039,10 @@ static char	*fmttoken(Lex_t *lp, int sym)
 		return (char*)sh_translate(e_endoffile);
 	if(sym==NL)
 		return (char*)sh_translate(e_newline);
-	stakfreeze(0);
-	stakputc(sym);
+	stkfreeze(sh.stk,0);
+	sfputc(sh.stk,sym);
 	if(sym&SYMREP)
-		stakputc(sym);
+		sfputc(sh.stk,sym);
 	else
 	{
 		switch(sym&SYMMASK)
@@ -2083,16 +2063,16 @@ static char	*fmttoken(Lex_t *lp, int sym)
 				sym = '#';
 				break;
 			case SYMSEMI:
-				if(*stakptr(0)=='<')
-					stakputc('>');
+				if(*stkptr(sh.stk,0)=='<')
+					sfputc(sh.stk,'>');
 				sym = ';';
 				break;
 			default:
 				sym = 0;
 		}
-		stakputc(sym);
+		sfputc(sh.stk,sym);
 	}
-	return stakfreeze(1);
+	return stkfreeze(sh.stk,1);
 }
 
 /*
@@ -2150,11 +2130,11 @@ static unsigned char *stack_shift(unsigned char *sp, unsigned char *dp)
 }
 
 /*
- * Assumes that current word is unfrozen on top of the stak
+ * Assumes that current word is unfrozen on top of the stack
  * If <mode> is zero, gets rid of quoting and consider argument as string
  *    and returns pointer to frozen arg
  * If mode==1, just replace $"..." strings with international strings
- *    The result is left on the stak
+ *    The result is left on the stack
  * If mode==2, the each $"" string is printed on standard output
  */
 static struct argnod *endword(int mode)

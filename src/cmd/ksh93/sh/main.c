@@ -28,7 +28,6 @@
 #include	"shopt.h"
 #include	<ast.h>
 #include	<sfio.h>
-#include	<stak.h>
 #include	<ls.h>
 #include	<fcin.h>
 #include	"defs.h"
@@ -97,7 +96,7 @@ static int sh_source(Sfio_t *iop, const char *file)
 	}
 	oid = error_info.id;
 	nid = error_info.id = sh_strdup(file);
-	sh.st.filename = path_fullname(stakptr(PATH_OFFSET));
+	sh.st.filename = path_fullname(stkptr(sh.stk,PATH_OFFSET));
 	REGRESS(source, "sh_source", ("%s", file));
 	exfile(iop, fd);
 	error_info.id = oid;
@@ -294,7 +293,7 @@ int sh_main(int ac, char *av[], Shinit_f userinit)
 					if(fdin < 0 && !strchr(name,'/'))
 					{
 						if(path_absolute(name,NULL,0))
-							sp = stakptr(PATH_OFFSET);
+							sp = stkptr(sh.stk,PATH_OFFSET);
 						if(sp)
 						{
 							if((fdin=sh_open(sp,O_RDONLY,0))>=0)
@@ -478,7 +477,7 @@ static void	exfile(Sfio_t *iop,int fno)
 	{
 		sh.nextprompt = 1;
 		sh_freeup();
-		stakset(NULL,0);
+		stkset(sh.stk,NULL,0);
 		sh_offstate(SH_STOPOK);
 		sh_offstate(SH_ERREXIT);
 		sh_offstate(SH_VERBOSE);
@@ -642,8 +641,8 @@ static void chkmail(char *files)
 	char		*cp,*sp,*qp;
 	char		save;
 	struct argnod	*arglist=0;
-	int		offset = staktell();
-	char	 	*savstak=stakptr(0);
+	int		offset = stktell(sh.stk);
+	char	 	*savstak = stkptr(sh.stk,0);
 	struct stat	statb;
 	if(*(cp=files) == 0)
 		return;
@@ -710,7 +709,7 @@ static void chkmail(char *files)
 		cp = sp;
 	}
 	while(save);
-	stakset(savstak,offset);
+	stkset(sh.stk,savstak,offset);
 }
 
 #undef EXECARGS
@@ -758,8 +757,8 @@ static void fixargs(char **argv, int mode)
 		command_len = st.command_length;
 		return;
 	}
-	stakseek(command_len+2);
-	buff = stakseek(0);
+	stkseek(sh.stk,command_len+2);
+	buff = stkseek(sh.stk,0);
 	if(command_len==0)
 		return;
 	while((cp = *argv++) && offset < command_len)
@@ -772,7 +771,7 @@ static void fixargs(char **argv, int mode)
 	}
 	offset--;
 	memset(&buff[offset], 0, command_len - offset + 1);
-	un.pst_command = stakptr(0);
+	un.pst_command = stkptr(sh.stk,0);
 	pstat(PSTAT_SETCMD,un,0,0,0);
 #   elif _lib_setproctitle
 #	define CMDMAXLEN 255

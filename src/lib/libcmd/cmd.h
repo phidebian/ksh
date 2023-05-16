@@ -26,7 +26,7 @@
 
 #include <ast.h>
 #include <error.h>
-#include <stak.h>
+#include <stk.h>
 #include <shcmd.h>
 
 #define cmdinit			_cmd_init
