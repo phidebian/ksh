@@ -15,6 +15,7 @@
 *                   Phong Vo <kpv@research.att.com>                    *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*                      Phi <phi.debian@gmail.com>                      *
 *                                                                      *
 ***********************************************************************/
 #include	"sfhdr.h"
@@ -33,13 +34,6 @@ static char* sffmtint(const char* str, int* v)
 	return (char*)str;
 }
 
-/*
- * Here we implement the same kind of modification made in sfvprintf():
- * - nargs is the argv[] index of the last seen sequential % format (% or *)
- * - xargs is highest (max) argv[] index see in an indexed format (%x$ *x$)
- * See sfvprintf.c for thorough explanations.
- */
-
 /* type>0: scanf, type==0: printf, type==-1: internal */
 static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,int type)
 {
@@ -50,7 +44,8 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 	Sffmt_t		savft;
 	Fmtpos_t*	fp;	/* position array of arguments	*/
 	int		argp, argn, maxp, need[FP_INDEX];
-	int		nargs, xargs;
+	int		nargs;	/* the argv[] index of the last seen sequential % format (% or *) */
+	int		xargs;	/* highest (max) argv[] index see in an indexed format (%x$ *x$)  */
 	int		nextarg;
 	SFMBDCL(fmbs)
 
@@ -340,8 +335,8 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 
 	/* get value for positions */
 	if(ft)
-	{	if(ft->reload)
-			nextarg = (*ft->reload)(0, 0, NULL, ft);
+	{	if(ft->reloadf)
+			nextarg = (*ft->reloadf)(0, 0, NULL, ft);
 		memcpy(&savft, ft, sizeof(*ft));
 	}
 	for(n = 0; n <= maxp; ++n)
@@ -362,7 +357,7 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 		{	fp[n].ft.version = ft->version;
 			fp[n].ft.extf = ft->extf;
 			fp[n].ft.eventf = ft->eventf;
-			fp[n].ft.reload = ft->reload;
+			fp[n].ft.reloadf = ft->reloadf;
 			if((v = fp[n].need[FP_WIDTH]) >= 0 && v < n)
 				fp[n].ft.width = fp[v].argv.i;
 			if((v = fp[n].need[FP_PRECIS]) >= 0 && v < n)
@@ -467,8 +462,8 @@ static Fmtpos_t* sffmtpos(Sfio_t* f,const char* form,va_list args,Sffmt_t* ft,in
 	}
 
 	if(ft)
-	{	if(ft->reload)
-			(*ft->reload)(nextarg, 0, NULL, ft);
+	{	if(ft->reloadf)
+			(*ft->reloadf)(nextarg, 0, NULL, ft);
 		memcpy(ft,&savft,sizeof(Sffmt_t));
 	}
 	return fp;

@@ -13,6 +13,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*                      Phi <phi.debian@gmail.com>                      *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -349,7 +350,7 @@ printf_v:
 		memset(&pdata, 0, sizeof(pdata));
 		pdata.hdr.version = SFIO_VERSION;
 		pdata.hdr.extf = extend;
-		pdata.hdr.reload = reload;
+		pdata.hdr.reloadf = reload;
 		pdata.nextarg = argv;
 		sh_offstate(SH_STOPOK);
 		pool=sfpool(sfstderr,NULL,SF_WRITE);
@@ -1085,9 +1086,8 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
 }
 
 /*
- * See src/lib/libast/sfio/sfvprintf.c for explanations.
- * Reload is called when the caller wants to solve a fp[x] cache miss,
- * i.e., a type mismatch between the cached type/value and the desired new type.
+ * reload() is called when the caller wants to solve a fp[x] cache miss, i.e.,
+ * a type mismatch between the cached type/value and the desired new type.
  * This keeps the fp[x] cache intact, it just fills up the new value (v)
  * with a conversion of the fp[x] type/value to the new type/value.
  * This is a single-use value; the conversion is not cached.
@@ -1096,9 +1096,9 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
  * To trick extend(), we back up nextarg, set nextarg to argn, do extend()
  * and restore nextarg.
  *
- * fmt==0 is a special case to handle indexed jumps like '%s $5s'. In that case,
- * argv[0] and argv[4] are consumed and nextarg push to &argv[5] argv[1..3] is
- * ignored.
+ * fmt==0 is a special case to handle indexed jumps like '%s $5s'.
+ * In that case, argv[0] and argv[4] are consumed and nextarg push
+ * to &argv[5] argv[1..3] is ignored.
  */
 static int reload(int argn, char fmt, void* v, Sffmt_t* fe)
 {
@@ -1112,7 +1112,7 @@ static int reload(int argn, char fmt, void* v, Sffmt_t* fe)
 		n = 0;
 		if(pp->nextarg != nullarg)
 		{
-			n = pp->nextarg-pp->argv0;
+			n = pp->nextarg - pp->argv0;
 			pp->nextarg = pp->argv0;
 			while(argn && *pp->nextarg)
 				argn--, pp->nextarg++;
@@ -1123,8 +1123,8 @@ static int reload(int argn, char fmt, void* v, Sffmt_t* fe)
 	 * fmt!=0 ==> Late conversion on type mismatch on fp[x], i.e., %1$s %1$d
 	 * fp[1-1].fmt='s' ==> %1$d wants an int, go convert.
 	 */
-	n = pp->nextarg-pp->argv0;
-	pp->nextarg = pp->argv0+argn;
+	n = pp->nextarg - pp->argv0;
+	pp->nextarg = pp->argv0 + argn;
 	fe->fmt = fmt;
 	r = extend(0,v,fe);
 	pp->nextarg = pp->argv0 + n;

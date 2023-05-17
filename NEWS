@@ -2,6 +2,10 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-05-17:
+
+- Fixed buggy behaviour of printf with mix and match of % and %x$.
+
 2023-05-15:
 
 - Fixed a crash on executing a nested compound assignment in a command
