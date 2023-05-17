@@ -348,7 +348,7 @@ do	[[ $i == *.sh ]] || i+='.sh'
 	t=$(	case $i in
 		glob.sh)	grep -c '^[[:blank:]]*test_[a-z]\{3,\}' $i ;;
 		leaks.sh)	grep -c ^TEST $i ;;
-		printf.sh)	grep -c '^T ' $i ;;
+		printf.sh)	grep -c '^[[:blank:]]*T ' $i ;;
 		pty.sh)		grep -c 'tst ' $i ;;
 		*)		grep -c err_exit $i ;;
 		esac	)
