@@ -14,6 +14,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                   Phong Vo <kpv@research.att.com>                    *
 *                  Martijn Dekker <martijn@inlv.org>                   *
+*                      Phi <phi.debian@gmail.com>                      *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -108,11 +109,10 @@ tmfix(Tm_t* tm)
 	}
 	else if (tm->tm_mon < 0)
 	{
-		tm->tm_year += ((tm->tm_mon / 12) - 1);
-		tm->tm_mon = 12+(tm->tm_mon % 12);
-		if(tm->tm_mon >= 12)
-		{ tm->tm_year++; tm->tm_mon = 0;
-		}		
+		tm->tm_year += tm->tm_mon / 12 - 1;
+		tm->tm_mon = tm->tm_mon % 12 + 12;
+		if (tm->tm_mon >= 12)
+			tm->tm_year++, tm->tm_mon = 0;
 	}
 	while (tm->tm_mday < -365)
 	{
