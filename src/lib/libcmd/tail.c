@@ -629,7 +629,7 @@ b_tail(int argc, char** argv, Shbltin_t* context)
 	}
 	if (flags & FOLLOW)
 	{
-		if (!(fp = (Tail_t*)stakalloc(argc * sizeof(Tail_t))))
+		if (!(fp = (Tail_t*)stkalloc(stkstd, argc * sizeof(Tail_t))))
 		{
 			error(ERROR_SYSTEM|ERROR_PANIC, "out of memory");
 			UNREACHABLE();

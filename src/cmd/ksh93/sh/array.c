@@ -27,7 +27,6 @@
 
 #include	"shopt.h"
 #include	"defs.h"
-#include	<stak.h>
 #include	"name.h"
 
 #define NUMSIZE	11
@@ -755,8 +754,7 @@ static void array_putval(Namval_t *np, const char *string, int flags, Namfun_t *
 		}
 		if(!nv_isnull(np))
 		{
-			if(!np->nvfun)
-				nv_onattr(np,NV_NOFREE);
+			nv_onattr(np,NV_NOFREE);
 			_nv_unset(np,flags);
 		}
 		else
@@ -881,11 +879,9 @@ static struct index_array *array_grow(Namval_t *np, struct index_array *arp,int 
 int nv_atypeindex(Namval_t *np, const char *tname)
 {
 	Namval_t	*tp;
-	int		offset = staktell();
 	size_t		n = strlen(tname)-1;
-	sfprintf(stkstd,"%s.%.*s%c",NV_CLASS,n,tname,0);
-	tp = nv_open(stakptr(offset), sh.var_tree, NV_NOADD|NV_VARNAME);
-	stakseek(offset);
+	sfprintf(sh.strbuf,"%s.%.*s",NV_CLASS,n,tname);
+	tp = nv_open(sfstruse(sh.strbuf), sh.var_tree, NV_NOADD|NV_VARNAME|NV_NOFAIL);
 	if(tp)
 	{
 		struct index_array *ap = (struct index_array*)nv_arrayptr(np);
@@ -1504,9 +1500,9 @@ char *nv_endsubscript(Namval_t *np, char *cp, int mode)
 	if(quoted)
 	{
 		/* strip escape characters */
-		count = staktell();
-		stakwrite(sp,1+cp-sp);
-		sh_trim(sp=stakptr(count));
+		count = stktell(sh.stk);
+		sfwrite(sh.stk,sp,1+cp-sp);
+		sh_trim(sp=stkptr(sh.stk,count));
 	}
 	if(mode && np)
 	{
@@ -1541,7 +1537,7 @@ char *nv_endsubscript(Namval_t *np, char *cp, int mode)
 		nv_putsub(np, sp, ((mode&NV_ADD)?ARRAY_ADD:0)|(cp[1]&&(mode&NV_ADD)?ARRAY_FILL:mode&ARRAY_FILL));
 	}
 	if(quoted)
-		stakseek(count);
+		stkseek(sh.stk,count);
 	*cp++ = c;
 	return cp;
 }

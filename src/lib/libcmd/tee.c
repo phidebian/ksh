@@ -167,7 +167,7 @@ b_tee(int argc, char** argv, Shbltin_t* context)
 #endif
 	if (argc > 0)
 	{
-		if (tp = (Tee_t*)stakalloc(sizeof(Tee_t) + argc * sizeof(int)))
+		if (tp = (Tee_t*)stkalloc(stkstd, sizeof(Tee_t) + argc * sizeof(int)))
 		{
 			memset(&tp->disc, 0, sizeof(tp->disc));
 			tp->disc.writef = tee_write;

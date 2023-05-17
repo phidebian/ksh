@@ -339,7 +339,7 @@ int ed_viread(void *context, int fd, char *shbuf, int nchar, int reedit)
 	tty_cooked(ERRIO);
 	if(ed->e_nlist)
 		ed->e_nlist = 0;
-	stakset(ed->e_stkptr,ed->e_stkoff);
+	stkset(sh.stk,ed->e_stkptr,ed->e_stkoff);
 	if( vp->addnl )
 	{
 		virtual[++last_virt] = '\n';

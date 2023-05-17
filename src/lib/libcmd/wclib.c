@@ -56,7 +56,7 @@ Wc_t* wc_init(int mode)
 	int	w;
 	Wc_t*	wp;
 
-	if (!(wp = (Wc_t*)stakalloc(sizeof(Wc_t))))
+	if (!(wp = (Wc_t*)stkalloc(stkstd,sizeof(Wc_t))))
 		return NULL;
 	if (!mbwide())
 		wp->mb = 0;

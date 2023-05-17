@@ -13,6 +13,7 @@
 *                  David Korn <dgk@research.att.com>                   *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*                      Phi <phi.debian@gmail.com>                      *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -27,7 +28,6 @@
 #include	"shopt.h"
 #include	"defs.h"
 #include	<error.h>
-#include	<stak.h>
 #include	"io.h"
 #include	"name.h"
 #include	"history.h"
@@ -56,6 +56,7 @@ struct printf
 	Sffmt_t		hdr;
 	int		argsize;
 	int		intvar;
+	char		**argv0; /* see reload() below */
 	char		**nextarg;
 	char		*lastarg;
 	char		cescape;
@@ -83,6 +84,7 @@ static const struct printmap  Pmap[] =
 
 static int		echolist(Sfio_t*, int, char**);
 static int		extend(Sfio_t*,void*, Sffmt_t*);
+static int		reload(int argn, char fmt, void* v, Sffmt_t* fe);
 static char		*genformat(char*);
 static int		fmtvecho(const char*, struct printf*);
 static ssize_t		fmtbase64(Sfio_t*, char*, int);
@@ -348,18 +350,20 @@ printf_v:
 		memset(&pdata, 0, sizeof(pdata));
 		pdata.hdr.version = SFIO_VERSION;
 		pdata.hdr.extf = extend;
+		pdata.hdr.reloadf = reload;
 		pdata.nextarg = argv;
 		sh_offstate(SH_STOPOK);
 		pool=sfpool(sfstderr,NULL,SF_WRITE);
 		do
 		{
+			pdata.argv0 = pdata.nextarg;
 			if(sh.trapnote&SH_SIGSET)
 				break;
 			pdata.hdr.form = format;
 			sfprintf(outfile,"%!",&pdata);
 		} while(*pdata.nextarg && pdata.nextarg!=argv);
 		if(pdata.nextarg == nullarg && pdata.argsize>0)
-			if(sfwrite(outfile,stakptr(staktell()),pdata.argsize) < 0)
+			if(sfwrite(outfile,stkptr(sh.stk,stktell(sh.stk)),pdata.argsize) < 0)
 				exitval = 1;
 		sfpool(sfstderr,pool,SF_WRITE);
 		if (pdata.err)
@@ -424,7 +428,7 @@ static int echolist(Sfio_t *outfile, int raw, char *argv[])
 		if(!raw  && (n=fmtvecho(cp,&pdata))>=0)
 		{
 			if(n)
-				if(sfwrite(outfile,stakptr(staktell()),n) < 0)
+				if(sfwrite(outfile,stkptr(sh.stk,stktell(sh.stk)),n) < 0)
 					exitval = 1;
 		}
 		else
@@ -498,9 +502,9 @@ static char strformat(char *s)
 static char *genformat(char *format)
 {
 	char *fp;
-	stakseek(0);
-	stakputs(format);
-	fp = (char*)stakfreeze(1);
+	stkseek(sh.stk,0);
+	sfputr(sh.stk,format,-1);
+	fp = stkfreeze(sh.stk,1);
 	strformat(fp);
 	return fp;
 }
@@ -508,7 +512,7 @@ static char *genformat(char *format)
 static char *fmthtml(const char *string, int flags)
 {
 	const char *cp = string, *op;
-	int c, offset = staktell();
+	int c, offset = stktell(sh.stk);
 	/*
 	 * The only multibyte locale ksh currently supports is UTF-8, which is a superset of ASCII. So, if we're on an
 	 * EBCDIC system, below we attempt to convert EBCDIC to ASCII only if we're not in a multibyte locale (mbwide()).
@@ -522,19 +526,19 @@ static char *fmthtml(const char *string, int flags)
 			if(!mbwide())
 				c = CCMAPC(c,CC_NATIVE,CC_ASCII);
 			if(mbwide() && c < 0)		/* invalid multibyte char */
-				stakputc('?');
+				sfputc(sh.stk,'?');
 			else if(c == 60)		/* < */
-				stakputs("&lt;");
+				sfputr(sh.stk,"&lt;",-1);
 			else if(c == 62)		/* > */
-				stakputs("&gt;");
+				sfputr(sh.stk,"&gt;",-1);
 			else if(c == 38)		/* & */
-				stakputs("&amp;");
+				sfputr(sh.stk,"&amp;",-1);
 			else if(c == 34)		/* " */
-				stakputs("&quot;");
+				sfputr(sh.stk,"&quot;",-1);
 			else if(c == 39)		/* ' (&apos; is not HTML) */
-				stakputs("&#39;");
+				sfputr(sh.stk,"&#39;",-1);
 			else
-				stakwrite(op, cp-op);
+				sfwrite(sh.stk, op, cp-op);
 		}
 	}
 	else
@@ -545,12 +549,12 @@ static char *fmthtml(const char *string, int flags)
 			while(op = cp, c = mbchar(cp))
 			{
 				if(c < 0)
-					stakputs("%3F");
+					sfputr(sh.stk,"%3F",-1);
 				else if(c < 128 && strchr(URI_RFC3986_UNRESERVED, c))
-					stakputc(c);
+					sfputc(sh.stk,c);
 				else
 					while(c = *(unsigned char*)op++, op <= cp)
-						sfprintf(stkstd, "%%%02X", c);
+						sfprintf(sh.stk, "%%%02X", c);
 			}
 		}
 		else
@@ -558,14 +562,14 @@ static char *fmthtml(const char *string, int flags)
 			while(c = *(unsigned char*)cp++)
 			{
 				if(strchr(URI_RFC3986_UNRESERVED, c))
-					stakputc(c);
+					sfputc(sh.stk,c);
 				else
-					sfprintf(stkstd, "%%%02X", CCMAPC(c, CC_NATIVE, CC_ASCII));
+					sfprintf(sh.stk, "%%%02X", CCMAPC(c, CC_NATIVE, CC_ASCII));
 			}
 		}
 	}
-	stakputc(0);
-	return stakptr(offset);
+	sfputc(sh.stk,0);
+	return stkptr(sh.stk,offset);
 }
 
 static ssize_t fmtbase64(Sfio_t *iop, char *string, int alt)
@@ -735,7 +739,7 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
 			argp = pp->lastarg;
 		if(argp)
 		{
-			sfprintf(sh.strbuf,"%s.%.*s%c",argp,fe->n_str,fe->t_str,0);
+			sfprintf(sh.strbuf,"%s.%.*s",argp,fe->n_str,fe->t_str);
 			argp = sfstruse(sh.strbuf);
 		}
 	}
@@ -788,6 +792,10 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
 		case 'T':
 			fe->fmt = 'd';
 			value->ll = tmxgettime();
+			break;
+		case '.':
+			fe->fmt = 'd';
+			value->ll = 0;
 			break;
 		default:
 			if(!strchr("DdXxoUu",format))
@@ -1013,7 +1021,7 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
 				pp->argsize = n;
 				return -1;
 			}
-			value->s = stakptr(staktell());
+			value->s = stkptr(sh.stk,stktell(sh.stk));
 			fe->size = n;
 		}
 		break;
@@ -1078,6 +1086,52 @@ static int extend(Sfio_t* sp, void* v, Sffmt_t* fe)
 }
 
 /*
+ * reload() is called when the caller wants to solve a fp[x] cache miss, i.e.,
+ * a type mismatch between the cached type/value and the desired new type.
+ * This keeps the fp[x] cache intact, it just fills up the new value (v)
+ * with a conversion of the fp[x] type/value to the new type/value.
+ * This is a single-use value; the conversion is not cached.
+ * The conversion is handled by the extend() function that uses the current
+ * nextarg (argv[]) and pushes it, i.e., *nextarg++.
+ * To trick extend(), we back up nextarg, set nextarg to argn, do extend()
+ * and restore nextarg.
+ *
+ * fmt==0 is a special case to handle indexed jumps like '%s $5s'.
+ * In that case, argv[0] and argv[4] are consumed and nextarg push
+ * to &argv[5] argv[1..3] is ignored.
+ */
+static int reload(int argn, char fmt, void* v, Sffmt_t* fe)
+{
+	union types_t*	value = (union types_t*)v;
+	struct printf*	pp = (struct printf*)fe;
+	int		r;
+	int		n;
+	if(fmt == 0)
+	{
+		/* Set nextarg */
+		n = 0;
+		if(pp->nextarg != nullarg)
+		{
+			n = pp->nextarg - pp->argv0;
+			pp->nextarg = pp->argv0;
+			while(argn && *pp->nextarg)
+				argn--, pp->nextarg++;
+		}
+		return n;
+	}
+	/*
+	 * fmt!=0 ==> Late conversion on type mismatch on fp[x], i.e., %1$s %1$d
+	 * fp[1-1].fmt='s' ==> %1$d wants an int, go convert.
+	 */
+	n = pp->nextarg - pp->argv0;
+	pp->nextarg = pp->argv0 + argn;
+	fe->fmt = fmt;
+	r = extend(0,v,fe);
+	pp->nextarg = pp->argv0 + n;
+	return r;
+}
+
+/*
  * construct System V echo string out of <cp>
  * If there are no escape sequences, returns -1
  * Otherwise, puts null-terminated result on stack, but doesn't freeze it
@@ -1087,7 +1141,7 @@ static int fmtvecho(const char *string, struct printf *pp)
 {
 	const char *cp = string, *cpmax;
 	int c;
-	int offset = staktell();
+	int offset = stktell(sh.stk);
 	int chlen;
 	if(mbwide())
 	{
@@ -1107,12 +1161,12 @@ static int fmtvecho(const char *string, struct printf *pp)
 		return -1;
 	c = --cp - string;
 	if(c>0)
-		stakwrite(string,c);
+		sfwrite(sh.stk,string,c);
 	for(; c= *cp; cp++)
 	{
 		if (mbwide() && ((chlen = mbsize(cp)) > 1))
 		{
-			stakwrite(cp,chlen);
+			sfwrite(sh.stk,cp,chlen);
 			cp +=  (chlen-1);
 			continue;
 		}
@@ -1161,11 +1215,11 @@ static int fmtvecho(const char *string, struct printf *pp)
 			default:
 				cp--;
 		}
-		stakputc(c);
+		sfputc(sh.stk,c);
 	}
 done:
-	c = staktell()-offset;
-	stakputc(0);
-	stakseek(offset);
+	c = stktell(sh.stk)-offset;
+	sfputc(sh.stk,0);
+	stkseek(sh.stk,offset);
 	return c;
 }

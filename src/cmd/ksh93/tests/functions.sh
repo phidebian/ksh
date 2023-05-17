@@ -2,7 +2,7 @@
 #                                                                      #
 #               This software is part of the ast package               #
 #          Copyright (c) 1982-2012 AT&T Intellectual Property          #
-#          Copyright (c) 2020-2022 Contributors to ksh 93u+m           #
+#          Copyright (c) 2020-2023 Contributors to ksh 93u+m           #
 #                      and is licensed under the                       #
 #                 Eclipse Public License, Version 2.0                  #
 #                                                                      #
@@ -1413,7 +1413,7 @@ fi
 # ======
 # funcname.ksh crashed
 # https://github.com/ksh93/ksh/issues/212
-cat >$tmp/funcname.ksh <<-'EOF'
+cat >$tmp/funcname.ksh <<'EOF'
 # tweaked version of funname.ksh by Daniel Douglas
 # https://gist.github.com/ormaaj/12874b68acd06ee98b59
 # Used by permission: "Consider all my gists MIT / do whatever."

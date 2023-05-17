@@ -15,6 +15,7 @@
 *                   Phong Vo <kpv@research.att.com>                    *
 *                  Martijn Dekker <martijn@inlv.org>                   *
 *            Johnothan King <johnothanking@protonmail.com>             *
+*                      Phi <phi.debian@gmail.com>                      *
 *                                                                      *
 ***********************************************************************/
 #include	"sfhdr.h"
@@ -28,6 +29,7 @@
 **
 **	Written by Kiem-Phong Vo.
 */
+
 #define HIGHBITI	(~((~((uint)0)) >> 1))
 #define HIGHBITL	(~((~((Sfulong_t)0)) >> 1))
 
@@ -95,6 +97,8 @@ int sfvprintf(Sfio_t*		f,		/* file to print to	*/
 	va_list		oargs;		/* original arg list		*/
 	Fmtpos_t*	fp;		/* arg position list		*/
 	int		argp, argn;	/* arg position and number	*/
+	int		nargs;		/* the argv[] index of the last seen sequential % format (% or *) */
+	int		xargs;		/* highest (max) argv[] index see in an indexed format (%x$ *x$)  */
 
 #define SLACK		1024
 	char		buf[SF_MAXDIGITS+SLACK], tmp[SF_MAXDIGITS+1], data[SF_GRAIN];
@@ -170,6 +174,8 @@ int sfvprintf(Sfio_t*		f,		/* file to print to	*/
 	argn = -1;
 	fp = NULL;
 
+	nargs = xargs = -1;
+
 loop_fmt :
 	SFMBCLR(&fmbs); /* clear multibyte states to parse the format string */
 	while((n = *form) )
@@ -196,7 +202,6 @@ loop_fmt :
 		endsp = sp = buf+(sizeof(buf)-1);
 		t_str = NULL;
 		n_str = dot = 0;
-
 	loop_flags:	/* LOOP FOR \0, %, FLAGS, WIDTH, PRECISION, BASE, TYPE */
 		switch((fmt = *form++) )
 		{
@@ -231,9 +236,11 @@ loop_fmt :
 						{	if(!fp &&
 							   !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
 								goto pop_fmt;
-							n = FP_SET(n,argn);
 						}
-						else	n = FP_SET(-1,argn);
+						if(n > xargs)
+							xargs = n;
+						else
+							n=++nargs;
 
 						if(fp)
 						{	t_str = fp[n].argv.s;
@@ -341,9 +348,11 @@ loop_fmt :
 			{	form += 1;
 				if(!fp && !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
 					goto pop_fmt;
-				n = FP_SET(n,argn);
+				if(n > xargs)
+					xargs = n;
 			}
-			else	n = FP_SET(-1,argn);
+			else
+				n = ++nargs;
 
 			if(fp)
 				v = fp[n].argv.i;
@@ -371,6 +380,8 @@ loop_fmt :
 				if(!fp && !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)) )
 					goto pop_fmt;
 				argp = v-1;
+				if(argp > xargs)
+					xargs = argp;
 				goto loop_flags;
 			}
 		dot_set :
@@ -398,9 +409,12 @@ loop_fmt :
 					if(!fp &&
 					   !(fp = (*_Sffmtposf)(f,oform,oargs,ft,0)))
 						goto pop_fmt;
-					n = FP_SET(n,argn);
+
+					if(n > xargs)
+						xargs = n;
 				}
-				else	n = FP_SET(-1,argn);
+				else
+					n = ++nargs;
 
 				if(fp)	/* use position list */
 					size = fp[n].argv.i;
@@ -499,12 +513,22 @@ loop_fmt :
 			}
 		}
 
-		argp = FP_SET(argp,argn);
+		if(argp < 0)
+			argp = ++nargs;
 		if(fp)
-		{	if(ft && ft->extf && fp[argp].ft.fmt != fp[argp].fmt)
-				fmt = fp[argp].ft.fmt;
-			argv = fp[argp].argv;
-			size = fp[argp].ft.size;
+		{	if(ft && ft->extf)
+			{	if(fmt == fp[argp].ft.fmt)
+				{	if(fp[argp].ft.fmt != fp[argp].fmt)
+						fmt = fp[argp].ft.fmt;
+					argv = fp[argp].argv;
+					size = fp[argp].ft.size;
+				}
+				else	/* reload ft on type mismatch */
+				{	FMTSET(ft, form, args, fmt, size, flags, width, precis, base, t_str, n_str);
+					(*ft->reloadf)(argp, fmt, &argv, ft);
+					FMTGET(ft, form, args, fmt, size, flags, width, precis, base);
+				}
+			}
 		}
 		else if(ft && ft->extf )	/* extended processing */
 		{	FMTSET(ft, form,args, fmt, size,flags, width,precis,base,
@@ -624,6 +648,7 @@ loop_fmt :
 					fm->fp = fp;
 
 					form = ft->form; SFMBCLR(ft->mbs);
+					nargs = xargs = -1;
 					va_copy(args,ft->args);
 					argn = -1;
 					fp = NULL;
@@ -786,6 +811,7 @@ loop_fmt :
 					break;
 				else if(base > 0)
 					{ SFputc(f,base); }
+				nargs++;
 			}
 			continue;
 
@@ -1345,6 +1371,11 @@ loop_fmt :
 	}
 
 pop_fmt:
+	if(ft && ft->reloadf) /* fix nargs %.., %5$s i.e. skip argv[] */
+	{	if(xargs > nargs)
+			nargs = xargs;
+		(*ft->reloadf)(nargs+1, 0, NULL, ft);
+	}
 	if(fp)
 	{	free(fp);
 		fp = NULL;

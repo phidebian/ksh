@@ -17,7 +17,6 @@
 ***********************************************************************/
 #include	"shopt.h"
 #include	"defs.h"
-#include	<stak.h>
 #include	<ls.h>
 #include	<error.h>
 #include	"variables.h"
@@ -322,7 +321,7 @@ static void hist_subst(const char *command,int fd,char *replace)
 		return;
 	lseek(fd,0,SEEK_SET);
 	c =  (int)size;
-	string = stakalloc(c+1);
+	string = stkalloc(sh.stk,c+1);
 	if(read(fd,string,c)!=c)
 		return;
 	string[c] = 0;

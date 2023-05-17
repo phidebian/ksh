@@ -208,9 +208,8 @@ static void p_time(Sfio_t *out, const char *format, struct timeval tm[3])
 static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 #endif
 {
-	int		c,n,offset = staktell();
+	int		c,n,offset = stktell(sh.stk);
 	const char	*first;
-	Stk_t		*stkp = sh.stk;
 #ifdef timeofday
 	struct timeval	tv_cpu_sum;
 	struct timeval	*tvp;
@@ -224,13 +223,13 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 		c = *format;
 		if(c!='%')
 			continue;
-		sfwrite(stkp, first, format-first);
+		sfwrite(sh.stk, first, format-first);
 		c = *++format;
 		if(c=='\0')
 		{
 			/* If a lone percent is the last character of the format pretend
 			   the user had written '%%' for a literal percent */
-			sfwrite(stkp, "%", 1);
+			sfwrite(sh.stk, "%", 1);
 			first = format + 1;
 			break;
 		}
@@ -254,7 +253,7 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 			d = timeval_to_double(tv_real);
 			if(d)
 				d = 100.0 * timeval_to_double(tv_cpu) / d;
-			sfprintf(stkp, "%.*f", precision, d);
+			sfprintf(sh.stk, "%.*f", precision, d);
 			first = format + 1;
 			continue;
 #else
@@ -284,12 +283,12 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 		}
 		else
 		{
-			stkseek(stkp,offset);
+			stkseek(sh.stk,offset);
 			errormsg(SH_DICT,ERROR_exit(0),e_badtformat,c);
 			return;
 		}
 		if(l_modifier)
-			l_time(stkp, tvp, precision);
+			l_time(sh.stk, tvp, precision);
 		else
 		{
 			/* scale fraction from micro to milli, centi, or deci second according to precision */
@@ -297,9 +296,9 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 			for(n = 3 + (3 - precision); n > 0; --n)
 				frac /= 10;
 			if(precision)
-				sfprintf(stkp, "%d%c%0*d", tvp->tv_sec, sh.radixpoint, precision, frac);
+				sfprintf(sh.stk, "%d%c%0*d", tvp->tv_sec, sh.radixpoint, precision, frac);
 			else
-				sfprintf(stkp, "%d", tvp->tv_sec);
+				sfprintf(sh.stk, "%d", tvp->tv_sec);
 		}
 #else
 		if(c=='R')
@@ -312,7 +311,7 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 			n = 3;
 		else
 		{
-			stkseek(stkp,offset);
+			stkseek(sh.stk,offset);
 			errormsg(SH_DICT,ERROR_exit(0),e_badtformat,c);
 			return;
 		}
@@ -325,18 +324,18 @@ static void p_time(Sfio_t *out, const char *format, clock_t *tm)
 			d = (double)tm[n]/sh.lim.clk_tck;
 	skip:
 		if(l_modifier)
-			l_time(stkp, n==3 ? tm[1] + tm[2] : tm[n], precision);
+			l_time(sh.stk, n==3 ? tm[1] + tm[2] : tm[n], precision);
 		else
-			sfprintf(stkp,"%.*f", precision, d);
+			sfprintf(sh.stk,"%.*f", precision, d);
 #endif
 		first = format+1;
 	}
 	if(format>first)
-		sfwrite(stkp,first, format-first);
-	sfputc(stkp,'\n');
-	n = stktell(stkp)-offset;
-	sfwrite(out,stkptr(stkp,offset),n);
-	stkseek(stkp,offset);
+		sfwrite(sh.stk,first, format-first);
+	sfputc(sh.stk,'\n');
+	n = stktell(sh.stk)-offset;
+	sfwrite(out,stkptr(sh.stk,offset),n);
+	stkseek(sh.stk,offset);
 }
 
 #if SHOPT_OPTIMIZE
@@ -498,11 +497,11 @@ static void out_string(Sfio_t *iop, const char *cp, int c, int quoted)
 {
 	if(quoted)
 	{
-		int n = stktell(stkstd);
+		int n = stktell(sh.stk);
 		cp = sh_fmtq(cp);
-		if(iop==stkstd && cp==stkptr(stkstd,n))
+		if(iop==sh.stk && cp==stkptr(sh.stk,n))
 		{
-			*stkptr(stkstd,stktell(stkstd)-1) = c;
+			*stkptr(sh.stk,stktell(sh.stk)-1) = c;
 			return;
 		}
 	}
@@ -543,47 +542,45 @@ static Namfun_t level_disc_fun = { &level_disc, 1 };
  */
 int sh_debug(const char *trap, const char *name, const char *subscript, char *const argv[], int flags)
 {
-	Stk_t			*stkp=sh.stk;
-	struct sh_scoped	savst;
 	Namval_t		*np = SH_COMMANDNOD;
-	int			n=4, offset=stktell(stkp);
-	char			*sav = stkfreeze(stkp,0);
+	int			n=4, offset=stktell(sh.stk);
+	char			*sav = stkfreeze(sh.stk,0);
+	struct sh_scoped	*savst = (struct sh_scoped*)stkalloc(sh.stk,sizeof(struct sh_scoped));
 	const char		*cp = "+=( ";
-	Sfio_t			*iop = stkstd;
 	if(sh.indebug)
 		return 0;
 	sh.indebug = 1;
 	if(name)
 	{
-		sfputr(iop,name,-1);
+		sfputr(sh.stk,name,-1);
 		if(subscript)
 		{
-			sfputc(iop,'[');
-			out_string(iop,subscript,']',1);
+			sfputc(sh.stk,'[');
+			out_string(sh.stk,subscript,']',1);
 		}
 		if(!(flags&ARG_APPEND))
 			cp+=1, n-=1;
 		if(!(flags&ARG_ASSIGN))
 			n -= 2;
-		sfwrite(iop,cp,n);
+		sfwrite(sh.stk,cp,n);
 	}
 	if(*argv && !(flags&ARG_RAW))
-		out_string(iop, *argv++,' ', 0);
+		out_string(sh.stk, *argv++,' ', 0);
 	n = (flags&ARG_ARITH);
 	while(cp = *argv++)
 	{
 		if((flags&ARG_EXP) && argv[1]==0)
-			out_pattern(iop, cp,' ');
+			out_pattern(sh.stk, cp,' ');
 		else
-			out_string(iop, cp,' ',n?0: (flags&(ARG_RAW|ARG_NOGLOB))||*argv);
+			out_string(sh.stk, cp,' ',n?0: (flags&(ARG_RAW|ARG_NOGLOB))||*argv);
 	}
 	if(flags&ARG_ASSIGN)
-		sfputc(iop,')');
-	else if(iop==stkstd)
-		*stkptr(stkp,stktell(stkp)-1) = 0;
-	np->nvalue.cp = stkfreeze(stkp,1);
+		sfputc(sh.stk,')');
+	else
+		*stkptr(sh.stk,stktell(sh.stk)-1) = 0;
+	np->nvalue.cp = stkfreeze(sh.stk,1);
 	sh.st.lineno = error_info.line;
-	savst = sh.st;
+	*savst = sh.st;
 	sh.st.trap[SH_DEBUGTRAP] = 0;
 	/* set up .sh.level variable */
 	if(!SH_LEVELNOD->nvfun || !SH_LEVELNOD->nvfun->disc)
@@ -598,11 +595,11 @@ int sh_debug(const char *trap, const char *name, const char *subscript, char *co
 	nv_onattr(SH_FUNNAMENOD,NV_NOFREE);
 	/* restore scope */
 	update_sh_level();
-	sh.st = savst;
-	if(sav != stkptr(stkp,0))
-		stkset(stkp,sav,offset);
+	sh.st = *savst;
+	if(sav != stkptr(sh.stk,0))
+		stkset(sh.stk,sav,offset);
 	else
-		stkseek(stkp,offset);
+		stkseek(sh.stk,offset);
 	return n;
 }
 
@@ -715,7 +712,7 @@ static void free_list(struct openlist *olist)
  * set ${.sh.name} and ${.sh.subscript}
  * set _ to reference for ${.sh.name}[${.sh.subscript}]
  */
-static int set_instance(Namval_t *nq, Namval_t *node, struct Namref *nr)
+static long set_instance(Namval_t *nq, Namval_t *node, struct Namref *nr)
 {
 	char		*sp=0,*cp;
 	Namarr_t	*ap;
@@ -871,7 +868,6 @@ int sh_exec(const Shnode_t *t, int flags)
 	sh_sigcheck();
 	if(t && sh.st.breakcnt==0 && !sh_isoption(SH_NOEXEC))
 	{
-		Stk_t		*stkp = sh.stk;
 		int 		type = t->tre.tretyp;
 		char		*com0 = 0;
 		int 		errorflg = (flags&sh_state(SH_ERREXIT))|OPTIMIZE;
@@ -879,7 +875,7 @@ int sh_exec(const Shnode_t *t, int flags)
 		int 		execflg2 = (flags&sh_state(SH_FORKED));
 		int 		mainloop = (flags&sh_state(SH_INTERACTIVE));
 		int		topfd = sh.topfd;
-		char 		*sav=stkfreeze(stkp,0);
+		char 		*sav=stkfreeze(sh.stk,0);
 		char		*cp=0, **com=0, *comn;
 		int		argn;
 		int 		skipexitset = 0;
@@ -1025,10 +1021,9 @@ int sh_exec(const Shnode_t *t, int flags)
 #if SHOPT_NAMESPACE
 							if(sh.namespace)
 							{
-								if(!sh.strbuf2)
-									sh.strbuf2 = sfstropen();
-								sfprintf(sh.strbuf2,"%s%s%c",NV_CLASS,nv_name(sh.namespace),0);
-								sh.prefix = sh_strdup(sfstruse(sh.strbuf2));
+								sfputr(sh.strbuf,NV_CLASS,-1);
+								sfputr(sh.strbuf,nv_name(sh.namespace),-1);
+								sh.prefix = sh_strdup(sfstruse(sh.strbuf));
 								nv_open(sh.prefix,sh.var_base,NV_VARNAME);
 							}
 							else
@@ -1055,7 +1050,7 @@ int sh_exec(const Shnode_t *t, int flags)
 					else
 					{
 						/* avoid exit on error from nv_setlist, e.g. read-only variable */
-						struct checkpt *chkp = (struct checkpt*)stakalloc(sizeof(struct checkpt));
+						struct checkpt *chkp = (struct checkpt*)stkalloc(sh.stk,sizeof(struct checkpt));
 						sh_pushcontext(chkp,SH_JMPCMD);
 						jmpval = sigsetjmp(chkp->buff,0);
 						if(!jmpval)
@@ -1335,11 +1330,10 @@ int sh_exec(const Shnode_t *t, int flags)
 					volatile char scope = 0;
 					struct checkpt *buffp = (struct checkpt*)stkalloc(sh.stk,sizeof(struct checkpt));
 #if SHOPT_NAMESPACE
-					Namval_t node, *namespace=0;
-#else
-					Namval_t node;
+					Namval_t *namespace=0;
 #endif /* SHOPT_NAMESPACE */
-					struct Namref	nr;
+					Namval_t	*nodep;
+					struct Namref	*nrp;
 					long		mode = 0;
 					struct slnod *slp;
 					if(!np->nvalue.ip)
@@ -1373,14 +1367,16 @@ int sh_exec(const Shnode_t *t, int flags)
 					slp = (struct slnod*)np->nvenv;
 					sh_funstaks(slp->slchild,1);
 					if(slp->slptr)
-						staklink(slp->slptr);
+						stklink(slp->slptr);
 					if(nq)
 					{
 						Namval_t *mp=0;
 						if(nv_isattr(np,NV_STATICF) && (mp=nv_type(nq)))
 							nq = mp;
 						sh.last_table = last_table;
-						mode = set_instance(nq,&node,&nr);
+						nodep = (Namval_t*)stkalloc(sh.stk,sizeof(Namval_t));
+						nrp = (struct Namref*)stkalloc(sh.stk,sizeof(struct Namref));
+						mode = set_instance(nq,nodep,nrp);
 					}
 					if(io)
 					{
@@ -1425,13 +1421,13 @@ int sh_exec(const Shnode_t *t, int flags)
 					if(scope)
 						sh.invoc_local--;
 					if(nq)
-						unset_instance(nq,&node,&nr,mode);
+						unset_instance(nq,nodep,nrp,mode);
 					sh_funstaks(slp->slchild,-1);
 					if(slp->slptr)
 					{
-						Stak_t *sp = slp->slptr;
+						Stk_t *sp = slp->slptr;
 						slp->slptr = NULL;
-						stakdelete(sp);
+						stkclose(sp);
 					}
 					if(jmpval > SH_JMPFUN || (io && jmpval > SH_JMPIO))
 						siglongjmp(*sh.jmplist,jmpval);
@@ -1846,7 +1842,7 @@ int sh_exec(const Shnode_t *t, int flags)
 				job.curpgid = 0;
 				while((tn=tn->lst.lstrit) && tn->tre.tretyp==TFIL)
 					job.waitall++;
-				exitval = job.exitval = (int*)stakalloc(job.waitall*sizeof(int));
+				exitval = job.exitval = (int*)stkalloc(sh.stk,job.waitall*sizeof(int));
 				memset(exitval,0,job.waitall*sizeof(int));
 			}
 			else
@@ -1968,9 +1964,9 @@ int sh_exec(const Shnode_t *t, int flags)
 			int nargs;
 			Namval_t *np;
 			int flag = errorflg|OPTIMIZE_FLAG;
-			struct dolnod	*argsav=0;
+			struct dolnod	*argsav = NULL;
 			struct comnod	*tp;
-			char *cp, *trap, *nullptr = 0;
+			char *cp, *trap, *null_pointer = NULL;
 			int nameref, refresh=1;
 			char *av[5];
 #if SHOPT_OPTIMIZE
@@ -2014,7 +2010,7 @@ int sh_exec(const Shnode_t *t, int flags)
 					save_prompt = sh.nextprompt;
 					sh.nextprompt = 3;
 					sh.timeout = 0;
-					sh.exitval=sh_readline(&nullptr,0,1,0,1000*sh.st.tmout);
+					sh.exitval=sh_readline(&null_pointer,0,1,0,1000*sh.st.tmout);
 					sh.nextprompt = save_prompt;
 					if(sh.exitval||sfeof(sfstdin)||sferror(sfstdin))
 					{
@@ -2373,19 +2369,19 @@ int sh_exec(const Shnode_t *t, int flags)
 			{
 				Dt_t *root;
 				Namval_t *oldnspace = sh.namespace;
-				int offset = stktell(stkp);
+				int offset = stktell(sh.stk);
 				int	flags=NV_NOARRAY|NV_VARNAME;
-				struct checkpt *chkp = (struct checkpt*)stakalloc(sizeof(struct checkpt));
+				struct checkpt *chkp = (struct checkpt*)stkalloc(sh.stk,sizeof(struct checkpt));
 				int jmpval;
 				if(cp)
 				{
 					errormsg(SH_DICT,ERROR_exit(1),e_ident,fname);
 					UNREACHABLE();
 				}
-				sfputc(stkp,'.');
-				sfputr(stkp,fname,0);
-				np = nv_open(stkptr(stkp,offset),sh.var_tree,flags);
-				offset = stktell(stkp);
+				sfputc(sh.stk,'.');
+				sfputr(sh.stk,fname,0);
+				np = nv_open(stkptr(sh.stk,offset),sh.var_tree,flags);
+				offset = stktell(sh.stk);
 				if(nv_istable(np))
 					root = nv_dict(np);
 				else
@@ -2413,7 +2409,7 @@ int sh_exec(const Shnode_t *t, int flags)
 			/* Function names cannot be special builtin */
 			if(cp || sh.prefix)
 			{
-				int offset = stktell(stkp);
+				int offset = stktell(sh.stk);
 				if(sh.prefix)
 				{
 					cp = sh.prefix;
@@ -2424,13 +2420,13 @@ int sh_exec(const Shnode_t *t, int flags)
 				}
 				else
 				{
-					sfwrite(stkp,fname,cp++-fname);
-					sfputc(stkp,0);
-					npv = nv_open(stkptr(stkp,offset),sh.var_tree,NV_NOARRAY|NV_VARNAME);
+					sfwrite(sh.stk,fname,cp++-fname);
+					sfputc(sh.stk,0);
+					npv = nv_open(stkptr(sh.stk,offset),sh.var_tree,NV_NOARRAY|NV_VARNAME);
 				}
-				offset = stktell(stkp);
-				sfprintf(stkp,"%s.%s%c",nv_name(npv),cp,0);
-				fname = stkptr(stkp,offset);
+				offset = stktell(sh.stk);
+				sfprintf(sh.stk,"%s.%s%c",nv_name(npv),cp,0);
+				fname = stkptr(sh.stk,offset);
 			}
 			else if((mp=nv_search(fname,sh.bltin_tree,0)) && nv_isattr(mp,BLT_SPC))
 			{
@@ -2460,9 +2456,9 @@ int sh_exec(const Shnode_t *t, int flags)
 				sh_funstaks(slp->slchild,-1);
 				if(slp->slptr)
 				{
-					Stak_t *sp = slp->slptr;
+					Stk_t *sp = slp->slptr;
 					slp->slptr = NULL;
-					stakdelete(sp);
+					stkclose(sp);
 				}
 				if(rp->sdict)
 				{
@@ -2500,7 +2496,7 @@ int sh_exec(const Shnode_t *t, int flags)
 				slp = t->funct.functstak;
 				sh_funstaks(slp->slchild,1);
 				if(slp->slptr)
-					staklink(slp->slptr);
+					stklink(slp->slptr);
 				np->nvenv = (char*)slp;
 				nv_funtree(np) = (int*)(t->funct.functtre);
 				np->nvalue.rp->lineno = t->funct.functline;
@@ -2649,10 +2645,10 @@ int sh_exec(const Shnode_t *t, int flags)
 			exitset();
 		if(!(OPTIMIZE))
 		{
-			if(sav != stkptr(stkp,0))
-				stkset(stkp,sav,0);
-			else if(stktell(stkp))
-				stkseek(stkp,0);
+			if(sav != stkptr(sh.stk,0))
+				stkset(sh.stk,sav,0);
+			else if(stktell(sh.stk))
+				stkseek(sh.stk,0);
 		}
 		if(sh.trapnote&SH_SIGSET)
 			sh_exit(SH_EXITSIG|sh.lastsig);
@@ -2674,15 +2670,15 @@ int sh_exec(const Shnode_t *t, int flags)
 int sh_run(int argn, char *argv[])
 {
 	struct dolnod	*dp;
-	struct comnod	*t = (struct comnod*)stakalloc(sizeof(struct comnod));
-	int		savtop = staktell();
-	char		*savptr = stakfreeze(0);
+	struct comnod	*t = (struct comnod*)stkalloc(sh.stk,sizeof(struct comnod));
+	int		savtop = stktell(sh.stk);
+	char		*savptr = stkfreeze(sh.stk,0);
 	Opt_t		*op, *np = optctx(0, 0);
 	Shbltin_t	bltindata;
 	bltindata = sh.bltindata;
 	op = optctx(np, 0);
 	memset(t, 0, sizeof(struct comnod));
-	dp = (struct dolnod*)stakalloc((unsigned)sizeof(struct dolnod) + ARG_SPARE*sizeof(char*) + argn*sizeof(char*));
+	dp = (struct dolnod*)stkalloc(sh.stk, (unsigned)sizeof(struct dolnod) + ARG_SPARE*sizeof(char*) + argn*sizeof(char*));
 	dp->dolnum = argn;
 	dp->dolbot = ARG_SPARE;
 	memcpy(dp->dolval+ARG_SPARE, argv, (argn+1)*sizeof(char*));
@@ -2692,10 +2688,10 @@ int sh_run(int argn, char *argv[])
 	argn=sh_exec((Shnode_t*)t,sh_isstate(SH_ERREXIT));
 	optctx(op,np);
 	sh.bltindata = bltindata;
-	if(savptr!=stakptr(0))
-		stakset(savptr,savtop);
+	if(savptr!=stkptr(sh.stk,0))
+		stkset(sh.stk,savptr,savtop);
 	else
-		stakseek(savtop);
+		stkseek(sh.stk,savtop);
 	return argn;
 }
 
@@ -2802,8 +2798,8 @@ pid_t _sh_fork(pid_t parent,int flags,int *jobid)
 		if(sh_isstate(SH_MONITOR))
 		{
 			/*
-			 * errno==EPERM means that an earlier processes
-			 * completed.  Make parent the job group ID.
+			 * errno == EPERM means that an earlier process has
+			 * finished running. Make the parent the job group ID.
 			 */
 			if(postid==0)
 				job.curpgid = parent;
@@ -2974,7 +2970,8 @@ int sh_funscope(int argn, char *argv[],int(*fun)(void*),void *arg,int execflg)
 	char			*trap;
 	int			nsig;
 	struct dolnod		*argsav=0,*saveargfor;
-	struct sh_scoped	savst, *prevscope = sh.st.self;
+	struct sh_scoped	*savst = (struct sh_scoped*)stkalloc(sh.stk,sizeof(struct sh_scoped));
+	struct sh_scoped	*prevscope = sh.st.self;
 	struct argnod		*envlist=0;
 	int			isig,jmpval;
 	volatile int		r = 0;
@@ -2995,7 +2992,7 @@ int sh_funscope(int argn, char *argv[],int(*fun)(void*),void *arg,int execflg)
 	*prevscope = sh.st;
 	sh_offoption(SH_ERREXIT);
 	sh.st.prevst = prevscope;
-	sh.st.self = &savst;
+	sh.st.self = savst;
 	sh.topscope = (Shscope_t*)sh.st.self;
 	sh.st.opterror = sh.st.optchar = 0;
 	sh.st.optindex = 1;

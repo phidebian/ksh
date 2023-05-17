@@ -51,15 +51,13 @@ static char *walk_tree(Namval_t*, Namval_t*, int);
 static int read_tree(Namval_t* np, Sfio_t *iop, int n, Namfun_t *dp)
 {
 	Sfio_t	*sp;
-	char	*cp;
 	int	c;
 	if(n>=0)
 		return -1;
 	while((c = sfgetc(iop)) &&  isblank(c));
 	sfungetc(iop,c);
-	sfprintf(sh.strbuf,"%s=%c",nv_name(np),0);
-	cp = sfstruse(sh.strbuf);
-	sp = sfopen(NULL,cp,"s");
+	sfputr(sh.strbuf,nv_name(np),'=');
+	sp = sfopen(NULL,sfstruse(sh.strbuf),"s");
 	sfstack(iop,sp);
 	c=sh_eval(iop,SH_READEVAL);
 	return c;
@@ -491,7 +489,7 @@ void nv_attribute(Namval_t *np,Sfio_t *out,char *prefix,int noname)
 						sfprintf(out,"%.2s ",tp->sh_name);
 					if(ip)
 					{
-						sfprintf(out,"[%s] ",ip);
+						sfprintf(out,"'[%s]' ",ip);
 						ip = 0;
 					}
 				}
@@ -943,8 +941,8 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 	struct Walk walk;
 	Sfio_t *outfile;
 	Sfoff_t	off = 0;
-	int len, savtop = staktell();
-	char *savptr = stakfreeze(0);
+	int len, savtop = stktell(sh.stk);
+	char *savptr = stkfreeze(sh.stk,0);
 	struct argnod *ap=0; 
 	struct argnod *arglist=0;
 	char *name,*cp, **argv;
@@ -954,7 +952,7 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 	Namarr_t *arp = nv_arrayptr(np);
 	Dt_t	*save_tree = sh.var_tree;
 	Namval_t	*mp=0;
-	char		*xpname = xp?stakcopy(nv_name(xp)):0;
+	char		*xpname = xp?stkcopy(sh.stk,nv_name(xp)):0;
 	if(xp)
 	{
 		sh.last_root = sh.prev_root;
@@ -964,18 +962,15 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 		sh.last_root = nv_dict(sh.last_table);
 	if(sh.last_root)
 		sh.var_tree = sh.last_root;
-	stakputs(nv_name(np));
+	sfputr(sh.stk,nv_name(np),-1);
 	if(arp && !(arp->nelem&ARRAY_SCAN) && (subscript = nv_getsub(np)))
 	{
 		mp = nv_opensub(np);
-		stakputc('[');
-		stakputs(subscript);
-		stakputc(']');
-		stakputc('.');
+		sfprintf(sh.stk,"[%s].",subscript);
 	}
-	else if(*stakptr(staktell()-1) == ']')
+	else if(*stkptr(sh.stk,stktell(sh.stk)-1) == ']')
 		mp = np;
-	name = stakfreeze(1);
+	name = stkfreeze(sh.stk,1);
 	len = strlen(name);
 	sh.last_root = 0;
 	dir = nv_diropen(mp,name);
@@ -995,12 +990,11 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 			nq = nv_open(cp,walk.root,NV_VARNAME|NV_NOADD|NV_NOFAIL);
 			if(!nq && (flags&NV_MOVE))
 				nq = nv_search(cp,walk.root,NV_NOADD);
-			stakseek(0);
-			stakputs(xpname);
-			stakputs(cp+len);
-			stakputc(0);
+			stkseek(sh.stk,0);
+			sfputr(sh.stk,xpname,-1);
+			sfputr(sh.stk,cp+len,0);
 			sh.var_tree = save_tree;
-			mq = nv_open(stakptr(0),sh.prev_root,NV_VARNAME|NV_NOFAIL);
+			mq = nv_open(stkptr(sh.stk,0),sh.prev_root,NV_VARNAME|NV_NOFAIL);
 			sh.var_tree = dp;
 			if(nq && mq)
 			{
@@ -1010,9 +1004,9 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 			}
 			continue;
 		}
-		stakseek(ARGVAL);
-		stakputs(cp);
-		ap = (struct argnod*)stakfreeze(1);
+		stkseek(sh.stk,ARGVAL);
+		sfputr(sh.stk,cp,-1);
+		ap = (struct argnod*)stkfreeze(sh.stk,1);
 		ap->argflag = ARG_RAW;
 		ap->argchn.ap = arglist; 
 		n++;
@@ -1024,7 +1018,7 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 		sh.var_tree = save_tree;
 		return NULL;
 	}
-	argv = (char**)stakalloc((n+1)*sizeof(char*));
+	argv = (char**)stkalloc(sh.stk,(n+1)*sizeof(char*));
 	argv += n;
 	*argv = 0;
 	for(; ap; ap=ap->argchn.ap)
@@ -1044,7 +1038,7 @@ static char *walk_tree(Namval_t *np, Namval_t *xp, int flags)
 	walk.array = 0;
 	walk.flags = flags;
 	genvalue(argv,name,0,&walk);
-	stakset(savptr,savtop);
+	stkset(sh.stk,savptr,savtop);
 	sh.var_tree = save_tree;
 	if(!outfile)
 		return NULL;

@@ -163,9 +163,6 @@ fi
 if	[[ $(print -f "%(pattern)q" "[^x].*b\$") != '*[!x]*b' ]]
 then	err_exit 'print -f "%(pattern)q" not working'
 fi
-if	[[ $(abc: for i in foo bar;do print $i;break abc;done) != foo ]]
-then	err_exit 'break labels not working'
-fi
 if	[[ $(command -v if)	!= if ]]
 then	err_exit	'command -v not working'
 fi
@@ -1668,6 +1665,12 @@ got=$(
 [[ e=$? -eq 0 && $got == "$exp" ]] || err_exit "read -N8 && printf -v %B" \
 	"(expected status 0, '$exp';" \
 	"got status $e$( ((e>128)) && print -n /SIG && kill -l "$e"), $(printf %q "$got"))"
+# one proposed fix used the stack, breaking %q
+s='one two'
+exp="'$s' / '$s' / '$s'"
+printf -v got "%q / %q / %q" "$s" "$s" "$s"
+[[ $got == "$exp" ]] || err_exit "printf repeated %q" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # ======
 exit $((Errors<125?Errors:125))

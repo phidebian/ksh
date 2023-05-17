@@ -29,7 +29,6 @@
 #include	"test.h"
 #include	<glob.h>
 #include	<ls.h>
-#include	<stak.h>
 #include	<ast_dir.h>
 #include	"io.h"
 #include	"path.h"
@@ -123,9 +122,9 @@ static int scantree(Dt_t *tree, const char *pattern, struct argnod **arghead)
 	{
 		if(strmatch(cp=nv_name(np),pattern))
 		{
-			(void)stakseek(ARGVAL);
-			stakputs(cp);
-			ap = (struct argnod*)stakfreeze(1);
+			(void)stkseek(sh.stk,ARGVAL);
+			sfputr(sh.stk,cp,-1);
+			ap = (struct argnod*)stkfreeze(sh.stk,1);
 			ap->argbegin = NULL;
 			ap->argchn.ap = *arghead;
 			ap->argflag = ARG_RAW|ARG_MAKE;
@@ -343,13 +342,13 @@ endloop1:
 		brace = *cp;
 		*cp = 0;
 		sh_sigcheck();
-		ap = (struct argnod*)stakseek(ARGVAL);
+		ap = (struct argnod*)stkseek(sh.stk,ARGVAL);
 		ap->argflag = ARG_RAW;
 		ap->argchn.ap = todo;
-		stakputs(apin->argval);
-		stakputs(pat);
-		stakputs(rescan);
-		todo = ap = (struct argnod*)stakfreeze(1);
+		sfputr(sh.stk,apin->argval,-1);
+		sfputr(sh.stk,pat,-1);
+		sfputr(sh.stk,rescan,-1);
+		todo = ap = (struct argnod*)stkfreeze(sh.stk,1);
 		if(brace == '}')
 			break;
 		if(!range)

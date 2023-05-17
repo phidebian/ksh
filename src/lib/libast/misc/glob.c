@@ -28,7 +28,7 @@
 
 #include <ast.h>
 #include <ls.h>
-#include <stak.h>
+#include <stk.h>
 #include <ast_dir.h>
 #include <error.h>
 #include <ctype.h>
@@ -59,7 +59,7 @@ typedef int (*GL_stat_f)(const char*, struct stat*);
 	char*		gl_nextpath; \
 	globlist_t*	gl_rescan; \
 	globlist_t*	gl_match; \
-	Stak_t*		gl_stak; \
+	Stk_t*		gl_stak; \
 	int		re_flags; \
 	int		re_first; \
 	regex_t*	gl_ignore; \
@@ -158,7 +158,7 @@ static char*
 gl_nextdir(glob_t* gp, char* dir)
 {
 	if (!(dir = gp->gl_nextpath))
-		dir = gp->gl_nextpath = stakcopy(pathbin());
+		dir = gp->gl_nextpath = stkcopy(stkstd,pathbin());
 	switch (*gp->gl_nextpath)
 	{
 	case 0:
@@ -237,46 +237,46 @@ addmatch(glob_t* gp, const char* dir, const char* pat, const char* rescan, char*
 	int		offset;
 	int		type;
 
-	stakseek(MATCHPATH(gp));
+	stkseek(stkstd,MATCHPATH(gp));
 	if (dir)
 	{
-		stakputs(dir);
-		stakputc(gp->gl_delim);
+		sfputr(stkstd,dir,-1);
+		sfputc(stkstd,gp->gl_delim);
 	}
 	if (endslash)
 		*endslash = 0;
-	stakputs(pat);
+	sfputr(stkstd,pat,-1);
 	if (rescan)
 	{
-		if ((*gp->gl_type)(gp, stakptr(MATCHPATH(gp)), 0) != GLOB_DIR)
+		if ((*gp->gl_type)(gp, stkptr(stkstd,MATCHPATH(gp)), 0) != GLOB_DIR)
 			return;
-		stakputc(gp->gl_delim);
-		offset = staktell();
+		sfputc(stkstd,gp->gl_delim);
+		offset = stktell(stkstd);
 		/* if null, reserve room for . */
 		if (*rescan)
-			stakputs(rescan);
+			sfputr(stkstd,rescan,-1);
 		else
-			stakputc(0);
-		stakputc(0);
-		rescan = stakptr(offset);
-		ap = (globlist_t*)stakfreeze(0);
+			sfputc(stkstd,0);
+		sfputc(stkstd,0);
+		rescan = stkptr(stkstd,offset);
+		ap = (globlist_t*)stkfreeze(stkstd,0);
 		ap->gl_begin = (char*)rescan;
 		ap->gl_next = gp->gl_rescan;
 		gp->gl_rescan = ap;
 	}
 	else
 	{
-		if (!endslash && (gp->gl_flags & GLOB_MARK) && (type = (*gp->gl_type)(gp, stakptr(MATCHPATH(gp)), 0)))
+		if (!endslash && (gp->gl_flags & GLOB_MARK) && (type = (*gp->gl_type)(gp, stkptr(stkstd,MATCHPATH(gp)), 0)))
 		{
 			if ((gp->gl_flags & GLOB_COMPLETE) && type != GLOB_EXE)
 			{
-				stakseek(0);
+				stkseek(stkstd,0);
 				return;
 			}
 			else if (type == GLOB_DIR && (gp->gl_flags & GLOB_MARK))
-				stakputc(gp->gl_delim);
+				sfputc(stkstd,gp->gl_delim);
 		}
-		ap = (globlist_t*)stakfreeze(1);
+		ap = (globlist_t*)stkfreeze(stkstd,1);
 		ap->gl_next = gp->gl_match;
 		gp->gl_match = ap;
 		gp->gl_pathc++;
@@ -598,7 +598,7 @@ _ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), glob_t
 	globlist_t*	ap;
 	char*		pat;
 	globlist_t*	top;
-	Stak_t*		oldstak;
+	Stk_t*		oldstak;
 	char**		argv;
 	char**		av;
 	size_t		skip;
@@ -690,14 +690,14 @@ _ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), glob_t
 		}
 		if (gp->gl_flags & GLOB_STACK)
 			gp->gl_stak = 0;
-		else if (!(gp->gl_stak = stakcreate(0)))
+		else if (!(gp->gl_stak = stkopen(0)))
 			return GLOB_NOSPACE;
 		if ((gp->gl_flags & GLOB_COMPLETE) && !gp->gl_nextdir)
 			gp->gl_nextdir = gl_nextdir;
 	}
 	skip = gp->gl_pathc;
 	if (gp->gl_stak)
-		oldstak = stakinstall(gp->gl_stak, 0);
+		oldstak = stkinstall(gp->gl_stak, 0);
 	if (flags & GLOB_DOOFFS)
 		extra += gp->gl_offs;
 	if (gp->gl_suffix)
@@ -761,7 +761,7 @@ _ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), glob_t
 			break;
 		}
 	}
-	top = ap = (globlist_t*)stakalloc((optlen ? 2 : 1) * strlen(pattern) + sizeof(globlist_t) + suflen + gp->gl_extra);
+	top = ap = (globlist_t*)stkalloc(stkstd,(optlen ? 2 : 1) * strlen(pattern) + sizeof(globlist_t) + suflen + gp->gl_extra);
 	ap->gl_next = 0;
 	ap->gl_flags = 0;
 	ap->gl_begin = ap->gl_path + gp->gl_extra;
@@ -799,7 +799,7 @@ _ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), glob_t
 		gp->gl_list = gp->gl_match;
 	else
 	{
-		argv = (char**)stakalloc((gp->gl_pathc + extra) * sizeof(char*));
+		argv = (char**)stkalloc(stkstd,(gp->gl_pathc + extra) * sizeof(char*));
 		if (gp->gl_flags & GLOB_APPEND)
 		{
 			skip += --extra;
@@ -832,7 +832,7 @@ _ast_glob(const char* pattern, int flags, int (*errfn)(const char*, int), glob_t
 	if (gp->gl_starstar > 1)
 		gp->gl_flags &= ~GLOB_STARSTAR;
 	if (gp->gl_stak)
-		stakinstall(oldstak, 0);
+		stkinstall(oldstak, 0);
 	return gp->gl_error;
 }
 

@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 	error_info.id = script_id;
 	while(1)
 	{
-		stakset(NULL,0);
+		stkset(sh.stk,NULL,0);
 		if(t = (Shnode_t*)sh_parse(in,0))
 		{
 			if((t->tre.tretyp&(COMMSK|COMSCAN))==0 && t->com.comnamp && strcmp(nv_name((Namval_t*)t->com.comnamp),"alias")==0)

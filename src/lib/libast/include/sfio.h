@@ -20,7 +20,7 @@
 #ifndef _SFIO_H
 #define _SFIO_H	1
 
-#define SFIO_VERSION	20220212L
+#define SFIO_VERSION	20230517L
 
 /*	Public header file for the sfio library
 **
@@ -59,10 +59,12 @@ struct _sfdisc_s
 typedef struct _sffmt_s	Sffmt_t;
 typedef int		(*Sffmtext_f)(Sfio_t*, void*, Sffmt_t*);
 typedef int		(*Sffmtevent_f)(Sfio_t*, int, void*, Sffmt_t*);
+typedef int		(*Sffmtreload_f)(int, char, void*, Sffmt_t*);
 struct _sffmt_s
 {	long		version;/* version of this structure		*/
 	Sffmtext_f	extf;	/* function to process arguments	*/
 	Sffmtevent_f	eventf;	/* process events			*/
+	Sffmtreload_f	reloadf;/* reload argv with a new type/format	*/
 
 	char*		form;	/* format string to stack		*/
 	va_list		args;	/* corresponding arg list		*/

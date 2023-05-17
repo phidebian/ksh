@@ -16,6 +16,7 @@
 *         hyenias <58673227+hyenias@users.noreply.github.com>          *
 *                   Marc Wilson <posguy99@gmail.com>                   *
 *                      Phi <phi.debian@gmail.com>                      *
+*               K. Eugene Carlson <kvngncrlsn@gmail.com>               *
 *                                                                      *
 ***********************************************************************/
 /*
@@ -377,7 +378,7 @@ void sh_machere(Sfio_t *infile, Sfio_t *outfile, char *string)
 				break;
 			    }
 			    case S_PAR:
-				comsubst(mp,NULL,3);
+				comsubst(mp,NULL,1);
 				break;
 			    case S_EOF:
 				if((c=fcfill()) > 0)
@@ -441,7 +442,7 @@ static void copyto(Mac_t *mp,int endch, int newquote)
 	mp->sp = NULL;
 	mp->quote = newquote;
 	first = cp = fcseek(0);
-	if(!mp->quote && *cp=='~' && cp[1]!=LPAREN)
+	if(!mp->quote && *cp=='~' && cp[1]!=LPAREN && !sh_isstate(SH_NOTILDEXP))
 		tilde = stktell(stkp);
 	/* handle // operator specially */
 	if(mp->pattern==2 && *cp=='/')
@@ -807,7 +808,7 @@ static void copyto(Mac_t *mp,int endch, int newquote)
 		    case S_EQ:
 			if(mp->assign==1)
 			{
-				if(*cp=='~' && !endch && !mp->quote && !mp->lit)
+				if(*cp=='~' && !endch && !mp->quote && !mp->lit && !sh_isstate(SH_NOTILDEXP))
 					tilde = stktell(stkp)+(c+1);
 				mp->assign = 2;
 			}
@@ -830,7 +831,7 @@ static void copyto(Mac_t *mp,int endch, int newquote)
 				tilde = -1;
 				c=0;
 			}
-			if(n==S_COLON && mp->assign==2 && *cp=='~' && endch==0 && !mp->quote &&!mp->lit)
+			if(n==S_COLON && mp->assign==2 && *cp=='~' && endch==0 && !mp->quote && !mp->lit && !sh_isstate(SH_NOTILDEXP))
 				tilde = stktell(stkp)+(c+1);
 			else if(n==S_SLASH && mp->pattern==2)
 			{
@@ -1200,7 +1201,7 @@ retry1:
 	    case S_PAR:
 		if(type)
 			goto nosub;
-		comsubst(mp,NULL,3);
+		comsubst(mp,NULL,1);
 		return 1;
 	    case S_DIG:
 		var = 0;
@@ -1505,7 +1506,7 @@ retry1:
 					v = nv_getval(np);
 				mp->atmode = (v && mp->quoted && mode=='@');
 			}
-			if(savptr==stakptr(0))
+			if(savptr==stkptr(sh.stk,0))
 				stkseek(stkp,offset);
 			else
 				stkset(stkp,savptr,offset);
@@ -2232,7 +2233,6 @@ static void comsubst(Mac_t *mp,Shnode_t* t, int type)
 				char *cp = (char*)sh_malloc(IOBSIZE+1);
 				sp = sfnew(NULL,cp,IOBSIZE,fd,SF_READ|SF_MALLOC);
 			}
-			type = 3;
 		}
 		else
 		{
@@ -2675,39 +2675,39 @@ static int	charlen(const char *string,int len)
  */
 static void tilde_expand2(int offset)
 {
-	char		*cp = NULL;		/* character pointer for tilde expansion result */
-	char		*stakp = stakptr(0);		/* current stack object (&stakp[offset] is tilde string) */
-	int		curoff = staktell();		/* current offset of current stack object */
+	char		*cp = NULL;			/* character pointer for tilde expansion result */
+	char		*stakp = stkptr(sh.stk,0);	/* current stack object (&stakp[offset] is tilde string) */
+	int		curoff = stktell(sh.stk);	/* current offset of current stack object */
 	static char	block;				/* for disallowing tilde expansion in .get/.set to change ${.sh.tilde} */
 	/*
 	 * Allow overriding tilde expansion with a .sh.tilde.set or .get discipline function.
 	 */
 	if(!block && SH_TILDENOD->nvfun && SH_TILDENOD->nvfun->disc)
 	{
-		stakfreeze(1);				/* terminate current stack object to avoid data corruption */
+		stkfreeze(sh.stk,1);			/* terminate current stack object to avoid data corruption */
 		block++;
 		nv_putval(SH_TILDENOD, &stakp[offset], 0);
 		cp = nv_getval(SH_TILDENOD);
 		block--;
 		if(cp[0]=='\0' || cp[0]=='~')
-			cp = NULL;		/* do not use empty or unexpanded result */
-		stakset(stakp,curoff);			/* restore stack to state on function entry */
+			cp = NULL;			/* do not use empty or unexpanded result */
+		stkset(sh.stk,stakp,curoff);		/* restore stack to state on function entry */
 	}
 	/*
 	 * Perform default tilde expansion unless overridden.
 	 * Write the result to the stack, if any.
 	 */
-	stakputc(0);
+	sfputc(sh.stk,0);
 	if(!cp)
 		cp = sh_tilde(&stakp[offset]);
 	if(cp)
 	{
-		stakseek(offset);
+		stkseek(sh.stk,offset);
 		if(!(cp[0]=='/' && !cp[1] && fcpeek(0)=='/'))
-			stakputs(cp);			/* for ~ == /, avoid ~/foo -> //foo */
+			sfputr(sh.stk,cp,-1);		/* for ~ == /, avoid ~/foo -> //foo */
 	}
 	else
-		stakseek(curoff);
+		stkseek(sh.stk,curoff);
 }
 
 /*
@@ -2750,18 +2750,18 @@ static char *sh_tilde(const char *string)
 	if(fcgetc(c)=='/')
 	{
 		char	*str;
-		int	n=0,offset=staktell();
-		stakputs(string);
+		int	n=0,offset=stktell(sh.stk);
+		sfputr(sh.stk,string,-1);
 		do
 		{
-			stakputc(c);
+			sfputc(sh.stk,c);
 			n++;
 		}
 		while (fcgetc(c) && c!='/');
-		stakputc(0);
+		sfputc(sh.stk,0);
 		if(c)
 			fcseek(-1);
-		str = stakseek(offset);
+		str = stkseek(sh.stk,offset);
 		Skip = n;
 		if(logins_tree && (np=nv_search(str,logins_tree,0)))
 			return nv_getval(np);

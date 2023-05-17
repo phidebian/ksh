@@ -218,8 +218,8 @@ static int whence(char **argv, int flags)
 					pp = 0;
 					while(!path_search(name,&pp,3) && pp && (pp = pp->next))
 						;
-					if(*stakptr(PATH_OFFSET)=='/')
-						sfprintf(sfstdout,sh_translate(e_autoloadfrom),sh_fmtq(stakptr(PATH_OFFSET)));
+					if(*stkptr(sh.stk,PATH_OFFSET)=='/')
+						sfprintf(sfstdout,sh_translate(e_autoloadfrom),sh_fmtq(stkptr(sh.stk,PATH_OFFSET)));
 				}
 				else
 					sfprintf(sfstdout,sh_translate(is_function));
@@ -272,7 +272,7 @@ static int whence(char **argv, int flags)
 			}
 			else
 			{
-				cp = stakptr(PATH_OFFSET);
+				cp = stkptr(sh.stk,PATH_OFFSET);
 				if(*cp==0)
 					cp = 0;
 			}
@@ -294,7 +294,7 @@ static int whence(char **argv, int flags)
 					else if(flags&V_FLAG)
 					{
 						sfprintf(sfstdout,sh_translate(is_ufunction));
-						sfprintf(sfstdout,sh_translate(e_autoloadfrom),sh_fmtq(stakptr(PATH_OFFSET)));
+						sfprintf(sfstdout,sh_translate(e_autoloadfrom),sh_fmtq(stkptr(sh.stk,PATH_OFFSET)));
 					}
 					sfputc(sfstdout,'\n');
 				}

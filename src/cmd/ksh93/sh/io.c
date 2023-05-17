@@ -1082,23 +1082,22 @@ static char *io_usename(char *name, int *perm, int fno, int mode)
 		name=path;
 		name[fd] = 0;
 	}
-	stakseek(1);
-	stakputs(name);
-	stakputc(0);
-	pathcanon(stakptr(1),PATH_PHYSICAL);
-	sp = ep = stakptr(1);
+	stkseek(sh.stk,1);
+	sfputr(sh.stk,name,0);
+	pathcanon(stkptr(sh.stk,1),PATH_PHYSICAL);
+	sp = ep = stkptr(sh.stk,1);
 	if(ep = strrchr(sp,'/'))
 	{
-		memmove(stakptr(0),sp,++ep-sp);
-		stakseek(ep-sp);
+		memmove(stkptr(sh.stk,0),sp,++ep-sp);
+		stkseek(sh.stk,ep-sp);
 	}
 	else
 	{
 		ep = sp;
-		stakseek(0);
+		stkseek(sh.stk,0);
 	}
-	sfprintf(stkstd, ".<#%lld_%d{;.tmp", (Sflong_t)sh.current_pid, fno);
-	tname = stakfreeze(1);
+	sfprintf(sh.stk, ".<#%lld_%d{;.tmp", (Sflong_t)sh.current_pid, fno);
+	tname = stkfreeze(sh.stk,1);
 	switch(mode)
 	{
 	    case 1:
@@ -1161,7 +1160,7 @@ int	sh_redirect(struct ionod *iop, int flag)
 		{
 			if(iof&IOLSEEK)
 			{
-				struct argnod *ap = (struct argnod*)stakalloc(ARGVAL+strlen(iop->ioname));
+				struct argnod *ap = (struct argnod*)stkalloc(sh.stk,ARGVAL+strlen(iop->ioname));
 				memset(ap, 0, ARGVAL);
 				ap->argflag = ARG_MAC;
 				strcpy(ap->argval,iop->ioname);
@@ -1173,7 +1172,7 @@ int	sh_redirect(struct ionod *iop, int flag)
 		if((iof&IOPROCSUB) && !(iof&IOLSEEK))
 		{
 			/* handle process substitution passed to redirection */
-			struct argnod *ap = (struct argnod*)stakalloc(ARGVAL+strlen(iop->ioname));
+			struct argnod *ap = (struct argnod*)stkalloc(sh.stk,ARGVAL+strlen(iop->ioname));
 			memset(ap, 0, ARGVAL);
 			if(iof&IOPUT)
 				ap->argflag = ARG_RAW;
@@ -2171,10 +2170,10 @@ static int	io_prompt(Sfio_t *iop,int flag)
 		{
 			/* PS2 prompt. Save stack state to avoid corrupting command substitutions
 			 * in case we're executing a PS2.get discipline function at parse time. */
-			int	savestacktop = staktell();
-			char	*savestackptr = stakfreeze(0);
+			int	savestacktop = stktell(sh.stk);
+			char	*savestackptr = stkfreeze(sh.stk,0);
 			cp = nv_getval(sh_scoped(PS2NOD));
-			stakset(savestackptr, savestacktop);
+			stkset(sh.stk, savestackptr, savestacktop);
 			break;
 		}
 		case 3:
