@@ -96,10 +96,8 @@ tmfix(Tm_t* tm)
 	{
 		tm->tm_mday -= (23 - n) / 24;
 		tm->tm_hour = 24 - (-n) % 24;
-		if(tm->tm_hour>=24)
-		{
-		  tm->tm_hour = 0;
-		}
+		if (tm->tm_hour >= 24)
+			tm->tm_hour = 0;
 	}
 	else if (n >= 24)
 	{
