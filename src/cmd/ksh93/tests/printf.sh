@@ -207,13 +207,13 @@ export TZ=UTC
 # Check printf against a string
 function do_test # 1:LINENO 2:printf-STRING 3:match-string
 {	printf -v got "%($format)T" "$2"
-	[[ $got == "$3" ]] || \err_exit "$1" "ambiguous sec: printf '%($format)T' '$2':" \
+	[[ $got == "$3" ]] || \err_exit "$1" "$C: printf '%($format)T' '$2':" \
 		"expected $(printf %q "$3"), got $(printf %q "$got")"
 }
 
 format='%Y-%m-%d'
 
-# Calendar dates
+C='Calendar dates'
 T '2020-01-14'				'2020-01-14'
 T '2020-01-14 -14 days'			'2019-12-31'
 T '2020-01-14 -14 days ago'		'2020-01-28'
@@ -236,7 +236,14 @@ T '2020-01-14 14 days ago'		'2019-12-31'
 
 format='%Y-%m-%d %H:%M:%S'
 
-# Ambigous sec
+# Backward rollover
+# bug-182 in tmfix.c
+C='Backward rollover'
+T '#1684340457'				'2023-05-17 16:20:57'
+T '#1684340457 exact 2400 min  ago'	'2023-05-16 00:20:57'
+T '#1684340457 exact   40 hour ago'	'2023-05-16 00:20:57'
+
+C='Ambigous sec'
 T '#1579042800            +120 seconds'	'2020-01-14 23:02:00'
 T '#1579042800        fri +120 seconds'	'2020-01-17 00:02:00'
 T '#1579042800 next   fri +120 seconds'	'2020-01-24 00:02:00'
@@ -247,8 +254,8 @@ T '#1579042800 second second second'	'2020-01-14 23:00:03'
 T '#1579042800 second minute second'	'2020-01-14 23:01:01'
 T '#1579042800 second minute +2 second'	'2020-01-14 23:01:02'
 
-# Week dates
 # ksh doesn't handle week dates with day number: 2020-W20-D20
+C='Week dates'
 T '2020W20'				'2020-05-11 00:00:00'
 T '2020W20 exact'			'2020-05-11 00:00:00'
 T '2020-W20'				'2020-05-11 00:00:00'
@@ -263,6 +270,7 @@ T '2020W20  third fri'			'2020-05-15 00:00:00'
 T '2020-W20 third fri'			'2020-05-15 00:00:00'
 
 # Ordinal time (ksh only supports the extended form)
+C='Ordinal time'
 T '2020-2-3T12:34:56'			'2020-02-03 12:34:56'
 T '2020-2-3 12:34:56'			'2020-02-03 12:34:56'
 T '2020-2-3 12:34:56 next fri'		'2020-02-14 12:34:56'
