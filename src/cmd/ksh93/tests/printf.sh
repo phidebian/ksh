@@ -236,8 +236,6 @@ T '2020-01-14 14 days ago'		'2019-12-31'
 
 format='%Y-%m-%d %H:%M:%S'
 
-# Backward rollover
-# bug-182 in tmfix.c
 C='Backward rollover'
 T '#1684340457'				'2023-05-17 16:20:57'
 T '#1684340457 exact 2400 min  ago'	'2023-05-16 00:20:57'
@@ -269,8 +267,7 @@ T '2020-W20 second fri'			'2020-05-08 00:00:00'
 T '2020W20  third fri'			'2020-05-15 00:00:00'
 T '2020-W20 third fri'			'2020-05-15 00:00:00'
 
-# Ordinal time (ksh only supports the extended form)
-C='Ordinal time'
+C='Ordinal time'  # ksh only supports the extended form
 T '2020-2-3T12:34:56'			'2020-02-03 12:34:56'
 T '2020-2-3 12:34:56'			'2020-02-03 12:34:56'
 T '2020-2-3 12:34:56 next fri'		'2020-02-14 12:34:56'

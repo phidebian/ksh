@@ -2,6 +2,14 @@ This documents significant changes in the dev branch of ksh 93u+m.
 For full details, see the git log at: https://github.com/ksh93/ksh
 Uppercase BUG_* IDs are shell bug IDs as used by the Modernish shell library.
 
+2023-05-18:
+
+- Fixed multiple bugs causing incorrect output for relative date specifications
+  given as arguments to printf %(dateformat)T. For example, something like
+	printf '%(%Y-%m-%d %H:%M)' 'exact 9 weeks ago'
+  will now produce the correct output, which is the same as GNU date:
+	date '+%Y-%m-%d %H:%M' '9 weeks ago'
+
 2023-05-17:
 
 - Fixed buggy behaviour of printf with mix and match of % and %x$.
