@@ -46,9 +46,7 @@ const Shtable_t shtab_options[] =
 	"noexec",			SH_NOEXEC,
 	"functrace",			SH_FUNCTRACE,
 	"noglob",			SH_NOGLOB,
-#if SHOPT_GLOBCASEDET
 	"globcasedetect",		SH_GLOBCASEDET,
-#endif
 	"globstar",			SH_GLOBSTARS,
 #if SHOPT_ESH
 	"gmacs",			SH_GMACS,

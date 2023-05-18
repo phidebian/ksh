@@ -260,6 +260,8 @@ const char sh_set[] =
 			"component pattern \ap\a is treated as \b~(i:\b\ap\a\b)\b "
 			"if its parent directory exists on a case-insensitive "
 			"file system.]"
+#else
+		"[+globcasedetect?No effect; not supported on this system.]"
 #endif
 		"[+globstar?Equivalent to \b-G\b.]"
 #if SHOPT_ESH

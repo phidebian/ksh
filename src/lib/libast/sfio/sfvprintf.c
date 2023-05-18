@@ -517,10 +517,8 @@ loop_fmt :
 			argp = ++nargs;
 		if(fp)
 		{	if(ft && ft->extf)
-			{	if(fmt == fp[argp].ft.fmt)
-				{	if(fp[argp].ft.fmt != fp[argp].fmt)
-						fmt = fp[argp].ft.fmt;
-					argv = fp[argp].argv;
+			{	if(fmt == fp[argp].ft.fmt && fp[argp].ft.fmt == fp[argp].fmt)
+				{	argv = fp[argp].argv;
 					size = fp[argp].ft.size;
 				}
 				else	/* reload ft on type mismatch */

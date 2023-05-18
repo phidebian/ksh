@@ -13,6 +13,7 @@
 #                  David Korn <dgk@research.att.com>                   #
 #                  Martijn Dekker <martijn@inlv.org>                   #
 #            Johnothan King <johnothanking@protonmail.com>             #
+#         hyenias <58673227+hyenias@users.noreply.github.com>          #
 #                                                                      #
 ########################################################################
 
@@ -1670,6 +1671,17 @@ s='one two'
 exp="'$s' / '$s' / '$s'"
 printf -v got "%q / %q / %q" "$s" "$s" "$s"
 [[ $got == "$exp" ]] || err_exit "printf repeated %q" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+
+# ======
+# https://github.com/ksh93/ksh/issues/324
+got=${ printf '%1$s %1$b\n' '\\\\'; }
+exp='\\\\ \\'
+[[ $got == "$exp" ]] || err_exit "printf '%1$s %1$b'" \
+	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
+got=${ printf '%b %1$s\n' '\\\\'; }
+exp='\\ \\\\'
+[[ $got == "$exp" ]] || err_exit "printf '%b %1$s'" \
 	"(expected $(printf %q "$exp"), got $(printf %q "$got"))"
 
 # ======
