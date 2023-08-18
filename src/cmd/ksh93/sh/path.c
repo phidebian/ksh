@@ -806,8 +806,16 @@ Pathcomp_t *path_absolute(const char *name, Pathcomp_t *pp, int flag)
 					np->nvenv = dll;
 					goto found;
 				}
+
+#if 0
+				// We getting here with dll=0 of addr=0
+				// meaning there is no way we found anything.
+				// By not going to found we avid to return a
+				// wrong oldpp, yet we free fp as we should
+                                // then we exit the while loop and continue.
 				if(*stkptr(sh.stk,PATH_OFFSET)=='/' && nv_search(stkptr(sh.stk,PATH_OFFSET),sh.bltin_tree,0))
 					goto found;
+#endif
 				if(fp)
 					free(fp);
 				stkseek(sh.stk,n);
