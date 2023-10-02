@@ -26,6 +26,6 @@ for((;;))
 { $(expr A : B >/dev/null) && ((e=1))
   ((SECONDS>2)) && break;
 }
-((!$#&&e)) && err_exit '$(expr A : B >/dev/null)'
+((!$#&&e)) && err_exit '$(:>/dev/null)'
 # ======
 exit $((Errors<125?Errors:125))
