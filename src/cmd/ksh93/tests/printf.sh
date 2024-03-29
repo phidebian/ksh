@@ -285,6 +285,15 @@ T '2020-2-3 12:34:56 next fri'		'2020-02-14 12:34:56'
 T '2020-2-3T12:34:56Z'			'2020-02-03 12:34:56'
 T '2020-2-3 12:34:56Z'			'2020-02-03 12:34:56'
 
+C='ORDINAL access'
+format='%F'
+T '1th tuesday in 2016-3' '2016-03-01'
+T '2th tuesday in 2016-3' '2016-03-08'
+T '3th tuesday in 2016-3' '2016-03-15'
+T '4th tuesday in 2016-3' '2016-03-22'
+T '5th tuesday in 2016-3' '2016-03-29'
+
+
 # The following tests for times relative to the current time require GNU 'date' to compare our results to.
 if	! gd=$(	set -o noglob
 		IFS=:

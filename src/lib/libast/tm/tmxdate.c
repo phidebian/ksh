@@ -805,7 +805,7 @@ tmxdate(const char* s, char** e, Time_t now)
 					break;
 				goto save;
 			}
-			else if (f == -1 && isalpha(*t) && tmlex(t, &t, tm_info.format + TM_ORDINAL, TM_ORDINALS - TM_ORDINAL, NULL, 0) >= 0)
+			else if ( ((f == -1) || (f == 1)) && isalpha(*t) && tmlex(t, &t, tm_info.format + TM_ORDINAL, TM_ORDINALS - TM_ORDINAL, NULL, 0) >= 0)
 			{
 				message((-1, "AHA#%d n=%d", __LINE__, n));
  ordinal:
